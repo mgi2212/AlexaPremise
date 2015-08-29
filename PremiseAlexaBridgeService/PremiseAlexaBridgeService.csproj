@@ -122,6 +122,7 @@
   <ItemGroup>
     <Content Include="packages.config" />
     <Content Include="Alexa.cshtml" />
+    <Content Include="App_Data\Alexa.xdo" />
     <None Include="Properties\PublishProfiles\quigleys.us.pubxml" />
     <None Include="Web.Debug.config">
       <DependentUpon>Web.config</DependentUpon>
