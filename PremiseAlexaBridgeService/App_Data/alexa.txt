@@ -1,0 +1,113 @@
+﻿netsh advfirewall firewall add rule name="Open Port 8773" dir=in action=allow protocol=TCP localport=8733
+aws lambda add-permission --function-name arn:aws:lambda:us-east-1:115882003426:function:AlexaPremiseDriver --statement-id 1 --action lambda:invokeFunction --principal arn:aws:iam::185440857803:user/LambdaExecutionUser
+aws lambda add-permission --function-name arn:aws:lambda:us-east-1:115882003426:function:AlexaPremiseDriver --statement-id 2 --action lambda:invokeFunction --principal arn:aws:iam::882658230287:user/LambdaExecutionUser
+
+User Name,Access Key Id,Secret Access Key
+"premise",AKIAIWYK6K6MDYYBZALQ,Fzhttp://localhost:8733/PremiseAlexaBridgeService.svcG76vg3hv4Lwb39Sis/qvdM/1CFsF7uSjaTkeAo
+
+Microsoft Live
+Client ID:
+0000000048168A50 This is a unique identifier for your application.
+Client secret (v1):
+lGzLyYu2cNeog1hF2dpnMsK9yxsP3YMW  For security purposes, don't share your client secret with anyone.
+
+Logon WIth Amazon
+
+Client ID:amzn1.application-oa2-client.44e3b33735d048c7ba415aa47a314f7e
+Client Secret:928d6f6812b05a4423efa7c8837546bdc9a6cb37bbc6db941903901630ba083b
+ 
+
+ {
+  "header": {
+    "namespace": "System",
+    "name": "HealthCheckResponse",
+    "payloadVersion": "1"
+  },
+  "payload": {
+    "isHealthy": true,
+    "description": "The system is currently healthy"
+  }
+}
+
+http://localhost:8733/Alexa.svc/json/System/
+
+{
+"header": {
+"namespace": "System",
+"name": "HealthCheckRequest",
+"payloadVersion": "1"
+},
+"payload": {
+"initiationTimestamp": 1435302567000
+}
+}
+
+
+
+http://localhost:8733/Alexa.svc/json/Discovery/
+{
+    "header": {
+        "namespace": "Discovery",
+        "name": "DiscoverAppliancesRequest",
+        "payloadVersion": "1"
+    },
+    "payload": {
+        "accessToken": "random"
+    }
+}
+http://localhost:8733/Alexa.svc/json/Control/
+
+{
+    "header": {
+        "namespace": "Control",
+        "name": "SwitchOnOffRequest",
+        "payloadVersion": "1"
+    },
+    "payload": {
+        "accessToken": "dan",
+        "switchControlAction": "TURN_ON",
+        "appliance": {
+            "applianceId": "A266E75A-9FCF-496B-B6EF-7B83E0BFDA73",
+            "additionalApplianceDetails": {
+                "dimmable": true,
+                "path": "sys://Home/House/First/Den/Credenza"
+            }
+        }
+    }
+}
+
+
+{
+    "header": {
+        "namespace": "Control",
+        "name": "AdjustNumericalSettingRequest",
+        "payloadVersion": "1"
+    },
+    "payload": {
+        "accessToken": "dan",
+		"adjustmentType":"ABSOLUTE",
+		"adjustmentUnit":"PERCENTAGE",
+		"adjustmentValue":100.0,
+        "appliance": {
+            "applianceId": "A266E75A-9FCF-496B-B6EF-7B83E0BFDA73",
+            "additionalApplianceDetails": {
+                "dimmable": true,
+                "path": "sys://Home/House/First/Den/Credenza"
+            }
+        }
+    }
+}
+
+
+
+                "applianceId": "{A266E75A-9FCF-496B-B6EF-7B83E0BFDA73}",
+                "manufacturerName": "AlexaLightEx",
+                "modelName": "DeskLamp",
+                "version": "1.0",
+                "friendlyName": "Den Credenza",
+                "friendlyDescription": "Den Credenza",
+                "isReachable": true,
+                "additionalApplianceDetails": {
+                    "dimmable": true,
+                    "path": "sys://Home/House/First/Den/Credenza"
+                }
