@@ -1,8 +1,5 @@
 ﻿using System;
-using System.ServiceModel.Web;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.Runtime.Serialization.Json;
 using Premise;
 
 namespace PremiseAlexaBridgeService

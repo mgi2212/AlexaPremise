@@ -1,11 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.Serialization;
-using System.ServiceModel;
 using System.ServiceModel.Web;
-using System.Text;
-using Premise;
 
 
 namespace PremiseAlexaBridgeService
@@ -265,7 +259,7 @@ namespace PremiseAlexaBridgeService
 
                 if ((resultValue > 100.0) || (resultValue < 0))
                 {
-                    err.code = "TARGET_SETTING_OUT_OF_RAGE";
+                    err.code = "TARGET_SETTING_OUT_OF_RANGE";
                     err.description = string.Format("current={0} adjust={1}", currentValue, adjustValue);
                     response.payload.exception = err;
                     return response;

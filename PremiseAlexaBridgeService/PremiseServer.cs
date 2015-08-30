@@ -1,8 +1,7 @@
 ﻿using System;
-using System.ServiceModel.Web;
 using System.Collections.Generic;
+using System.Configuration;
 using System.Diagnostics;
-using System.Runtime.Serialization.Json;
 using Premise;
 
 namespace PremiseAlexaBridgeService
@@ -18,12 +17,20 @@ namespace PremiseAlexaBridgeService
 
         private PremiseServer()
         {
+            _premiseServer = ConfigurationManager.AppSettings["premiseServer"];
+            _premiseUser = ConfigurationManager.AppSettings["premiseUser"];
+            _premisePassword = ConfigurationManager.AppSettings["premisePassword"];
+
             _server = new Premise.SYSMiniBrokerClass();
-            _home = _server.Connect("192.168.1.65", "danq", "Lazelle");
+            _home = _server.Connect(_premiseServer, _premiseUser, _premisePassword);
             _home = _home.GetObject("sys://home");
 
             Refresh();
         }
+
+        private string _premiseServer;
+        private string _premiseUser;
+        private string _premisePassword;
 
         private SYSMiniBrokerClass _server;
         private IRemotePremiseObject _home;
