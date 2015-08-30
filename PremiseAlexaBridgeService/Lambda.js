@@ -1,6 +1,6 @@
 ﻿var https = require('https');
 var REMOTE_CLOUD_BASE_PATH = "/PremiseAlexaBridgeService.svc/json/";
-var REMOTE_CLOUD_HOSTNAME = "alexa.yourdomain";
+var REMOTE_CLOUD_HOSTNAME = "alexa.quigleys.us";
 var REMOTE_CLOUD_PORT = 8733;
 var log = log;
 var healthyResponse = {
@@ -17,7 +17,7 @@ var healthyResponse = {
 
 exports.handler = function (event, context) {
 
-    log('Input', event);
+    //log('Input', event);
 
     switch (event.header.namespace) {
 
@@ -27,10 +27,10 @@ exports.handler = function (event, context) {
             }
             break;
         case 'Control':
-            proxyEvent(event, context, 'Control');
+            proxyEventToCustomer(event, context, 'Control');
             break;
         case 'Discovery':
-            proxyEvent(event, context, 'Discovery');
+            proxyEventToCustomer(event, context, 'Discovery');
             break;
 
         default:
@@ -41,10 +41,52 @@ exports.handler = function (event, context) {
     }
 };
 
-function proxyEvent(event, context, path) {
+function proxyEventToCustomer(event, context, path) {
+    var get_data = "";
 
-    // this is where we need to look up the endpoint for a customer
-    event.payload.accessToken = "random";
+    // prepare request options
+    var get_options = {
+        host: 'api.amazon.com',
+        port: 443,
+        path: '/user/profile',
+        method: 'GET',
+        headers: {
+            'x-amz-access-token': event.payload.accessToken,
+            'Accept': 'application/json',
+            'Accept-Language': 'en-US'
+        }
+    };
+
+    //log('getCustomerInfoRequest', get_options);
+    var result = "";
+
+    // Set up the request
+    var get_req = https.request(get_options, function (response) {
+
+        response.setEncoding('utf-8');
+
+        response.on('data', function (chunk) {
+            result += chunk;
+        });
+
+        response.on('end', function () {
+            var json_result = JSON.parse(result);
+            event.payload.accessToken = json_result.user_id; // the on prem system expects the amazon user id from this call
+            proxyEvent(event, context, path);
+        });
+
+        response.on('error', function (e) {
+            console.log('Err', e.message);
+            context.fail('Request to appliance cloud failed authorization.');
+        });
+    });
+
+    get_req.write(get_data);
+    get_req.end();
+}
+
+
+function proxyEvent(event, context, path) {
 
     var post_data = JSON.stringify(event, 'utf-8');
 
@@ -61,7 +103,7 @@ function proxyEvent(event, context, path) {
     };
 
     var result = "";
-
+    //log('proxyEvent', post_data);
     // Set up the request
     var post_req = https.request(post_options, function (response) {
 
@@ -72,6 +114,7 @@ function proxyEvent(event, context, path) {
         });
 
         response.on('end', function () {
+            //log('Response', JSON.parse(result));
             context.succeed(JSON.parse(result));
         });
 
@@ -87,7 +130,7 @@ function proxyEvent(event, context, path) {
 
 
 function log(title, msg) {
-    console.log('*************** ' + title + ' Begin **********');
+    console.log('*************** ' + title + ' *************');
     console.log(msg);
     console.log('*************** ' + title + ' End*************');
 }
