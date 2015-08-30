@@ -1,6 +1,6 @@
 ﻿var https = require('https');
 var REMOTE_CLOUD_BASE_PATH = "/PremiseAlexaBridgeService.svc/json/";
-var REMOTE_CLOUD_HOSTNAME = "alexa.quigleys.us";
+var REMOTE_CLOUD_HOSTNAME = "alexa.yourdomain";
 var REMOTE_CLOUD_PORT = 8733;
 var log = log;
 var healthyResponse = {
@@ -16,8 +16,6 @@ var healthyResponse = {
 };
 
 exports.handler = function (event, context) {
-
-    //log('Input', event);
 
     switch (event.header.namespace) {
 
@@ -85,7 +83,6 @@ function proxyEventToCustomer(event, context, path) {
     get_req.end();
 }
 
-
 function proxyEvent(event, context, path) {
 
     var post_data = JSON.stringify(event, 'utf-8');
@@ -127,7 +124,6 @@ function proxyEvent(event, context, path) {
     post_req.write(post_data);
     post_req.end();
 }
-
 
 function log(title, msg) {
     console.log('*************** ' + title + ' *************');
