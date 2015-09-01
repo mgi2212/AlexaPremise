@@ -1,15 +1,17 @@
 ﻿using System;
+using System.Linq;
+using System.Collections.Generic;
+using System.ServiceModel;
 using System.ServiceModel.Web;
-
 
 namespace PremiseAlexaBridgeService
 {
+
     public class PremiseAlexaService : IPremiseAlexaService
     {
         PremiseServer _server = PremiseServer.Instance;
         /// <summary>
         /// System messages
-        /// Pretty much of a hack right now since Amazon doesn't utilize yet
         /// </summary>
         /// <param name="alexaRequest"></param>
         /// <returns></returns>
@@ -75,7 +77,7 @@ namespace PremiseAlexaBridgeService
                 response.payload.exception = err;
                 return response;
             }
-            response.payload.discoveredAppliances = _server.Appliances;
+            response.payload.discoveredAppliances = new List<Appliance>(_server.Appliances.Values); 
             return response;
         }
 
@@ -149,8 +151,9 @@ namespace PremiseAlexaBridgeService
                 return response;
             }
 
+
             // find the appliance to control
-            Appliance find = _server.Appliances.Find(x => x.applianceId.ToUpper() == alexaRequest.payload.appliance.applianceId.ToUpper());
+            Appliance find = _server.Appliances.Values.First(x => x.applianceId.ToUpper() == alexaRequest.payload.appliance.applianceId.ToUpper());
             if (find == null)
             {
                 err.code = "NO_SUCH_TARGET";

@@ -1,24 +1,38 @@
 <!-- Premise Systems Sys Schema Version 2.1 Build 15117 -->
 <Object ID="{8D692EC9-EB74-4155-9D83-315872AC9800}" Name="Premise SYS" Flags="0x120000" Class="sys://Schema/System/Object" Description="IP Camera REQUIRES IP CAMERAS EXTENSION" >
-	<Object ID="{05B46F0B-A745-4B03-81C9-624D3B3E9CD7}" Name="Schema" Flags="0x52FA0000" Class="sys://Schema/System/Schema" >
-		<Object ID="{79B9225F-8A86-42B2-9B31-78C8A2893404}" Name="Modules" Flags="0x40FA0000" Class="sys://Schema/System/ModuleFolder" Description="User-defined object types" DisplayName="Modules Folder" >
-			<Object ID="{620A74C6-BF42-4AB7-BDA5-DC375CF487C0}" Name="Alexa" Class="sys://Schema/System/Module" >
-				<Object ID="{C4E6A6CF-AE58-404E-9B2B-9D75C4AA2FB6}" Name="Classes" Flags="0x120000" Class="sys://Schema/System/ClassFolder" >
-					<Object ID="{3470B9B5-E685-4EB2-ABC0-2F4CCD7F686A}" Name="AlexaLightEx" Class="sys://Schema/System/Class" Virtual="-1" Aggregatable="-1" >
-						<Object ID="{52BC4602-5ABB-4D69-BDF7-F273C2A95E98}" Class="sys://Schema/System/SubClass" LinkObject="{0B1DA7E1-1731-49AC-9814-47470E78EFAB}" />
-						<Object ID="{24DC0F3F-5C64-4563-B106-1BD34C6A31E7}" Name="IsReachable" Flags="0x900" Class="sys://Schema/System/Boolean" DefaultValue="-1" />
-					</Object>
-					<Object ID="{31E99AB9-79D2-4BC1-9982-9D615DE6644E}" Name="AlexaStatus" Class="sys://Schema/System/Class" Health="-1" HealthDescription="This Premise system is healthy." AccessToken="random" >
-						<Object ID="{68A63139-5D3A-4CDF-B7A4-46982D7A8C7B}" Name="Health" Flags="0x900" Class="sys://Schema/System/Boolean" />
-						<Object ID="{2EA97614-63CE-4458-98F7-276A0755D8B5}" Class="sys://Schema/System/SuperClass" LinkObject="{DAA1CCD9-DDD2-4DC2-9BF8-C7B54560C62B}" />
-						<Object ID="{415F83E3-A174-4CF1-B1B0-789D04494348}" Name="HealthDescription" Flags="0x900" Class="sys://Schema/System/Text" />
-						<Object ID="{8944A9A9-5BBC-499C-8F5D-93DF139E7276}" Name="AccessToken" Flags="0x900" Class="sys://Schema/System/Text" />
-					</Object>
-				</Object>
-				<Object ID="{6F292FE9-8EDB-4BF3-9DC6-FD1856A283E8}" Name="Templates" Flags="0x120000" Class="sys://Schema/System/TemplateFolder" />
-				<Object ID="{408999CA-B2FC-448D-BDFF-C4A3F80F6602}" Name="GlobalScripts" Flags="0x120000" Class="sys://Schema/Scripting/GlobalScriptFolder" >
-					<Object ID="{66B730F7-3BDF-4D46-8A0B-0AC70A61DD92}" Name="AlexaAutoExec" Class="sys://Schema/Scripting/Global" >
-<![CDATA[
+  <Object ID="{05B46F0B-A745-4B03-81C9-624D3B3E9CD7}" Name="Schema" Flags="0x52FA0000" Class="sys://Schema/System/Schema" >
+    <Object ID="{79B9225F-8A86-42B2-9B31-78C8A2893404}" Name="Modules" Flags="0x40FA0000" Class="sys://Schema/System/ModuleFolder" Description="User-defined object types" DisplayName="Modules Folder" >
+      <Object ID="{620A74C6-BF42-4AB7-BDA5-DC375CF487C0}" Name="Alexa" Class="sys://Schema/System/Module" >
+        <Object ID="{C4E6A6CF-AE58-404E-9B2B-9D75C4AA2FB6}" Name="Classes" Flags="0x120000" Class="sys://Schema/System/ClassFolder" >
+          <Object ID="{3470B9B5-E685-4EB2-ABC0-2F4CCD7F686A}" Name="AlexaBase" Class="sys://Schema/System/Class" Virtual="-1" Aggregatable="-1" >
+            <Object ID="{24DC0F3F-5C64-4563-B106-1BD34C6A31E7}" Name="IsReachable" Flags="0x900" Class="sys://Schema/System/Boolean" DefaultValue="-1" Aggregation="2" />
+          </Object>
+          <Object ID="{3C3B4F0D-9DC5-42EA-9CE3-2150D2AD58CB}" Name="AlexaAppliance" Class="sys://Schema/System/Class" Virtual="-1" >
+            <Object ID="{AC71ED16-5354-46C1-A4BC-64E4CF8F8606}" Name="FriendlyDescription" Flags="0x900" Class="sys://Schema/System/Text" Mergeable="0" />
+            <Object ID="{41C98863-EDE3-4ED6-AF34-00DF88C7D154}" Name="FriendlyName" Flags="0x900" Class="sys://Schema/System/Text" Mergeable="0" />
+            <Object ID="{DD1A6ADE-99B2-4F21-9D81-EB8B734705E0}" Class="sys://Schema/System/SuperClass" LinkObject="{3470B9B5-E685-4EB2-ABC0-2F4CCD7F686A}" />
+          </Object>
+          <Object ID="{43899476-23CD-4015-A655-09C6CA885DB3}" Name="AlexaLighting" Class="sys://Schema/System/Class" Virtual="-1" >
+            <Object ID="{E763BBF9-9150-493D-900E-10CCD16EBBE6}" Class="sys://Schema/System/SuperClass" LinkObject="{3C3B4F0D-9DC5-42EA-9CE3-2150D2AD58CB}" />
+            <Object ID="{0BA2BC40-278B-4D1D-9B17-64337280F19C}" Class="sys://Schema/System/SubClass" LinkObject="{0B1DA7E1-1731-49AC-9814-47470E78EFAB}" />
+          </Object>
+          <Object ID="{48FDB8E2-ABE0-41DC-BB59-D609CF25FC40}" Name="AlexaFans" Class="sys://Schema/System/Class" Virtual="-1" >
+            <Object ID="{2CFBFDC2-93AA-4B2E-B69F-7C83EF67CE7D}" Class="sys://Schema/System/SuperClass" LinkObject="{3C3B4F0D-9DC5-42EA-9CE3-2150D2AD58CB}" />
+            <Object ID="{4C68D4B4-96A7-4348-BA76-8757EA5AD3A3}" Class="sys://Schema/System/SubClass" LinkObject="{77319741-F5A7-4CA5-A2EA-4F377D394301}" />
+          </Object>
+          <Object ID="{31E99AB9-79D2-4BC1-9982-9D615DE6644E}" Name="AlexaStatus" Class="sys://Schema/System/Class" Health="-1" HealthDescription="This Premise system is healthy." AccessToken="random" >
+            <Object ID="{68A63139-5D3A-4CDF-B7A4-46982D7A8C7B}" Name="Health" Flags="0x900" Class="sys://Schema/System/Boolean" />
+            <Object ID="{2EA97614-63CE-4458-98F7-276A0755D8B5}" Class="sys://Schema/System/SuperClass" LinkObject="{DAA1CCD9-DDD2-4DC2-9BF8-C7B54560C62B}" />
+            <Object ID="{415F83E3-A174-4CF1-B1B0-789D04494348}" Name="HealthDescription" Flags="0x900" Class="sys://Schema/System/Text" />
+            <Object ID="{8944A9A9-5BBC-499C-8F5D-93DF139E7276}" Name="AccessToken" Flags="0x900" Class="sys://Schema/System/Text" />
+            <Object ID="{13D00A3B-3C08-49D0-8506-0E66D8EB3C92}" Name="RefreshDevices" Flags="0x900" Class="sys://Schema/System/Boolean" />
+            <Object ID="{98931CAB-FD97-4246-B75A-2CE43E7E4341}" Name="LastRefreshed" Flags="0x900" Class="sys://Schema/System/DateTime" DefaultValue="8/30/2015 3:11:44 PM" />
+          </Object>
+        </Object>
+        <Object ID="{6F292FE9-8EDB-4BF3-9DC6-FD1856A283E8}" Name="Templates" Flags="0x120000" Class="sys://Schema/System/TemplateFolder" />
+        <Object ID="{408999CA-B2FC-448D-BDFF-C4A3F80F6602}" Name="GlobalScripts" Flags="0x120000" Class="sys://Schema/Scripting/GlobalScriptFolder" >
+          <Object ID="{66B730F7-3BDF-4D46-8A0B-0AC70A61DD92}" Name="AlexaAutoExec" Class="sys://Schema/Scripting/Global" >
+            <![CDATA[
 Script=
 DebugOut "Alexa Interface Module" & vbCrLf
 set gTmp = Home.GetObjectsByType(modules.Alexa.Classes.AlexaStatus.Path)
@@ -32,13 +46,13 @@ if gTmp.Count = 0 then
 end if
 set gTmp = nothing
 ]]>
-					</Object>
-				</Object>
-				<Object ID="{0BCABEDC-33ED-4C19-B6D3-C6FAEA074E25}" Name="Logic" Flags="0x120000" Class="sys://Schema/Logic/RuleFolder" />
-				<Object ID="{A69283D8-E798-4573-B14B-466D267A0F3E}" Name="Variables" Flags="0x120000" Class="sys://Schema/System/VariableFolder" />
-				<Object ID="{46BEB98D-3A96-418C-ABA9-463C76A3F934}" Name="Timers" Flags="0x120000" Class="sys://Schema/Timers/TimerFolder" />
-				<Object ID="{BE624F2F-5B4E-44DE-BB60-F5804B71106E}" Name="Macros" Flags="0x120000" Class="sys://Schema/System/MacroHolder" />
-			</Object>
-		</Object>
-	</Object>
+          </Object>
+        </Object>
+        <Object ID="{0BCABEDC-33ED-4C19-B6D3-C6FAEA074E25}" Name="Logic" Flags="0x120000" Class="sys://Schema/Logic/RuleFolder" />
+        <Object ID="{A69283D8-E798-4573-B14B-466D267A0F3E}" Name="Variables" Flags="0x120000" Class="sys://Schema/System/VariableFolder" />
+        <Object ID="{46BEB98D-3A96-418C-ABA9-463C76A3F934}" Name="Timers" Flags="0x120000" Class="sys://Schema/Timers/TimerFolder" />
+        <Object ID="{BE624F2F-5B4E-44DE-BB60-F5804B71106E}" Name="Macros" Flags="0x120000" Class="sys://Schema/System/MacroHolder" />
+      </Object>
+    </Object>
+  </Object>
 </Object>
