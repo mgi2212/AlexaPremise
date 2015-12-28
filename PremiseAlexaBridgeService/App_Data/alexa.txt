@@ -11,7 +11,7 @@ http://localhost:8733/Alexa.svc/json/Discovery/
         "payloadVersion": "1"
     },
     "payload": {
-        "accessToken": "random"
+        "accessToken": "amzn1.account.AHHO677DA2UVHYY724MCRSBYZOVQ"
     }
 }
 http://localhost:8733/Alexa.svc/json/Control/
@@ -23,7 +23,7 @@ http://localhost:8733/Alexa.svc/json/Control/
         "payloadVersion": "1"
     },
     "payload": {
-        "accessToken": "dan",
+        "accessToken": "amzn1.account.AHHO677DA2UVHYY724MCRSBYZOVQ",
         "switchControlAction": "TURN_ON",
         "appliance": {
             "applianceId": "A266E75A-9FCF-496B-B6EF-7B83E0BFDA73",

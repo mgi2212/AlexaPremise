@@ -3,13 +3,73 @@ using System.Linq;
 using System.Collections.Generic;
 using System.ServiceModel;
 using System.ServiceModel.Web;
+using SYSWebSockClient;
+using System.Threading.Tasks;
 
 namespace PremiseAlexaBridgeService
 {
 
+    public static class HumanFriendlyInteger
+    {
+        static string[] ones = new string[] { "", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine" };
+        static string[] teens = new string[] { "Ten", "Eleven", "Twelve", "Thirteen", "Fourteen", "Fifteen", "Sixteen", "Seventeen", "Eighteen", "Nineteen" };
+        static string[] tens = new string[] { "Twenty", "Thirty", "Forty", "Fifty", "Sixty", "Seventy", "Eighty", "Ninety" };
+        static string[] thousandsGroups = { "", " Thousand", " Million", " Billion" };
+
+        private static string FriendlyInteger(int n, string leftDigits, int thousands)
+        {
+            if (n == 0)
+            {
+                return leftDigits;
+            }
+            string friendlyInt = leftDigits;
+            if (friendlyInt.Length > 0)
+            {
+                friendlyInt += " ";
+            }
+
+            if (n < 10)
+            {
+                friendlyInt += ones[n];
+            }
+            else if (n < 20)
+            {
+                friendlyInt += teens[n - 10];
+            }
+            else if (n < 100)
+            {
+                friendlyInt += FriendlyInteger(n % 10, tens[n / 10 - 2], 0);
+            }
+            else if (n < 1000)
+            {
+                friendlyInt += FriendlyInteger(n % 100, (ones[n / 100] + " Hundred"), 0);
+            }
+            else
+            {
+                friendlyInt += FriendlyInteger(n % 1000, FriendlyInteger(n / 1000, "", thousands + 1), 0);
+            }
+
+            return friendlyInt + thousandsGroups[thousands];
+        }
+
+        public static string IntegerToWritten(int n)
+        {
+            if (n == 0)
+            {
+                return "Zero";
+            }
+            else if (n < 0)
+            {
+                return "Negative " + IntegerToWritten(-n);
+            }
+
+            return FriendlyInteger(n, "", 0);
+        }
+    }
+
     public class PremiseAlexaService : IPremiseAlexaService
     {
-        PremiseServer _server = PremiseServer.Instance;
+        PremiseServer Server = PremiseServer.Instance;
         /// <summary>
         /// System messages
         /// </summary>
@@ -18,18 +78,114 @@ namespace PremiseAlexaBridgeService
         [WebInvoke(Method = "POST", RequestFormat = WebMessageFormat.Json, ResponseFormat = WebMessageFormat.Json, BodyStyle = WebMessageBodyStyle.Bare, UriTemplate = "/System/")]
         public HealthCheckResponse Health(HealthCheckRequest alexaRequest)
         {
+            this.InformLastContact("HealthCheckRequest");
+
             var response = new HealthCheckResponse();
             var err = new ExceptionResponsePayload();
-
-            _server.Refresh(); // refreshes the cache of appliances and checks status
 
             response.header = new Header();
             response.header.name = "HealthCheckResponse";
             response.header.@namespace = "System";
             response.payload = new HealthCheckResponsePayload();
-            response.payload.isHealthy = _server.Status.Health;
-            response.payload.description = _server.Status.HealthDescription;
+            this.GetAlexaStatusHealth(response.payload);
             return response;
+        }
+
+        private void GetAlexaStatusHealth(HealthCheckResponsePayload payload)
+        {
+            var returnClause = new string[] { "Health", "HealthDescription" };
+            dynamic whereClause = new System.Dynamic.ExpandoObject();
+            var items = this.Server.AlexaStatus.Select(returnClause, whereClause).GetAwaiter().GetResult();
+            payload.isHealthy = this.Server.AlexaStatus.GetValue<bool>("Health").GetAwaiter().GetResult();
+            payload.description = this.Server.AlexaStatus.GetValue<string>("HealthDescription").GetAwaiter().GetResult();
+        }
+
+        private async void InformLastContact(string command)
+        {
+            await this.Server.AlexaStatus.SetValue("LastHeardFromAlexa", DateTime.Now.ToString());
+            await this.Server.AlexaStatus.SetValue("LastHeardCommand", command);
+        }
+
+        private string GetAlexaStatusAccessToken()
+        {
+            // bogus async whatever
+            var accessToken = this.Server.AlexaStatus.GetValue<string>("AccessToken").GetAwaiter().GetResult();
+            return accessToken;
+        }
+
+        private async Task<List<Appliance>> GetAppliances()
+        {
+            List<Appliance> appliances = new List<Appliance>();
+
+            var returnClause = new string[] { "Name", "DisplayName", "FriendlyName","FriendlyDescription", "IsReachable", "PowerState", "Brightness", "OID", "OPATH", "OTYPENAME", "Type" };
+            dynamic whereClause = new System.Dynamic.ExpandoObject();
+            whereClause.TypeOf = this.Server.AlexaApplianceClassPath;
+
+            var sysAppliances = await this.Server.HomeObject.Select(returnClause, whereClause);
+            int count = 0;
+            //int collisionCount = 0;
+            int noFriendlyNameCount = 0;
+
+            foreach (var sysAppliance in sysAppliances)
+            {
+                var appliance = new Appliance();
+
+                var objectId = (string)sysAppliance.OID;
+                appliance.applianceId = Guid.Parse(objectId).ToString("D");
+                appliance.modelName = sysAppliance.OTYPENAME;
+                appliance.friendlyName = ((string) sysAppliance.FriendlyName).Trim();
+                appliance.friendlyDescription = ((string) sysAppliance.FriendlyDescription).Trim();
+
+                // if no FriendlyName value then try to invent one and set it so we dont have to do this again!
+                if (string.IsNullOrEmpty(appliance.friendlyName))
+                {
+                    noFriendlyNameCount++;
+                    var premiseObject = await this.Server.HomeObject.GetObject(objectId);
+                    var parent = await premiseObject.GetParent();
+
+                    // parent should be a container - so get that name
+                    string parentName = (await parent.GetName()).Trim();
+
+                    // preceed the parent container name with the appliance name
+                    appliance.friendlyName = string.Format("{0} {1}", parentName, sysAppliance.Name).Trim();
+                    await premiseObject.SetValue("FriendlyName", appliance.friendlyName); 
+                }
+
+                // if no FriendlyDescription
+                if (string.IsNullOrEmpty(appliance.friendlyDescription))
+                    appliance.friendlyDescription = sysAppliance.OPATH;
+
+                appliance.isReachable = sysAppliance.IsReachable;
+                appliance.manufacturerName = "Premise Object";
+                appliance.version = "1.0";
+                bool hasDimmer = (sysAppliance.Brightness != null);
+                appliance.additionalApplianceDetails = new AdditionalApplianceDetails()
+                {
+                    dimmable = hasDimmer.ToString(),
+                    path = sysAppliance.OPATH
+                };
+
+#if false
+                // detect, avoid and flag friendly name collisions
+                Appliance existing;
+                if (this.Appliances.TryGetValue(appliance.friendlyName, out existing))
+                {
+                    collisionCount++;
+                    appliance.friendlyName = string.Format("Name Collision {0} {1}", HumanFriendlyInteger.IntegerToWritten(collisionCount), appliance.friendlyName);
+                    appliance.friendlyDescription = targetObjectPath;
+                }
+#endif
+                appliances.Add(appliance);
+                if (++count >= this.Server.AlexaDeviceLimit)
+                    break;
+            }
+
+            await this.Server.AlexaStatus.SetValue("RefreshDevices", "False");
+            await this.Server.AlexaStatus.SetValue("LastRefreshed", DateTime.Now.ToString());
+            await this.Server.AlexaStatus.SetValue("HealthDescription", string.Format("Reported={0},NameCollisions={1},NoFriendlyNameCount={2}", count, 0, noFriendlyNameCount));
+            await this.Server.AlexaStatus.SetValue("Health", "True");
+
+            return appliances;
         }
 
         /// <summary>
@@ -40,6 +196,8 @@ namespace PremiseAlexaBridgeService
         [WebInvoke(Method = "POST", RequestFormat = WebMessageFormat.Json, ResponseFormat = WebMessageFormat.Json, BodyStyle = WebMessageBodyStyle.Bare, UriTemplate = "/Discovery/")]
         public DiscoveryResponse Discover(DiscoveryRequest alexaRequest)
         {
+            this.InformLastContact("DiscoveryRequest");
+
             var response = new DiscoveryResponse();
             response.payload = new DiscoveryResponsePayload();
             response.payload.discoveredAppliances = null;
@@ -69,7 +227,8 @@ namespace PremiseAlexaBridgeService
             }
             response.header.name = "DiscoverAppliancesResponse";
 
-            if (alexaRequest.payload.accessToken != _server.Status.AccessToken)
+            string accessToken = this.GetAlexaStatusAccessToken();
+            if (alexaRequest.payload.accessToken != accessToken)
             {
                 var err = new ExceptionResponsePayload();
                 err.code = "INVALID_ACCESS_TOKEN";
@@ -77,7 +236,7 @@ namespace PremiseAlexaBridgeService
                 response.payload.exception = err;
                 return response;
             }
-            response.payload.discoveredAppliances = new List<Appliance>(_server.Appliances.Values); 
+            response.payload.discoveredAppliances = this.GetAppliances().GetAwaiter().GetResult();
             return response;
         }
 
@@ -96,6 +255,8 @@ namespace PremiseAlexaBridgeService
         [WebInvoke(Method = "POST", RequestFormat = WebMessageFormat.Json, ResponseFormat = WebMessageFormat.Json, BodyStyle = WebMessageBodyStyle.Bare, UriTemplate = "/Control/")]
         public ControlResponse Control(ControlRequest alexaRequest)
         {
+            this.InformLastContact("ControlRequest");
+
             var response = new ControlResponse();
             var err = new ExceptionResponsePayload();
             response.payload = new ApplianceControlResponsePayload();
@@ -143,18 +304,20 @@ namespace PremiseAlexaBridgeService
             }
 
             // check for access privleges
-            if (alexaRequest.payload.accessToken != _server.Status.AccessToken)
-            {
+            string accessToken = this.GetAlexaStatusAccessToken();
+            if (alexaRequest.payload.accessToken != accessToken)
+            { 
                 err.code = "INVALID_ACCESS_TOKEN";
                 err.description = "Invalid access token.";
                 response.payload.exception = err;
                 return response;
             }
 
-
+            Guid premiseId = new Guid(alexaRequest.payload.appliance.applianceId);
+            var applianceToControl = this.Server.RootObject.GetObject(premiseId.ToString("B")).GetAwaiter().GetResult();
             // find the appliance to control
-            Appliance find = _server.Appliances.Values.First(x => x.applianceId.ToUpper() == alexaRequest.payload.appliance.applianceId.ToUpper());
-            if (find == null)
+            // Server.Appliances.Values.First(x => x.applianceId.ToUpper() == alexaRequest.payload.appliance.applianceId.ToUpper());
+            if (applianceToControl == null)
             {
                 err.code = "NO_SUCH_TARGET";
                 err.description = string.Format("Cannot find device {0} ({1})", alexaRequest.payload.appliance.additionalApplianceDetails.path, alexaRequest.payload.appliance.applianceId);
@@ -163,19 +326,15 @@ namespace PremiseAlexaBridgeService
             }
 
             // check state and determine if it needs to be changed
-            var currentState = new object();
             if (requestType == ControlRequestType.SwitchOnOff)
             {
-
-                currentState = _server.Home.GetObject(find.additionalApplianceDetails.path).GetValue("PowerState");
-                bool state = Convert.ToBoolean(currentState);
-
+                bool state = applianceToControl.GetValue<bool>("PowerState").GetAwaiter().GetResult();
                 switch (alexaRequest.payload.switchControlAction.ToUpper())
                 {
                     case "TURN_OFF":
                         if (state == true)
                         {
-                            _server.Home.GetObject(find.additionalApplianceDetails.path).SetValue("PowerState", false);
+                            applianceToControl.SetValue("PowerState", "False");
                             response.payload.success = true;
                         }
                         else
@@ -189,7 +348,7 @@ namespace PremiseAlexaBridgeService
                     case "TURN_ON":
                         if (state == false)
                         {
-                            _server.Home.GetObject(find.additionalApplianceDetails.path).SetValue("PowerState", true);
+                            applianceToControl.SetValue("PowerState", "True");
                             response.payload.success = true;
                         }
                         else
@@ -211,8 +370,8 @@ namespace PremiseAlexaBridgeService
             // currently only percentage is viable here
             if (requestType == ControlRequestType.AdjustNumericalSetting)
             {
-
-                if ((find.additionalApplianceDetails.dimmable == false) || (alexaRequest.payload.adjustmentUnit != "PERCENTAGE"))
+                bool dimmable = bool.Parse(alexaRequest.payload.appliance.additionalApplianceDetails.dimmable);
+                if ((dimmable == false) || (alexaRequest.payload.adjustmentUnit != "PERCENTAGE"))
                 {
                     err.code = "UNSUPPORTED_TARGET_SETTING";
                     if ((alexaRequest.payload.adjustmentUnit != "PERCENTAGE"))
@@ -226,9 +385,7 @@ namespace PremiseAlexaBridgeService
                     response.payload.exception = err;
                     return response;
                 }
-
-                currentState = _server.Home.GetObject(find.additionalApplianceDetails.path).GetValue("Brightness");
-
+                double currentBrightnessValue = applianceToControl.GetValue<Double>("Brightness").GetAwaiter().GetResult(); 
                 bool relativeAdustment = false;
                 switch (alexaRequest.payload.adjustmentType.ToUpper())
                 {
@@ -247,13 +404,13 @@ namespace PremiseAlexaBridgeService
                         return response;
                 }
 
-                var currentValue = Math.Round(double.Parse(currentState.ToString()) * 100.0, 0);
+                currentBrightnessValue = Math.Round(currentBrightnessValue * 100.0, 0);
                 var adjustValue = Math.Round(double.Parse(alexaRequest.payload.adjustmentValue), 0);
                 var resultValue = 0.0;
 
                 if (relativeAdustment)
                 {
-                    resultValue = Math.Round(currentValue + adjustValue, 0);
+                    resultValue = Math.Round(currentBrightnessValue + adjustValue, 0);
                 }
                 else
                 {
@@ -263,14 +420,13 @@ namespace PremiseAlexaBridgeService
                 if ((resultValue > 100.0) || (resultValue < 0))
                 {
                     err.code = "TARGET_SETTING_OUT_OF_RANGE";
-                    err.description = string.Format("current={0} adjust={1}", currentValue, adjustValue);
+                    err.description = string.Format("current={0} adjust={1}", currentBrightnessValue, adjustValue);
                     response.payload.exception = err;
                     return response;
                 }
                 resultValue = resultValue / 100.0;
-                _server.Home.GetObject(find.additionalApplianceDetails.path).SetValue("Brightness", resultValue);
+                applianceToControl.SetValue("Brightness", resultValue.ToString()).GetAwaiter().GetResult();
                 response.payload.success = true;
-
             }
 
             return response;

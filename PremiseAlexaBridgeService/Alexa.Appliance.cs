@@ -1,4 +1,6 @@
-﻿using System.Runtime.Serialization;
+﻿using System;
+using System.Runtime.Serialization;
+using SYSWebSockClient;
 
 namespace PremiseAlexaBridgeService
 {
@@ -7,7 +9,7 @@ namespace PremiseAlexaBridgeService
     public class AdditionalApplianceDetails
     {
         [DataMember(Name = "dimmable", Order = 1)]
-        public bool dimmable { get; set; }
+        public string dimmable { get; set; }
 
         [DataMember(Name = "path", Order = 2)]
         public string path { get; set; }
@@ -17,22 +19,29 @@ namespace PremiseAlexaBridgeService
     [DataContract(Namespace = "")]
     public class Appliance
     {
-        [DataMember(Name = "applianceId",Order =1)]
-        public string applianceId { get; set; }
+        [DataMember(Name = "applianceId", Order = 1)]
+        public string applianceId { get; set;}
+
         [DataMember(Name = "manufacturerName", EmitDefaultValue = false, Order = 2)]
         public string manufacturerName { get; set; }
+
         [DataMember(Name = "modelName", EmitDefaultValue = false, Order = 3)]
-        public string modelName { get; set; }
+        public string modelName {get; set; }
+
         [DataMember(Name = "version", EmitDefaultValue = false, Order = 4)]
         public string version { get; set; }
+
         [DataMember(Name = "friendlyName", EmitDefaultValue = false, Order = 5)]
-        public string friendlyName { get; set; }
+        public string friendlyName{ get; set;}
+
         [DataMember(Name = "friendlyDescription", EmitDefaultValue = false, Order = 6)]
-        public string friendlyDescription { get; set; }
-        [DataMember(Name = "isReachable", EmitDefaultValue = false, Order = 7)]
+        public string friendlyDescription { get; set;}
+
+        [DataMember(Name = "isReachable", EmitDefaultValue = true, Order = 7)]
         public bool isReachable { get; set; }
+
         [DataMember(Name = "additionalApplianceDetails", EmitDefaultValue = false, Order = 8)]
-        public AdditionalApplianceDetails additionalApplianceDetails { get; set; }
+        public AdditionalApplianceDetails additionalApplianceDetails { get; set;}
     }
 
 
@@ -75,6 +84,7 @@ namespace PremiseAlexaBridgeService
     {
         [DataMember(Name = "success", Order = 1)]
         public bool success { get; set; }
+
         [DataMember(Name = "exception", EmitDefaultValue = false, Order = 2)]
         public ExceptionResponsePayload exception { get; set; }
     }
