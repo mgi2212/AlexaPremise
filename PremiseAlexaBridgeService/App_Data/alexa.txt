@@ -2,6 +2,17 @@
 aws lambda add-permission --function-name arn:aws:lambda:us-east-1:115882003426:function:AlexaPremiseDriver --statement-id 1 --action lambda:invokeFunction --principal arn:aws:iam::185440857803:user/LambdaExecutionUser
 aws lambda add-permission --function-name arn:aws:lambda:us-east-1:115882003426:function:AlexaPremiseDriver --statement-id 2 --action lambda:invokeFunction --principal arn:aws:iam::882658230287:user/LambdaExecutionUser
 
+http://localhost:8733/Alexa.svc/json/System/
+{
+"header": {
+"namespace": "System",
+"name": "HealthCheckRequest",
+"payloadVersion": "1"
+},
+"payload": {
+"initiationTimestamp": 1435302567000
+}
+}
 
 http://localhost:8733/Alexa.svc/json/Discovery/
 {

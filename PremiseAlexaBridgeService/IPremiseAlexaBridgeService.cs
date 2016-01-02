@@ -6,21 +6,12 @@ namespace PremiseAlexaBridgeService
     public interface IPremiseAlexaService
     {
         [OperationContract]
-        DiscoveryResponse Discover(DiscoveryRequest request);
+        DiscoveryResponse Discovery(DiscoveryRequest request);
 
         [OperationContract]
         ControlResponse Control(ControlRequest request);
 
         [OperationContract]
-        HealthCheckResponse Health(HealthCheckRequest request);
-
+        SystemResponse System(SystemRequest request);
     }
-
-    public enum ControlRequestType
-    {
-        Unknown,
-        SwitchOnOff,
-        AdjustNumericalSetting
-    }
-
 }

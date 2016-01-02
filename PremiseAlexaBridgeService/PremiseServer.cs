@@ -13,19 +13,21 @@ namespace PremiseAlexaBridgeService
     {
         private static readonly PremiseServer instance = new PremiseServer();
 
+        internal int AlexaDeviceLimit;
+        internal bool AlexaCheckStateBeforeSetValue;
+        internal string AlexaStatusClassPath;
+        internal string AlexaApplianceClassPath;
+
         internal string PremiseServerAddress;
         internal string PremiseUserName;
         internal string PremiseUserPassword;
         internal string PremiseHomeObject;
-        internal string AlexaStatusClassPath;
-        internal string AlexaApplianceClassPath;
-        internal int AlexaDeviceLimit;
 
-        private readonly SYSClient Server;
+        //private readonly SYSClient Server;
+        //private SYSClient Server;
         internal IPremiseObject RootObject;
         internal IPremiseObject HomeObject;
         internal IPremiseObject AlexaStatus;
-        //internal Dictionary<string, Appliance> Appliances;
 
         private PremiseServer()
         {
@@ -35,25 +37,38 @@ namespace PremiseAlexaBridgeService
             this.PremiseHomeObject = ConfigurationManager.AppSettings["premiseHomeObject"];
             this.AlexaStatusClassPath = ConfigurationManager.AppSettings["premiseAlexaStatusClassPath"];
             this.AlexaApplianceClassPath = ConfigurationManager.AppSettings["premiseAlexaApplianceClassPath"];
-            this.AlexaDeviceLimit = int.Parse(ConfigurationManager.AppSettings["premiseAlexaDeviceLimit"]);
-            this.Server = new SYSClient();
-            //this.Appliances = new Dictionary<string, Appliance>();
-            this.ConnectToServer();
+
+            try
+            {
+                this.AlexaDeviceLimit = int.Parse(ConfigurationManager.AppSettings["premiseAlexaDeviceLimit"]);
+            }
+            catch (Exception)
+            {
+                this.AlexaDeviceLimit = 300;
+            }
+
+            try
+            {
+                this.AlexaCheckStateBeforeSetValue = bool.Parse(ConfigurationManager.AppSettings["AlexaCheckStateBeforeSetValue"]);
+            }
+            catch (Exception)
+            {
+                this.AlexaCheckStateBeforeSetValue = true;
+            }
+
+            //this.Server = new SYSClient();
+            //this.ConnectToServer();
         }
 
-        private void ConnectToServer()
+        public void ConnectToServer(SYSClient client)
         {
-            this.HomeObject = Server.Connect(this.PremiseServerAddress).GetAwaiter().GetResult(); // TODO: , _premiseUser, _premisePassword);
+            this.HomeObject = client.Connect(this.PremiseServerAddress).GetAwaiter().GetResult(); // TODO: , _premiseUser, _premisePassword);
 
             this.RootObject = this.HomeObject.GetRoot().GetAwaiter().GetResult();
 
             var returnClause = new string[] { "OID","Name" };
             dynamic whereClause = new System.Dynamic.ExpandoObject();
-
             whereClause.TypeOf = this.AlexaStatusClassPath;
-            //whereClause.TypeOf = "sys://Schema/Modules/Alexa/Classes/AlexaStatus";
-
-            //whereClause.TypeOf = "{31E99AB9-79D2-4BC1-9982-9D615DE6644E}"; // this.AlexaStatusClassPath;
 
             var statusRecords = this.HomeObject.Select(returnClause, whereClause).GetAwaiter().GetResult();
 
@@ -64,6 +79,14 @@ namespace PremiseAlexaBridgeService
                 break;
             }
             //TODO: No AlexaStatus Object in Sys is bad
+        }
+
+        public void DisconnectServer(SYSClient client)
+        {
+            this.HomeObject = null;
+            this.RootObject = null;
+            this.AlexaStatus = null;
+            client.Disconnect();
         }
 
         public static PremiseServer Instance
