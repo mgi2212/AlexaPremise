@@ -1,0 +1,321 @@
+// MiniBroker.idl : IDL source for MiniBroker.dll
+//
+
+// This file will be processed by the MIDL tool to
+// produce the type library (MiniBroker.tlb) and marshalling code.
+
+import "oaidl.idl";
+import "ocidl.idl";
+
+[
+	uuid(44BD569A-66B8-485c-BA7F-4936BCDE1C86),
+	version(1.0),
+	helpstring("MiniBroker 1.0 Type Library")
+]
+library MINIBROKERLib
+{
+	importlib("stdole32.tlb");
+	importlib("stdole2.tlb");
+
+	interface IRemotePremiseObject;
+
+
+	// These flags are specified in SubscribeToConnection() callback
+	typedef enum
+	{
+		miniBrokerDisconnected = 0,
+		miniBrokerConnecting,
+		miniBrokerFailedToConnect,
+		miniBrokerConnected,
+		miniBrokerConnectionTerminated,
+	} MiniBrokerConnectionStatus;
+
+	typedef enum
+	{
+		miniBrokerRampStop = 0,
+		miniBrokerRampUp,
+		miniBrokerRampDown
+	} miniBrokerRampType;
+
+	// These flags are for use in Subscribe() method
+	typedef enum
+	{
+		mbSubscribeObject			= 0x0000,
+		mbSubscribeGlobal			= 0x0001,
+		mbSubscribeChildren			= 0x0002,
+		mbSubscribeConstruct			= 0x0003,
+		mbSubscribeDestruct			= 0x0004,
+		mbSubscribeClassChildDelete	= 0x0005,
+		mbSubscribeChildConstruct		= 0x0006,
+		mbSubscribeChildDestruct		= 0x0007,
+		mbSubscribeProperty			= 0x0010,
+		mbSubscribeClass				= 0x0020,
+		mbSubscribePropType			= 0x0040,
+		mbSubscribePriority			= 0x0200
+	} MiniBrokerSubscribeFlags;
+
+
+	[
+		object,
+		uuid(7FFE5716-5404-4157-BF97-81180B44571E),
+		dual,
+		helpstring("IRemotePremiseObjectCollection Interface"),
+		pointer_default(unique)
+	]
+	interface IRemotePremiseObjectCollection : IDispatch
+	{
+		[helpstring("Returns an object from the collection"), id(0)]
+		HRESULT Item([in] VARIANT lIndex, [out, retval] IRemotePremiseObject** ppObject);
+
+		[helpstring("Returns the count of objects in the collection"), propget, id(1)]
+		HRESULT Count([out, retval] long* pCount);
+
+		[helpstring("Adds an object to the collection"), id(2)]
+		HRESULT Add([in] IRemotePremiseObject* pObject);
+		
+		[helpstring("Removes the specified object from the collection"), id(3)]
+		HRESULT Remove([in] VARIANT index);	
+		
+		[helpstring("Faster method for getting the object at a position from early bound languages"), id(4), hidden]
+		HRESULT GetItemEx([in] long lIndex, [out, retval] IRemotePremiseObject** ppObject);
+
+		[helpstring("Returns an enumerable collection of objects"), propget, id(-4)]
+		HRESULT _NewEnum([out, retval] IUnknown** ppEnum);
+
+	};
+
+
+	[
+		object,
+		uuid(7B1E562D-A466-4002-B976-38C6DC6B1FC9),
+		dual,
+		helpstring("IRemotePremiseObject Interface"),
+		pointer_default(unique)
+	]
+	interface IRemotePremiseObject : IDispatch
+	{
+// ------------------------------- Automation  Compliant -------------------
+
+// ------------------------------- Core Object -------------------------------
+
+// ------------------------------- Properties  -------------------------------
+		
+		[propput, helpstring("Sets the name of the object."), id(0)]
+		HRESULT Name([in] BSTR ObjectName);
+		[propget, helpstring("Returns the name of the object."), id(0)]
+		HRESULT Name([out, retval] BSTR* ObjectName);
+		
+		[propput, helpstring("Sets the display name of the object."), id(1)]
+		HRESULT DisplayName([in] BSTR ObjectName);
+		[propget, helpstring("Returns the display name of the object."), id(1)]
+		HRESULT DisplayName([out, retval] BSTR* ObjectDisplayName);
+
+		[propput, helpstring("Sets the description of the object."), id(2)]
+		HRESULT Description([in] BSTR ObjectDescription);
+		[propget, helpstring("Returns the description of the object."), id(2)]
+		HRESULT Description([out, retval] BSTR* ObjectDescription);
+
+		[propget, helpstring("Returns the class of this object."), id(3)]
+		HRESULT Class([out, retval] IRemotePremiseObject** ClassObject);
+		[propputref, helpstring("Sets the class of this object."), id(3)]
+		HRESULT Class([in] IRemotePremiseObject* NewClass);
+		
+		[propput, helpstring("Sets explicitly defined flags for an object."), id(4)]
+		HRESULT Flags([in] long NewFlags);
+		[propget, helpstring("Returns explicitly defined flags for an object."), id(4)]
+		HRESULT Flags([out, retval] long* Flags);
+
+		[propget, helpstring("Returns the parent of the object."), id(5)]
+		HRESULT Parent([out, retval] IRemotePremiseObject** ObjectParent);
+
+		[propget, helpstring("Returns the top-level root object."), id(6)]
+		HRESULT Root([out, retval] IRemotePremiseObject** Root);
+
+		[propget, helpstring("Returns the full path of the object."), id(7)]
+		HRESULT Path([out, retval] BSTR* Path);
+
+		[propget, helpstring("Returns the unique ID of the object."), id(8)]
+		HRESULT ObjectID([out, retval] BSTR* ObjectID);
+
+		[propget, helpstring("Returns the collection of all descendents of the object."), id(9)]
+		HRESULT all([out, retval] IRemotePremiseObjectCollection** ObjectCollection);
+
+		[propget, helpstring("Returns a collection of direct descendents of the object."), id(10)]
+		HRESULT children([out, retval] IRemotePremiseObjectCollection** ObjectCollection);
+
+// ------------------------------- Object Manipulation -------------------------------
+
+		[helpstring("Returns another object, using relative name, relative path, absolute path, or Object ID."), id(100)]
+		HRESULT GetObject([in] BSTR RelativePath, [out,retval] IRemotePremiseObject** SYSObject);
+
+		[helpstring("Creates a child object."), id(101)]
+		HRESULT CreateObject([in] BSTR Schema, [in] BSTR Name,  [out,retval] IRemotePremiseObject** NewObject);
+
+		[helpstring("Deletes a child object, or deletes object itself if NULL is specified."), id(102)]
+		HRESULT DeleteObject([in] BSTR Name);
+
+		[helpstring("Returns a value on an object."), id(103)]
+		HRESULT GetValue([in] BSTR PropertyName, [out, retval] VARIANT* PropertyValue);
+
+		[helpstring("Sets the value of a property on an object."), id(104)]
+		HRESULT SetValue([in] BSTR PropertyName, [in] VARIANT NewValue);
+
+		[helpstring("Subscribes to change notifications"), id(105)]
+		HRESULT SubscribeToProperty([in] BSTR PropertyName, [in] BSTR NameOfCallbackFunction, [in] IDispatch* ObjectContainingCallback, [out,retval] long* SubscriptionID);
+
+		[helpstring("Subscribes to change notifications"), id(106)]
+		HRESULT SubscribeToCreate([in] BSTR NameOfCallbackFunction, [in] IDispatch* ObjectContainingCallback, [out,retval] long* SubscriptionID);
+
+		[helpstring("Subscribes to change notifications"), id(107)]
+		HRESULT SubscribeToDelete([in] BSTR NameOfCallbackFunction, [in] IDispatch* ObjectContainingCallback, [out,retval] long* SubscriptionID);
+	
+		[helpstring("Unsubscribes to change notifications"), id(108)]
+		HRESULT Unsubscribe([in] long SubscriptionID);
+
+		[helpstring("Determines if the object derives from a specific class"), id(109)]
+		HRESULT IsOfExplicitType([in] BSTR ClassPath, [out, retval] VARIANT_BOOL* result);
+
+		[helpstring("Returns the value of a property that is aggregated on to an object"), id(110) ]
+		HRESULT GetAggregatedPropertyValue([in] BSTR PropertyName, [in] BSTR PropertyClass, [out,retval] VARIANT* pvarResult);
+
+		[helpstring("Determines if object is a direct or indirect child of another object."), id(111) ]
+		HRESULT IsChildOf([in] IRemotePremiseObject* ParentObject, [out, retval] VARIANT_BOOL* result);
+
+		[helpstring("Locate the property on a class or inheritance chain"), id(112) ]
+		HRESULT FindClassProperty([in] BSTR PropertyName, [out, retval] IRemotePremiseObject** ppObject);
+
+		[helpstring("Returns the value of a property in text format"), id(113) ]
+		HRESULT GetPropertyAsText([in] IRemotePremiseObject* Property, [out, retval] BSTR* pbstrTextValue);
+
+		[helpstring("Invoke the specified property on the object"), id(114)]
+		HRESULT InvokeProperty([in] long lControlCode, [in] IRemotePremiseObject* Property, [in] IRemotePremiseObject* pAction);
+
+		[helpstring("Plays a collection of macros"), id(115)]
+		HRESULT PlayMacros([in] IRemotePremiseObjectCollection* MacroCollection);
+
+		[helpstring("Invokes the action or property of an action object"), id(116) ]
+		HRESULT InvokeActionObject([in] IRemotePremiseObject* Target);
+
+		[helpstring("Makes a property ramp up, ramp down, or stop"), id(117) ]
+		HRESULT RampProperty([in] IRemotePremiseObject* pProperty, miniBrokerRampType rt);
+
+		[helpstring("Returns the delegated object implementing the class, or nothing if the class isn't delegated."), id(118) ]
+		HRESULT GetDelegatedObjectEx([in] IRemotePremiseObject* pDelegatingObject, [in] IRemotePremiseObject* pClass, [out, retval] IRemotePremiseObject** ppObject);
+
+		[helpstring("Forces the property value to be set on an object."), id(119) ]
+		HRESULT SetValueForced([in] BSTR Property, [in] VARIANT* Value);
+// ------------------------------- Advanced Use -------------------------------
+
+		[hidden, helpstring("Subscribes to change notifications"), id(150)]
+		HRESULT Subscribe([in] long lSubscriptionFlags, [in] VARIANT* Filter, [in] BSTR NameOfCallbackFunction, [in] IDispatch* pCallbackObject, [out,retval] long* lSubscriptionID);
+
+		[helpstring("Returns a value on an object."), id(151)]
+		HRESULT GetValueEx([in] IRemotePremiseObject* pProperty, [out, retval] VARIANT* Value);
+
+		[helpstring("Sets the value of a property on an object."), id(152)]
+		HRESULT SetValueEx([in] long lNotifyFlags, [in] IRemotePremiseObject* Property, [in] VARIANT* NewValue);
+
+		[helpstring("Find a property by name."), id(153)]
+		HRESULT FindPropertyByName([in] BSTR PropertyName, [in, defaultvalue(0)] long Recursion, [out, retval] IRemotePremiseObject** Property);
+		
+		[helpstring("Find a method on the class by name."), id(154)]
+		HRESULT FindClassMethod([in] BSTR MethodName, [out, retval] IRemotePremiseObject** spMethodDef);
+		
+		[helpstring("Invoke a method by name."), id(155)]
+		HRESULT InvokeMethod([in] BSTR MethodName, [in] SAFEARRAY(VARIANT) varParams, [out, retval] VARIANT* pvarResult);
+		
+		[helpstring("Runs a command action."), id(156)]
+		HRESULT RunCommand([in] BSTR Command);
+		
+		[helpstring("Imports the XDO schema provided"), id(157) ]
+		HRESULT ImportXML([in] BSTR xml, [in, defaultvalue(0)] long lFlags);
+		
+// ------------------------------- Object Collections -------------------------------
+
+		[helpstring("Return the children of an object."), id(200)]
+		HRESULT GetChildren([in, defaultvalue(-1)] VARIANT_BOOL Recurse, [out, retval] IRemotePremiseObjectCollection** ObjectCollection);
+		
+		[helpstring("Returns a collection of objects found under this object of a certain type."), id(201)]
+		HRESULT GetObjectsByType([in] VARIANT SchemaPath, [in, defaultvalue(-1)] VARIANT_BOOL Recurse, [out, retval] IRemotePremiseObjectCollection** ObjectCollection);
+
+		[helpstring("Returns the collection of classes of the object"), id(202)]
+		HRESULT GetClasses([in, defaultvalue(-1)] VARIANT_BOOL Recurse, [out, retval] IRemotePremiseObjectCollection** ObjectCollection);
+
+		[helpstring("Returns the collection of sub-classes of the object"), id(203)]
+		HRESULT GetSubClasses([out, retval] IRemotePremiseObjectCollection** ObjectCollection);
+
+		[helpstring("Returns the collection of super-classes of the object"), id(204)]
+		HRESULT GetSuperClasses([out, retval] IRemotePremiseObjectCollection** ObjectCollection);
+
+		[helpstring("Returns the collection of properties on the object"), id(205)]
+		HRESULT GetProperties([in, defaultvalue(-1)] VARIANT_BOOL Recurse, [out, retval] IRemotePremiseObjectCollection** ObjectCollection);
+
+		[helpstring("Returns the collection of aggregated properties on the object"), id(206)]
+		HRESULT GetAggregatedProperties([in, defaultvalue(-1)] VARIANT_BOOL Recurse, [out, retval] IRemotePremiseObjectCollection** ObjectCollection);
+
+		[helpstring("Returns the collection of methods on the object"), id(207)]
+		HRESULT GetMethods([in, defaultvalue(-1)] VARIANT_BOOL Recurse, [out, retval] IRemotePremiseObjectCollection** ObjectCollection);
+
+		[helpstring("Returns a collection of connected objects"), id(208)]
+		HRESULT GetConnectedObjects([out, retval] IRemotePremiseObjectCollection** ObjectCollection);
+
+		[helpstring("Returns a collection of creatable objects"), id(209)]
+		HRESULT GetCreatableObjects([out, retval] IRemotePremiseObjectCollection** ObjectCollection);
+
+		[helpstring("Returns all media devices and content items that a zone is capable of accessing, which may or may not be in use"), id(210)]
+		HRESULT GetAccessibleMedia([out, retval] IRemotePremiseObjectCollection** ObjectCollection);
+
+		[helpstring("Returns all media devices and content that can be played in a zone, which may or may not be in use"), id(211)]
+		HRESULT GetMediaSources([out, retval] IRemotePremiseObjectCollection** ObjectCollection);
+
+		[helpstring("Returns an empty objects collection for population"), id(212)]
+		HRESULT GetNewObjectCollection([out, retval] IRemotePremiseObjectCollection** Collection);
+
+		[helpstring("Returns a collection of objects found under this object that have a property with the specified name."), id(213) ]
+		HRESULT GetObjectsByPropertyName([in] BSTR PropertyName, [in, defaultvalue(-1)] VARIANT_BOOL ShouldRecurseChildren, [out, retval] IRemotePremiseObjectCollection** ppCollection);
+
+		[helpstring("Returns a collection of objects found under this object where the specified property is set to the provided value."), id(214) ]
+		HRESULT GetObjectsByPropertyValue([in] BSTR PropertyName, [in] VARIANT PropertyValueToMatch, [in, defaultvalue(-1)] VARIANT_BOOL ShouldRecurseChildren, [out, retval] IRemotePremiseObjectCollection** ppCollection);
+
+		[helpstring("Returns a collection of objects found under this object whose property value matches a wildcard search specification."), id(215) ]
+		HRESULT GetObjectsByPropertySearch([in] BSTR PropertyName, [in] BSTR SearchStringToMatch, [in, defaultvalue(-1)] VARIANT_BOOL ShouldRecurseChildren, [out, retval] IRemotePremiseObjectCollection** ppCollection);
+
+		[helpstring("Returns a collection of objects found under this object of a certain type and property value."), id(216) ]
+		HRESULT GetObjectsByTypeAndPropertyValue([in] BSTR SchemaPath, [in] BSTR PropertyName, [in] VARIANT PropertyValueToMatch, [in, defaultvalue(-1)] VARIANT_BOOL RecurseChildren, [out, retval] IRemotePremiseObjectCollection** ppCollection);
+// ------------------------------- Not Automation Compliant  -------------------------------
+
+		[helpstring("Return the ID of the Object."), restricted, id(500)]
+		HRESULT GetGUID([out, retval] GUID* pGUID);
+	};
+
+
+	[
+		object,
+		uuid(C1D1F82F-4455-4c37-8F0F-07A2A3E8A23A),
+		dual,
+		helpstring("ISYSMiniBroker Interface"),
+		pointer_default(unique)
+	]
+	interface ISYSMiniBroker : IDispatch
+	{
+		[ helpstring("Connect to the specified server using the specified credentials."), id(0) ]
+		HRESULT Connect([in] BSTR ServerName, [in] BSTR UserName, [in] BSTR Password, [out,retval] IRemotePremiseObject** RootObject);
+		[ helpstring("Set the maximum time (in milliseconds) allowed for each method call."), id(1) ]
+		HRESULT SetMethodTimeout([in] long MethodTimeout);
+		[ helpstring("Attach an event handler for listening to server discovery events."), id(2) ]
+		HRESULT SubscribeToDiscovery([in] BSTR NameOfCallbackFunction, [in] IDispatch* ObjectContainingCallback);
+		[ helpstring("Attach an event handler for listening to connection events."), id(3) ]
+		HRESULT SubscribeToConnection([in] BSTR NameOfCallbackFunction, [in] IDispatch* ObjectContainingCallback);
+		[ propget, helpstring("Returns the status of the connection to the server."), id(4)]
+		HRESULT connectionStatus([out, retval] MiniBrokerConnectionStatus* ConnectionStatus);
+	};
+
+	[
+		uuid(D4A3FA5C-A9CD-4944-A928-C82A59C2FE7E),
+		helpstring("SYSMiniBroker Class")
+	]
+	coclass SYSMiniBroker
+	{
+		[default] interface ISYSMiniBroker;
+	};
+};

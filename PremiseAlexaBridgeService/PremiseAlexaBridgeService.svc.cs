@@ -5,6 +5,7 @@ using System.ServiceModel;
 using System.ServiceModel.Web;
 using SYSWebSockClient;
 using System.Threading.Tasks;
+using Common.Logging;
 
 namespace PremiseAlexaBridgeService
 {
@@ -24,8 +25,12 @@ namespace PremiseAlexaBridgeService
     {
         PremiseServer ServiceInstance;
 
+        ILog log;
+
         public void Preload(string[] parameters)
         {
+            log = LogManager.GetLogger(LogManager.Adapter.GetType());
+            log.Debug("AlexaPremiseBridge Preload");
             ServiceInstance = PremiseServer.Instance;
         }
     }
