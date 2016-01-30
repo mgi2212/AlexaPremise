@@ -68,3 +68,68 @@ http://localhost:8733/Alexa.svc/json/Control/
     }
 }
 
+    <system.applicationHost>
+
+        <applicationPools>
+            <add name="DefaultAppPool" />
+            <add name=".NET v4.5 Classic" managedRuntimeVersion="v4.0" managedPipelineMode="Classic" />
+            <add name=".NET v4.5" managedRuntimeVersion="v4.0" />
+            <add name="AlexaBridge" autoStart="true" enable32BitAppOnWin64="true" managedRuntimeVersion="v4.0" managedPipelineMode="Integrated" startMode="AlwaysRunning">
+                <processModel identityType="ApplicationPoolIdentity" />
+            </add>
+            <applicationPoolDefaults managedRuntimeVersion="v4.0">
+                <processModel identityType="ApplicationPoolIdentity" />
+            </applicationPoolDefaults>
+        </applicationPools>
+
+        <!--
+
+          The <customMetadata> section is used internally by the Admin Base Objects
+          (ABO) Compatibility component. Please do not modify its content.
+
+        -->
+        <customMetadata />
+
+        <!--
+
+          The <listenerAdapters> section defines the protocols with which the
+          Windows Process Activation Service (WAS) binds.
+
+        -->
+        <listenerAdapters>
+            <add name="http" />
+            <add name="net.tcp" identity="S-1-5-80-3579033775-2824656752-1522793541-1960352512-462907086" />
+        </listenerAdapters>
+
+        <log>
+            <centralBinaryLogFile enabled="true" directory="%SystemDrive%\inetpub\logs\LogFiles" />
+            <centralW3CLogFile enabled="true" directory="%SystemDrive%\inetpub\logs\LogFiles" />
+        </log>
+
+        <sites>
+            <site name="AlexaBridge" id="2" serverAutoStart="true">
+                <application path="/" applicationPool="AlexaBridge" preloadEnabled="true" serviceAutoStartEnabled="true" serviceAutoStartProvider="PreWarmMyCache">
+                    <virtualDirectory path="/" physicalPath="C:\inetpub\wwwroot\AlexaBridge" />
+                </application>
+                <bindings>
+                    <binding protocol="http" bindingInformation="*:80:alexa.quigleys.us" />
+                    <binding protocol="https" bindingInformation="192.168.1.10:8733:alexa.quigleys.us" sslFlags="0" />
+                </bindings>
+                <logFile logExtFileFlags="Date, Time, ClientIP, UserName, SiteName, ComputerName, ServerIP, Method, UriStem, UriQuery, HttpStatus, Win32Status, TimeTaken, ServerPort, UserAgent, Referer, Host, HttpSubStatus" logTargetW3C="File, ETW" />
+                <traceFailedRequestsLogging enabled="true" />
+            </site>
+            <siteDefaults>
+                <logFile logFormat="W3C" directory="%SystemDrive%\inetpub\logs\LogFiles" />
+                <traceFailedRequestsLogging directory="%SystemDrive%\inetpub\logs\FailedReqLogFiles" />
+            </siteDefaults>
+            <applicationDefaults applicationPool="DefaultAppPool" />
+            <virtualDirectoryDefaults allowSubDirConfig="true" />
+        </sites>
+
+	<serviceAutoStartProviders>
+     		<add name="PreWarmMyCache" type="PremiseAlexaBridgeService.PreWarmCache, PremiseAlexaBridgeService" />
+	</serviceAutoStartProviders> 
+
+    <webLimits />
+
+    </system.applicationHost>

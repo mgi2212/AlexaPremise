@@ -20,6 +20,16 @@ namespace PremiseAlexaBridgeService
         }
     }
 
+    public class PreWarmCache : System.Web.Hosting.IProcessHostPreloadClient
+    {
+        PremiseServer ServiceInstance;
+
+        public void Preload(string[] parameters)
+        {
+            ServiceInstance = PremiseServer.Instance;
+        }
+    }
+
     public class PremiseAlexaService : IPremiseAlexaService
     {
         PremiseServer ServiceInstance = PremiseServer.Instance;
