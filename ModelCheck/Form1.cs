@@ -12,6 +12,7 @@ using System.IO;
 using System.Runtime.Serialization.Json;
 using Newtonsoft.Json;
 using System.Collections;
+using Alexa;
 
 namespace ModelCheck
 {
@@ -21,7 +22,15 @@ namespace ModelCheck
         public Form1()
         {
             InitializeComponent();
+            this.clearColumns();
+            this.hostText.Text = ModelCheck.Default.Host;
+            this.portText.Text = ModelCheck.Default.Port;
+            this.accessToken.Text = ModelCheck.Default.AccessToken;
+        }
 
+        private void clearColumns()
+        {
+            listView.Clear();
             listView.Columns.Clear();
             listView.Columns.Add("applianceId", -1, HorizontalAlignment.Left);
             listView.Columns.Add("manufacturerName", -1, HorizontalAlignment.Left);
@@ -32,33 +41,20 @@ namespace ModelCheck
             listView.Columns.Add("isReachable", -1, HorizontalAlignment.Left);
             listView.Columns.Add("dimmable", -1, HorizontalAlignment.Left);
             listView.Columns.Add("path", -1, HorizontalAlignment.Left);
-            hostText.Text = ModelCheck.Default.Host;
-            portText.Text = ModelCheck.Default.Port;
-            accessToken.Text = ModelCheck.Default.AccessToken;
+            this.statusText.Text = string.Format("Item Count:{0}", listView.Items.Count);
         }
 
         private void queryButton_Click(object sender, EventArgs e)
         {
-            const string fmt = "{{\"header\": {{\"namespace\": \"Discovery\",\"name\": \"DiscoverAppliancesRequest\",\"payloadVersion\": \"1\"}},\"payload\": {{ \"accessToken\": \"{0}\"}}}}";
+            Alexa.DiscoveryRequest request = new Alexa.DiscoveryRequest();
+            request.payload.accessToken = accessToken.Text;
+            string data = JsonConvert.SerializeObject(request);
+            var dataToDeserialize = jsonData(string.Format(@"https://{0}:{1}/Alexa.svc/json/Discovery/", hostText.Text, portText.Text), data);
 
-            string data = string.Format(fmt, accessToken.Text);
+            var items = JsonConvert.DeserializeObject<Alexa.DiscoveryResponse>(dataToDeserialize);
 
-            var deserialized = jsonData(string.Format(@"https://{0}:{1}/Alexa.svc/json/Discovery/", hostText.Text, portText.Text), data);
-
-            var items = JsonConvert.DeserializeObject<DiscoveryResponse>(deserialized);
-
-            listView.Clear();
-            listView.Columns.Clear();
-            listView.Columns.Add("applianceId", -2, HorizontalAlignment.Left);
-            listView.Columns.Add("manufacturerName", -2, HorizontalAlignment.Left);
-            listView.Columns.Add("modelName", -2, HorizontalAlignment.Left);
-            listView.Columns.Add("version", -2, HorizontalAlignment.Left);
-            listView.Columns.Add("friendlyName", -2, HorizontalAlignment.Left);
-            listView.Columns.Add("friendlyDescription", -2, HorizontalAlignment.Left);
-            listView.Columns.Add("isReachable", -2, HorizontalAlignment.Left);
-            listView.Columns.Add("dimmable", -2, HorizontalAlignment.Left);
-            listView.Columns.Add("path", -2, HorizontalAlignment.Left);
-
+            this.clearColumns();  
+           
             foreach (var col in items.payload.discoveredAppliances)
             {
                 var item = new ListViewItem(new[]
@@ -80,6 +76,7 @@ namespace ModelCheck
             ModelCheck.Default.Host = hostText.Text;
             ModelCheck.Default.Port = portText.Text;
             ModelCheck.Default.AccessToken = accessToken.Text;
+            this.statusText.Text = string.Format("Item Count:{0}", listView.Items.Count);
             ModelCheck.Default.Save();
         }
 
@@ -113,6 +110,53 @@ namespace ModelCheck
         {
             this.listView.ListViewItemSorter = new ListViewItemComparer(e.Column);
         }
+
+        private void listView_MouseClick(object sender, MouseEventArgs e)
+        {
+            if (e.Button == MouseButtons.Right)
+            {
+                if (listView.FocusedItem.Bounds.Contains(e.Location) == true)
+                {
+                    contextMenuStrip.Show(Cursor.Position);
+                }
+            }
+        }
+
+        private void contextMenuStrip_Opening(object sender, CancelEventArgs e)
+        {
+
+        }
+
+        private void contextMenuStrip_ItemClicked(object sender, ToolStripItemClickedEventArgs e)
+        {
+            commandStatus.Text = "OnOffRequest: ";
+
+            try
+            { 
+                Alexa.Appliance appliance = new Appliance();
+
+                string idText = listView.SelectedItems[0].SubItems[0].Text;
+                appliance.applianceId = Guid.Parse(idText).ToString("D");
+
+                appliance.additionalApplianceDetails.dimmable = listView.SelectedItems[0].SubItems[7].Text;
+                appliance.additionalApplianceDetails.path = listView.SelectedItems[0].SubItems[8].Text;
+
+                string command = (e.ClickedItem.Name == turnItemOn.Name) ? "TURN_ON" :  "TURN_OFF";
+
+                Alexa.ControlSwitchOnOffRequest request = new ControlSwitchOnOffRequest(accessToken.Text, appliance, command);
+                string data = JsonConvert.SerializeObject(request);
+
+                var dataToDeserialize = jsonData(string.Format(@"https://{0}:{1}/Alexa.svc/json/Control/", hostText.Text, portText.Text), data);
+
+                var response = JsonConvert.DeserializeObject<Alexa.ControlResponse>(dataToDeserialize);
+
+                commandStatus.Text = string.Format("OnOffRequest: Success = {0}", response.payload.success);
+            }
+            catch (Exception err)
+            {
+                commandStatus.Text = string.Format("OnOffRequest: Error = {0}", err.Message);
+            }
+        }
     }
 
     class ListViewItemComparer : IComparer
@@ -130,42 +174,6 @@ namespace ModelCheck
         {
             return String.Compare(((ListViewItem)x).SubItems[col].Text, ((ListViewItem)y).SubItems[col].Text);
         }
-    }
-
-    public class AlexaHeader
-    {
-        public string @namespace { get; set; }
-        public string name { get; set; }
-        public string payloadVersion { get; set; }
-    }
-
-    public class AlexaDiscoveryPayload
-    {
-        public AlexaDevice[] discoveredAppliances { get; set; }
-    }
-
-    public class AlexaDeviceDetails
-    {
-        public string dimmable { get; set; }
-        public string path { get; set; }
-    }
-
-    public class AlexaDevice
-    {
-        public string applianceId { get; set; }
-        public string manufacturerName { get; set; }
-        public string modelName { get; set; }
-        public string version { get; set; }
-        public string friendlyName { get; set; }
-        public string friendlyDescription { get; set; }
-        public string isReachable { get; set; }
-        public AlexaDeviceDetails additionalApplianceDetails { get; set; }
-    }
-
-    public class DiscoveryResponse
-    {
-        public AlexaHeader header { get; set; }
-        public AlexaDiscoveryPayload payload { get; set; }
     }
 
 }

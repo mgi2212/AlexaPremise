@@ -28,6 +28,7 @@
         /// </summary>
         private void InitializeComponent()
         {
+            this.components = new System.ComponentModel.Container();
             this.hostText = new System.Windows.Forms.TextBox();
             this.label1 = new System.Windows.Forms.Label();
             this.label2 = new System.Windows.Forms.Label();
@@ -36,6 +37,14 @@
             this.queryButton = new System.Windows.Forms.Button();
             this.label3 = new System.Windows.Forms.Label();
             this.accessToken = new System.Windows.Forms.TextBox();
+            this.contextMenuStrip = new System.Windows.Forms.ContextMenuStrip(this.components);
+            this.turnItemOn = new System.Windows.Forms.ToolStripMenuItem();
+            this.turnItemOff = new System.Windows.Forms.ToolStripMenuItem();
+            this.statusStrip1 = new System.Windows.Forms.StatusStrip();
+            this.statusText = new System.Windows.Forms.ToolStripStatusLabel();
+            this.commandStatus = new System.Windows.Forms.ToolStripStatusLabel();
+            this.contextMenuStrip.SuspendLayout();
+            this.statusStrip1.SuspendLayout();
             this.SuspendLayout();
             // 
             // hostText
@@ -85,6 +94,7 @@
             this.listView.UseCompatibleStateImageBehavior = false;
             this.listView.View = System.Windows.Forms.View.Details;
             this.listView.ColumnClick += new System.Windows.Forms.ColumnClickEventHandler(this.listView_ColumnClick);
+            this.listView.MouseClick += new System.Windows.Forms.MouseEventHandler(this.listView_MouseClick);
             // 
             // queryButton
             // 
@@ -112,11 +122,57 @@
             this.accessToken.Size = new System.Drawing.Size(311, 20);
             this.accessToken.TabIndex = 3;
             // 
+            // contextMenuStrip
+            // 
+            this.contextMenuStrip.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.turnItemOn,
+            this.turnItemOff});
+            this.contextMenuStrip.Name = "contextMenuStrip";
+            this.contextMenuStrip.Size = new System.Drawing.Size(120, 48);
+            this.contextMenuStrip.Opening += new System.ComponentModel.CancelEventHandler(this.contextMenuStrip_Opening);
+            this.contextMenuStrip.ItemClicked += new System.Windows.Forms.ToolStripItemClickedEventHandler(this.contextMenuStrip_ItemClicked);
+            // 
+            // turnItemOn
+            // 
+            this.turnItemOn.Name = "turnItemOn";
+            this.turnItemOn.Size = new System.Drawing.Size(119, 22);
+            this.turnItemOn.Text = "Turn On";
+            // 
+            // turnItemOff
+            // 
+            this.turnItemOff.Name = "turnItemOff";
+            this.turnItemOff.Size = new System.Drawing.Size(119, 22);
+            this.turnItemOff.Text = "Turn Off";
+            // 
+            // statusStrip1
+            // 
+            this.statusStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.statusText,
+            this.commandStatus});
+            this.statusStrip1.Location = new System.Drawing.Point(0, 453);
+            this.statusStrip1.Name = "statusStrip1";
+            this.statusStrip1.Size = new System.Drawing.Size(862, 22);
+            this.statusStrip1.TabIndex = 9;
+            this.statusStrip1.Text = "statusStrip1";
+            // 
+            // statusText
+            // 
+            this.statusText.Name = "statusText";
+            this.statusText.Size = new System.Drawing.Size(48, 17);
+            this.statusText.Text = "Items: 0";
+            // 
+            // commandStatus
+            // 
+            this.commandStatus.Name = "commandStatus";
+            this.commandStatus.Size = new System.Drawing.Size(42, 17);
+            this.commandStatus.Text = "Status:";
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(862, 475);
+            this.Controls.Add(this.statusStrip1);
             this.Controls.Add(this.label3);
             this.Controls.Add(this.accessToken);
             this.Controls.Add(this.queryButton);
@@ -127,6 +183,9 @@
             this.Controls.Add(this.hostText);
             this.Name = "Form1";
             this.Text = "AlexaPremise Model Check";
+            this.contextMenuStrip.ResumeLayout(false);
+            this.statusStrip1.ResumeLayout(false);
+            this.statusStrip1.PerformLayout();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -142,6 +201,12 @@
         private System.Windows.Forms.ListView listView;
         private System.Windows.Forms.Label label3;
         private System.Windows.Forms.TextBox accessToken;
+        private System.Windows.Forms.ContextMenuStrip contextMenuStrip;
+        private System.Windows.Forms.ToolStripMenuItem turnItemOn;
+        private System.Windows.Forms.ToolStripMenuItem turnItemOff;
+        private System.Windows.Forms.StatusStrip statusStrip1;
+        private System.Windows.Forms.ToolStripStatusLabel statusText;
+        private System.Windows.Forms.ToolStripStatusLabel commandStatus;
     }
 }
 
