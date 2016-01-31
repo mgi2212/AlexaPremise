@@ -1,0 +1,15 @@
+﻿<?xml version='1.0' encoding='utf-8'?>
+<SettingsFile xmlns="http://schemas.microsoft.com/VisualStudio/2004/01/settings" CurrentProfile="(Default)" GeneratedClassNamespace="ModelCheck" GeneratedClassName="ModelCheck">
+  <Profiles />
+  <Settings>
+    <Setting Name="Host" Type="System.String" Scope="User">
+      <Value Profile="(Default)">alexa.quigleys.us</Value>
+    </Setting>
+    <Setting Name="Port" Type="System.String" Scope="User">
+      <Value Profile="(Default)">8733</Value>
+    </Setting>
+    <Setting Name="AccessToken" Type="System.String" Scope="User">
+      <Value Profile="(Default)">amzn1.account.AHHO677DA2UVHYY724MCRSBYZOVQ</Value>
+    </Setting>
+  </Settings>
+</SettingsFile>

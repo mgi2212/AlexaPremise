@@ -34,6 +34,8 @@
             this.portText = new System.Windows.Forms.TextBox();
             this.listView = new System.Windows.Forms.ListView();
             this.queryButton = new System.Windows.Forms.Button();
+            this.label3 = new System.Windows.Forms.Label();
+            this.accessToken = new System.Windows.Forms.TextBox();
             this.SuspendLayout();
             // 
             // hostText
@@ -63,16 +65,18 @@
             // 
             // portText
             // 
-            this.portText.Location = new System.Drawing.Point(299, 12);
+            this.portText.Location = new System.Drawing.Point(296, 12);
             this.portText.Name = "portText";
             this.portText.Size = new System.Drawing.Size(54, 20);
-            this.portText.TabIndex = 2;
+            this.portText.TabIndex = 1;
             // 
             // listView
             // 
             this.listView.Alignment = System.Windows.Forms.ListViewAlignment.Left;
             this.listView.AllowColumnReorder = true;
-            this.listView.Dock = System.Windows.Forms.DockStyle.Bottom;
+            this.listView.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
             this.listView.FullRowSelect = true;
             this.listView.Location = new System.Drawing.Point(0, 38);
             this.listView.Name = "listView";
@@ -84,19 +88,37 @@
             // 
             // queryButton
             // 
-            this.queryButton.Location = new System.Drawing.Point(376, 8);
+            this.queryButton.Location = new System.Drawing.Point(775, 10);
             this.queryButton.Name = "queryButton";
             this.queryButton.Size = new System.Drawing.Size(75, 23);
-            this.queryButton.TabIndex = 5;
+            this.queryButton.TabIndex = 4;
             this.queryButton.Text = "Query";
             this.queryButton.UseVisualStyleBackColor = true;
             this.queryButton.Click += new System.EventHandler(this.queryButton_Click);
+            // 
+            // label3
+            // 
+            this.label3.AutoSize = true;
+            this.label3.Location = new System.Drawing.Point(373, 15);
+            this.label3.Name = "label3";
+            this.label3.Size = new System.Drawing.Size(79, 13);
+            this.label3.TabIndex = 7;
+            this.label3.Text = "Access Token:";
+            // 
+            // accessToken
+            // 
+            this.accessToken.Location = new System.Drawing.Point(458, 12);
+            this.accessToken.Name = "accessToken";
+            this.accessToken.Size = new System.Drawing.Size(311, 20);
+            this.accessToken.TabIndex = 3;
             // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(862, 475);
+            this.Controls.Add(this.label3);
+            this.Controls.Add(this.accessToken);
             this.Controls.Add(this.queryButton);
             this.Controls.Add(this.listView);
             this.Controls.Add(this.label2);
@@ -118,6 +140,8 @@
         private System.Windows.Forms.TextBox portText;
         private System.Windows.Forms.Button queryButton;
         private System.Windows.Forms.ListView listView;
+        private System.Windows.Forms.Label label3;
+        private System.Windows.Forms.TextBox accessToken;
     }
 }
 

@@ -32,16 +32,16 @@ namespace ModelCheck
             listView.Columns.Add("isReachable", -1, HorizontalAlignment.Left);
             listView.Columns.Add("dimmable", -1, HorizontalAlignment.Left);
             listView.Columns.Add("path", -1, HorizontalAlignment.Left);
-            hostText.Text = @"alexa.quigleys.us";
-            portText.Text = "8733";
+            hostText.Text = ModelCheck.Default.Host;
+            portText.Text = ModelCheck.Default.Port;
+            accessToken.Text = ModelCheck.Default.AccessToken;
         }
-
-
 
         private void queryButton_Click(object sender, EventArgs e)
         {
+            const string fmt = "{{\"header\": {{\"namespace\": \"Discovery\",\"name\": \"DiscoverAppliancesRequest\",\"payloadVersion\": \"1\"}},\"payload\": {{ \"accessToken\": \"{0}\"}}}}";
 
-            string data = @"{""header"": {""namespace"": ""Discovery"",""name"": ""DiscoverAppliancesRequest"",""payloadVersion"": ""1""},""payload"": { ""accessToken"": ""amzn1.account.AHHO677DA2UVHYY724MCRSBYZOVQ""}}";
+            string data = string.Format(fmt, accessToken.Text);
 
             var deserialized = jsonData(string.Format(@"https://{0}:{1}/Alexa.svc/json/Discovery/", hostText.Text, portText.Text), data);
 
@@ -76,6 +76,11 @@ namespace ModelCheck
                 listView.Items.Add(item);
             }
             listView.AutoResizeColumns(ColumnHeaderAutoResizeStyle.ColumnContent);
+
+            ModelCheck.Default.Host = hostText.Text;
+            ModelCheck.Default.Port = portText.Text;
+            ModelCheck.Default.AccessToken = accessToken.Text;
+            ModelCheck.Default.Save();
         }
 
         private string jsonData(string url, string data)
