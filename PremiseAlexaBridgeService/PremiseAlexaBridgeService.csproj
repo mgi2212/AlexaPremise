@@ -33,6 +33,10 @@
     <WarningLevel>4</WarningLevel>
     <PlatformTarget>AnyCPU</PlatformTarget>
     <ExcludeGeneratedDebugSymbol>false</ExcludeGeneratedDebugSymbol>
+    <IncludeIisSettings>true</IncludeIisSettings>
+    <IncludeAppPool>true</IncludeAppPool>
+    <PublishDatabases>false</PublishDatabases>
+    <RunCodeAnalysis>true</RunCodeAnalysis>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -108,7 +112,7 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="App_Data\alexa.txt" />
-    <Content Include="Lambda.js" />
+    <Content Include="App_Data\Lambda.js" />
     <Content Include="PremiseAlexaBridgeService.svc" />
     <Content Include="Web.config" />
   </ItemGroup>

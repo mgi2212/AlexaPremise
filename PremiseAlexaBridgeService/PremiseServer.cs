@@ -27,7 +27,7 @@ namespace PremiseAlexaBridgeService
         //private SYSClient Server;
         internal IPremiseObject RootObject;
         internal IPremiseObject HomeObject;
-        internal IPremiseObject AlexaStatus;
+        //internal IPremiseObject AlexaStatus;
 
         private PremiseServer()
         {
@@ -66,26 +66,26 @@ namespace PremiseAlexaBridgeService
 
             this.RootObject = this.HomeObject.GetRoot().GetAwaiter().GetResult();
 
-            var returnClause = new string[] { "OID","Name" };
-            dynamic whereClause = new System.Dynamic.ExpandoObject();
-            whereClause.TypeOf = this.AlexaStatusClassPath;
+            //var returnClause = new string[] { "OID","Name" };
+            //dynamic whereClause = new System.Dynamic.ExpandoObject();
+            //whereClause.TypeOf = this.AlexaStatusClassPath;
 
-            var statusRecords = this.HomeObject.Select(returnClause, whereClause).GetAwaiter().GetResult();
+            //var statusRecords = this.HomeObject.Select(returnClause, whereClause).GetAwaiter().GetResult();
 
-            foreach (var item in statusRecords)
-            {
-                var objectId = (string) item.OID;
-                this.AlexaStatus = this.RootObject.WrapObjectId(objectId);
-                break;
-            }
-            //TODO: No AlexaStatus Object in Sys is bad
+            //foreach (var item in statusRecords)
+            //{
+            //    var objectId = (string) item.OID;
+            //    this.AlexaStatus = this.RootObject.WrapObjectId(objectId);
+            //    break;
+            //}
+            ////TODO: No AlexaStatus Object in Sys is bad
         }
 
         public void DisconnectServer(SYSClient client)
         {
             this.HomeObject = null;
             this.RootObject = null;
-            this.AlexaStatus = null;
+            //this.AlexaStatus = null;
             client.Disconnect();
         }
 

@@ -17,7 +17,7 @@ var healthyResponse = {
 
 exports.handler = function (event, context) {
 
-    log('Input', event);
+    // log('Input', event);
 
     switch (event.header.namespace) {
 
@@ -35,14 +35,13 @@ exports.handler = function (event, context) {
 
         default:
             // Warning! Logging this in production might be a security problem.
-            log('Err', 'No supported namespace: ' + event.header.namespace);
+            log('Err', 'Namespace Not Supported: ' + event.header.namespace);
             context.fail('Something went wrong');
             break;
     }
 };
 
 function proxyEventToCustomer(event, context, path) {
-    var get_data = "";
 
     // prepare request options
     var get_options = {
@@ -70,8 +69,8 @@ function proxyEventToCustomer(event, context, path) {
         });
 
         response.on('end', function () {
-            var json_result = JSON.parse(result);
             //log('BeforeProxy', JSON.stringify(JSON.parse(result)));
+            var json_result = JSON.parse(result);
             event.payload.accessToken = json_result.user_id; // the on prem system expects the amazon user id from this call
             proxyEvent(event, context, path);
         });
@@ -82,6 +81,7 @@ function proxyEventToCustomer(event, context, path) {
         });
     });
 
+    var get_data = "";
     get_req.write(get_data);
     get_req.end();
 }
@@ -90,6 +90,7 @@ function proxyEventToCustomer(event, context, path) {
 function proxyEvent(event, context, path) {
 
     var post_data = JSON.stringify(event, 'utf-8');
+    //log('proxyEvent', post_data);
 
     // prepare request options
     var post_options = {
@@ -103,9 +104,9 @@ function proxyEvent(event, context, path) {
         }
     };
 
-    var result = "";
-    //log('proxyEvent', post_data);
     // Set up the request
+
+    var result = "";
     var post_req = https.request(post_options, function (response) {
 
         response.setEncoding('utf-8');
@@ -117,7 +118,6 @@ function proxyEvent(event, context, path) {
         response.on('end', function () {
             //log('Response', JSON.stringify(JSON.parse(result)));
             context.succeed(JSON.parse(result));
-            //log('Success','the end' );
         });
 
         response.on('error', function (e) {
@@ -134,5 +134,5 @@ function proxyEvent(event, context, path) {
 function log(title, msg) {
     console.log('*************** ' + title + ' *************');
     console.log(msg);
-    console.log('*************** ' + title + ' End*************');
+    console.log('************* ' + title + ' End ***********');
 }

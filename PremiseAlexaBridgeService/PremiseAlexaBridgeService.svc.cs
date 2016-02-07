@@ -1,11 +1,8 @@
 ﻿using System;
-using System.Linq;
 using System.Collections.Generic;
-using System.ServiceModel;
 using System.ServiceModel.Web;
-using SYSWebSockClient;
 using System.Threading.Tasks;
-using Common.Logging;
+using SYSWebSockClient;
 
 namespace PremiseAlexaBridgeService
 {
@@ -25,12 +22,12 @@ namespace PremiseAlexaBridgeService
     {
         PremiseServer ServiceInstance;
 
-        ILog log;
+        //ILog log;
 
         public void Preload(string[] parameters)
         {
-            log = LogManager.GetLogger(LogManager.Adapter.GetType());
-            log.Debug("AlexaPremiseBridge Preload");
+            //log = LogManager.GetLogger(LogManager.Adapter.GetType());
+            //log.Debug("AlexaPremiseBridge Preload");
             ServiceInstance = PremiseServer.Instance;
         }
     }
@@ -75,7 +72,7 @@ namespace PremiseAlexaBridgeService
                 case "HealthCheckRequest":
                     this.InformLastContact("System:HealthCheckRequest");
 
-                    string accessToken = this.GetAlexaStatusAccessToken().GetAwaiter().GetResult();
+                    string accessToken = this.GetAlexaAccessToken().GetAwaiter().GetResult();
                     if (alexaRequest.payload.accessToken != accessToken)
                     {
                         response.payload.exception = GetExceptionPayload("INVALID_ACCESS_TOKEN", "Access denied.");
@@ -108,8 +105,8 @@ namespace PremiseAlexaBridgeService
             SystemResponsePayload payload = new SystemResponsePayload(); 
             var returnClause = new string[] { "Health", "HealthDescription" };
             dynamic whereClause = new System.Dynamic.ExpandoObject();
-            payload.isHealthy = this.ServiceInstance.AlexaStatus.GetValue<bool>("Health").GetAwaiter().GetResult();
-            payload.description = this.ServiceInstance.AlexaStatus.GetValue<string>("HealthDescription").GetAwaiter().GetResult();
+            payload.isHealthy = this.ServiceInstance.HomeObject.GetValue<bool>("Health").GetAwaiter().GetResult();
+            payload.description = this.ServiceInstance.HomeObject.GetValue<string>("HealthDescription").GetAwaiter().GetResult();
             return payload;
         }
 
@@ -163,7 +160,7 @@ namespace PremiseAlexaBridgeService
                 return response;
             }
 
-            string accessToken = this.GetAlexaStatusAccessToken().GetAwaiter().GetResult();
+            string accessToken = this.GetAlexaAccessToken().GetAwaiter().GetResult();
             if (alexaRequest.payload.accessToken != accessToken)
             {
                 response.payload.exception = GetExceptionPayload("INVALID_ACCESS_TOKEN", "Access denied.");
@@ -180,7 +177,7 @@ namespace PremiseAlexaBridgeService
         {
             List<Appliance> appliances = new List<Appliance>();
 
-            var returnClause = new string[] { "Name", "DisplayName", "FriendlyName", "FriendlyDescription", "IsReachable", "PowerState", "Brightness", "OID", "OPATH", "OTYPENAME", "Type" };
+            var returnClause = new string[] { "Name", "DisplayName", "FriendlyName", "FriendlyDescription", "IsReachable", "IsDiscoverable", "PowerState", "Brightness", "OID", "OPATH", "OTYPENAME", "Type" };
             dynamic whereClause = new System.Dynamic.ExpandoObject();
             whereClause.TypeOf = this.ServiceInstance.AlexaApplianceClassPath;
 
@@ -190,6 +187,9 @@ namespace PremiseAlexaBridgeService
 
             foreach (var sysAppliance in sysAppliances)
             {
+                if (sysAppliance.IsDiscoverable == false)
+                    continue;
+
                 var objectId = (string)sysAppliance.OID;
                 var appliance = new Appliance()
                 {
@@ -251,10 +251,10 @@ namespace PremiseAlexaBridgeService
                     break;
             }
 
-            await this.ServiceInstance.AlexaStatus.SetValue("RefreshDevices", "False");
-            await this.ServiceInstance.AlexaStatus.SetValue("LastRefreshed", DateTime.Now.ToString());
-            await this.ServiceInstance.AlexaStatus.SetValue("HealthDescription", string.Format("Reported={0},Names Generated={1}", count, generatedNameCount));
-            await this.ServiceInstance.AlexaStatus.SetValue("Health", "True");
+            //await this.ServiceInstance.HomeObject.SetValue("RefreshDevices", "False");
+            await this.ServiceInstance.HomeObject.SetValue("LastRefreshed", DateTime.Now.ToString());
+            await this.ServiceInstance.HomeObject.SetValue("HealthDescription", string.Format("Reported={0},Names Generated={1}", count, generatedNameCount));
+            await this.ServiceInstance.HomeObject.SetValue("Health", "True");
 
             return appliances;
         }
@@ -264,7 +264,7 @@ namespace PremiseAlexaBridgeService
         #region Control
 
         /// <summary>
-        /// Control Requests are process here
+        /// Control Requests are processed here
         /// 1) validate the json
         /// 2) determine the request type
         /// 3) check for 'token' access privs
@@ -299,7 +299,7 @@ namespace PremiseAlexaBridgeService
                 return response;
             }
 
-            this.InformLastContact("ControlRequest");
+            this.InformLastContact("ControlRequest:" + alexaRequest.payload.appliance.additionalApplianceDetails.path);
 
             // check for a bad request
             if (alexaRequest == null)
@@ -320,7 +320,7 @@ namespace PremiseAlexaBridgeService
 
 
             // check access privleges
-            string accessToken = this.GetAlexaStatusAccessToken().GetAwaiter().GetResult();
+            string accessToken = this.GetAlexaAccessToken().GetAwaiter().GetResult();
             if (alexaRequest.payload.accessToken != accessToken)
             {
                 response.payload.exception = GetExceptionPayload("INVALID_ACCESS_TOKEN", "Access denied.");
@@ -360,7 +360,7 @@ namespace PremiseAlexaBridgeService
             // check state and determine if it needs to be changed
             if (requestType == ControlRequestType.SwitchOnOff)
             {
-                bool state = applianceToControl.GetValue<bool>("PowerState").GetAwaiter().GetResult();
+                //bool state = applianceToControl.GetValue<bool>("PowerState").GetAwaiter().GetResult();
                 switch (alexaRequest.payload.switchControlAction.ToUpper())
                 {
                     case "TURN_OFF":
@@ -477,13 +477,13 @@ namespace PremiseAlexaBridgeService
 
         private async void InformLastContact(string command)
         {
-            await this.ServiceInstance.AlexaStatus.SetValue("LastHeardFromAlexa", DateTime.Now.ToString());
-            await this.ServiceInstance.AlexaStatus.SetValue("LastHeardCommand", command);
+            await this.ServiceInstance.HomeObject.SetValue("LastHeardFromAlexa", DateTime.Now.ToString());
+            await this.ServiceInstance.HomeObject.SetValue("LastHeardCommand", command);
         }
 
-        private async Task<string> GetAlexaStatusAccessToken()
+        private async Task<string> GetAlexaAccessToken()
         {
-            var accessToken = await this.ServiceInstance.AlexaStatus.GetValue<string>("AccessToken");
+            var accessToken = await this.ServiceInstance.HomeObject.GetValue<string>("AccessToken");
             return accessToken;
         }
 
