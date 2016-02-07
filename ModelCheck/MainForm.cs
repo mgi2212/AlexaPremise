@@ -1,25 +1,17 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows.Forms;
-using System.Net;
-using System.IO;
-using System.Runtime.Serialization.Json;
+﻿using Alexa;
 using Newtonsoft.Json;
+using System;
 using System.Collections;
-using Alexa;
+using System.IO;
+using System.Net;
+using System.Windows.Forms;
 
 namespace ModelCheck
 {
 
-    public partial class Form1 : Form
+    public partial class MainForm : Form
     {
-        public Form1()
+        public MainForm()
         {
             InitializeComponent();
             this.clearColumns();
@@ -49,6 +41,7 @@ namespace ModelCheck
             Alexa.DiscoveryRequest request = new Alexa.DiscoveryRequest();
             request.payload.accessToken = accessToken.Text;
             string data = JsonConvert.SerializeObject(request);
+
             var dataToDeserialize = jsonData(string.Format(@"https://{0}:{1}/Alexa.svc/json/Discovery/", hostText.Text, portText.Text), data);
 
             var items = JsonConvert.DeserializeObject<Alexa.DiscoveryResponse>(dataToDeserialize);
@@ -120,11 +113,6 @@ namespace ModelCheck
                     contextMenuStrip.Show(Cursor.Position);
                 }
             }
-        }
-
-        private void contextMenuStrip_Opening(object sender, CancelEventArgs e)
-        {
-
         }
 
         private void contextMenuStrip_ItemClicked(object sender, ToolStripItemClickedEventArgs e)
