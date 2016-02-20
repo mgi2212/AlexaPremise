@@ -128,21 +128,21 @@
     <Compile Include="UtilityClasses.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\..\..\..\..\..\dev\Amazon\Web\dotNet\SYSWebSockClient\SYSWebSockClient.csproj">
-      <Project>{4bacf0aa-a338-49f8-aaf4-9128dd79ec4a}</Project>
-      <Name>SYSWebSockClient</Name>
-    </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
     <Content Include="packages.config" />
     <Content Include="App_Data\Alexa.xdo" />
-    <None Include="Properties\PublishProfiles\quigleys.us.pubxml" />
+    <None Include="Properties\PublishProfiles\Kindel.pubxml" />
     <None Include="Web.Debug.config">
       <DependentUpon>Web.config</DependentUpon>
     </None>
     <None Include="Web.Release.config">
       <DependentUpon>Web.config</DependentUpon>
     </None>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\SYSWebSockClient\SYSWebSockClient.csproj">
+      <Project>{4bacf0aa-a338-49f8-aaf4-9128dd79ec4a}</Project>
+      <Name>SYSWebSockClient</Name>
+    </ProjectReference>
   </ItemGroup>
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>
