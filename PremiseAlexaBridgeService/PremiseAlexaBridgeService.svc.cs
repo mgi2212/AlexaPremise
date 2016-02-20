@@ -72,8 +72,7 @@ namespace PremiseAlexaBridgeService
                 case "HealthCheckRequest":
                     this.InformLastContact("System:HealthCheckRequest");
 
-                    string accessToken = this.GetAlexaAccessToken().GetAwaiter().GetResult();
-                    if (alexaRequest.payload.accessToken != accessToken)
+                    if (!CheckAccessToken(alexaRequest.payload.accessToken).GetAwaiter().GetResult())
                     {
                         response.payload.exception = GetExceptionPayload("INVALID_ACCESS_TOKEN", "Access denied.");
                         break;
@@ -160,8 +159,7 @@ namespace PremiseAlexaBridgeService
                 return response;
             }
 
-            string accessToken = this.GetAlexaAccessToken().GetAwaiter().GetResult();
-            if (alexaRequest.payload.accessToken != accessToken)
+            if (!CheckAccessToken(alexaRequest.payload.accessToken).GetAwaiter().GetResult())
             {
                 response.payload.exception = GetExceptionPayload("INVALID_ACCESS_TOKEN", "Access denied.");
                 ServiceInstance.DisconnectServer(client);
@@ -320,8 +318,7 @@ namespace PremiseAlexaBridgeService
 
 
             // check access privleges
-            string accessToken = this.GetAlexaAccessToken().GetAwaiter().GetResult();
-            if (alexaRequest.payload.accessToken != accessToken)
+            if (!CheckAccessToken(alexaRequest.payload.accessToken).GetAwaiter().GetResult())
             {
                 response.payload.exception = GetExceptionPayload("INVALID_ACCESS_TOKEN", "Access denied.");
                 ServiceInstance.DisconnectServer(client);
@@ -481,10 +478,11 @@ namespace PremiseAlexaBridgeService
             await this.ServiceInstance.HomeObject.SetValue("LastHeardCommand", command);
         }
 
-        private async Task<string> GetAlexaAccessToken()
+        private async Task<bool> CheckAccessToken(string token)
         {
             var accessToken = await this.ServiceInstance.HomeObject.GetValue<string>("AccessToken");
-            return accessToken;
+            List<string> tokens = new List<string>(accessToken.Split(','));
+            return (-1 != tokens.IndexOf(token));
         }
 
         #endregion

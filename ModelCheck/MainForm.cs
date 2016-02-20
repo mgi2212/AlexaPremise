@@ -46,6 +46,12 @@ namespace ModelCheck
 
             var items = JsonConvert.DeserializeObject<Alexa.DiscoveryResponse>(dataToDeserialize);
 
+            if (items.payload.discoveredAppliances == null)
+            {
+                MessageBox.Show(dataToDeserialize, "Error");
+                return;
+            }
+
             this.clearColumns();  
            
             foreach (var col in items.payload.discoveredAppliances)
