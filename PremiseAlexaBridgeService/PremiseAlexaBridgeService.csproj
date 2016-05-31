@@ -118,7 +118,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Alexa.Appliance.cs" />
-    <Compile Include="Alexa.cs" />
+    <Compile Include="Alexa.ConnectedHome.cs" />
     <Compile Include="PremiseAlexaBridgeService.svc.cs">
       <DependentUpon>PremiseAlexaBridgeService.svc</DependentUpon>
     </Compile>
@@ -130,6 +130,7 @@
   <ItemGroup>
     <Content Include="packages.config" />
     <Content Include="App_Data\Alexa.xdo" />
+    <None Include="Properties\PublishProfiles\AD2.pubxml" />
     <None Include="Properties\PublishProfiles\Kindel.pubxml" />
     <None Include="Web.Debug.config">
       <DependentUpon>Web.config</DependentUpon>

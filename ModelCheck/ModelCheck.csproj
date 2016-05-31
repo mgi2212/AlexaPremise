@@ -54,6 +54,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AlexaProtocolV2.cs" />
     <Compile Include="AlexaProtocolV1.cs" />
     <Compile Include="MainForm.cs">
       <SubType>Form</SubType>

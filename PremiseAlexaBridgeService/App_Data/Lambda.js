@@ -5,9 +5,10 @@ var REMOTE_CLOUD_PORT = 8733;
 var log = log;
 var healthyResponse = {
     "header": {
-        "namespace": "System",
+        "messageId": "",
+        "namespace": "Alexa.ConnectedHome.System",
         "name": "HealthCheckResponse",
-        "payloadVersion": "1"
+        "payloadVersion": "2"
     },
     "payload": {
         "isHealthy": true,
@@ -17,31 +18,35 @@ var healthyResponse = {
 
 exports.handler = function (event, context) {
 
-    // log('Input', event);
+    log('Input', event);
 
     switch (event.header.namespace) {
 
-        case 'System':
+        case 'Alexa.ConnectedHome.System':
             if (event.header.name == 'HealthCheckRequest') {
+                healthyResponse.header.messageId = event.header.messageId;
                 context.succeed(JSON.parse(healthyResponse));
             }
             break;
-        case 'Control':
+        case 'Alexa.ConnectedHome.Control':
             proxyEventToCustomer(event, context, 'Control');
             break;
-        case 'Discovery':
+        case 'Alexa.ConnectedHome.Discovery':
             proxyEventToCustomer(event, context, 'Discovery');
             break;
 
         default:
             // Warning! Logging this in production might be a security problem.
-            log('Err', 'Namespace Not Supported: ' + event.header.namespace);
+            log('Err', 'No supported namespace: ' + event.header.namespace);
             context.fail('Something went wrong');
             break;
     }
 };
 
 function proxyEventToCustomer(event, context, path) {
+    var get_data = "";
+
+    log('getCustomerInfoRequest', event);
 
     // prepare request options
     var get_options = {
@@ -56,7 +61,7 @@ function proxyEventToCustomer(event, context, path) {
         }
     };
 
-    //log('getCustomerInfoRequest', get_options);
+    log('getCustomerInfoRequest', get_options);
     var result = "";
 
     // Set up the request
@@ -69,8 +74,8 @@ function proxyEventToCustomer(event, context, path) {
         });
 
         response.on('end', function () {
-            //log('BeforeProxy', JSON.stringify(JSON.parse(result)));
             var json_result = JSON.parse(result);
+            log('BeforeProxy', JSON.stringify(json_result));
             event.payload.accessToken = json_result.user_id; // the on prem system expects the amazon user id from this call
             proxyEvent(event, context, path);
         });
@@ -81,7 +86,6 @@ function proxyEventToCustomer(event, context, path) {
         });
     });
 
-    var get_data = "";
     get_req.write(get_data);
     get_req.end();
 }
@@ -90,7 +94,6 @@ function proxyEventToCustomer(event, context, path) {
 function proxyEvent(event, context, path) {
 
     var post_data = JSON.stringify(event, 'utf-8');
-    //log('proxyEvent', post_data);
 
     // prepare request options
     var post_options = {
@@ -104,9 +107,9 @@ function proxyEvent(event, context, path) {
         }
     };
 
-    // Set up the request
-
     var result = "";
+    log('proxyEvent', post_data);
+    // Set up the request
     var post_req = https.request(post_options, function (response) {
 
         response.setEncoding('utf-8');
@@ -116,8 +119,9 @@ function proxyEvent(event, context, path) {
         });
 
         response.on('end', function () {
-            //log('Response', JSON.stringify(JSON.parse(result)));
+            log('Response', JSON.stringify(JSON.parse(result)));
             context.succeed(JSON.parse(result));
+            //log('Success','the end' );
         });
 
         response.on('error', function (e) {
@@ -134,5 +138,5 @@ function proxyEvent(event, context, path) {
 function log(title, msg) {
     console.log('*************** ' + title + ' *************');
     console.log(msg);
-    console.log('************* ' + title + ' End ***********');
+    console.log('*************** ' + title + ' End*************');
 }

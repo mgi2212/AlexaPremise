@@ -1,6 +1,6 @@
 ﻿using System.Runtime.Serialization;
 
-namespace Alexa.SmartHome.V1
+namespace Alexa.SmartHome.V2
 {
     public class Header
     {
@@ -80,7 +80,7 @@ namespace Alexa.SmartHome.V1
             header = new Header();
             header.@namespace = "Discovery";
             header.name = "DiscoverAppliancesRequest";
-            header.payloadVersion = "1";
+            header.payloadVersion = "2";
             payload = new DiscoveryRequestPayload();
         }
     }

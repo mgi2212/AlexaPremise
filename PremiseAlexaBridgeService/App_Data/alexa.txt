@@ -3,8 +3,8 @@ aws lambda add-permission --function-name arn:aws:lambda:us-east-1:115882003426:
 aws lambda add-permission --function-name arn:aws:lambda:us-east-1:115882003426:function:AlexaPremiseDriver --statement-id 2 --action lambda:invokeFunction --principal arn:aws:iam::882658230287:user/LambdaExecutionUser
 //alexa.caelumllc.com 8173 amzn1.account.AHCY3ZDCJ2RSRM3SMEANBN2DYNGA
 //alexapremise.kindel.net 443 amzn1.account.AGJYA77MWXON4PADJR35H2HHL7NQ
-//alexapremise.quigleys.us 8733 amzn1.account.AHHO677DA2UVHYY724MCRSBYZOVQ
-
+//alexa.quigleys.us 8733 amzn1.account.AHHO677DA2UVHYY724MCRSBYZOVQ
+//alexa.quigleys.us 8733 amzn1.account.AFUVBW6UNIFO6IMP3SRXTR6P2IWA
 
 http://localhost:8733/Alexa.svc/json/System/
 {

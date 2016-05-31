@@ -1,4 +1,5 @@
 ﻿using System.ServiceModel;
+using Alexa.SmartHome;
 
 namespace PremiseAlexaBridgeService
 {

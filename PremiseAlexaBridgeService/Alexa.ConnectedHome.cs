@@ -1,24 +1,26 @@
 ﻿using System.Collections.Generic;
 using System.Runtime.Serialization;
 
-namespace PremiseAlexaBridgeService
+namespace Alexa.SmartHome
 {
 
     #region Header
 
-    [DataContract(Namespace = "")]
+    [DataContract(Namespace = "Alexa.ConnectedHome")]
     public class Header
     {
-        [DataMember(Name = "namespace", Order = 1)]
+        [DataMember(Name = "messageId", IsRequired = true, Order = 1)]
+        public string messageId { get; set; }
+        [DataMember(Name = "namespace", IsRequired = true, Order = 2)]
         public string @namespace { get; set; }
-        [DataMember(Name = "name", Order = 2)]
+        [DataMember(Name = "name", IsRequired = true, Order = 3)]
         public string name { get; set; }
-        [DataMember(Name = "payloadVersion", Order = 3)]
+        [DataMember(Name = "payloadVersion", IsRequired = true, Order = 4)]
         public string payloadVersion { get; set; }
 
         public Header()
         {
-            payloadVersion = "1";
+            payloadVersion = "2";
         }
     }
 
@@ -26,7 +28,7 @@ namespace PremiseAlexaBridgeService
 
     #region Exception
 
-    [DataContract(Name = "payload", Namespace = "z")]
+    [DataContract(Name = "payload")]
     public class ExceptionResponsePayload
     {
         [DataMember(Name = "code")]
@@ -45,7 +47,7 @@ namespace PremiseAlexaBridgeService
         HealthCheck,
     }
 
-    [DataContract(Namespace = "System")]
+    [DataContract(Namespace = "Alexa.ConnectedHome.System")]
     public class SystemRequest
     {
         [DataMember(Name = "header", Order = 1)]
@@ -95,14 +97,14 @@ namespace PremiseAlexaBridgeService
 
     #region Discovery
 
-    [DataContract(Namespace = "Discovery")]
+    [DataContract(Namespace = "Alexa.ConnectedHome.Discovery")]
     public class DiscoveryRequestPayload
     {
         [DataMember(Name = "accessToken")]
         public string accessToken { get; set; }
     }
 
-    [DataContract(Namespace = "Discovery")]
+    [DataContract(Namespace = "Alexa.ConnectedHome.Discovery")]
     public class DiscoveryRequest
     {
         [DataMember(Name = "header")]
@@ -112,7 +114,7 @@ namespace PremiseAlexaBridgeService
         public DiscoveryRequestPayload payload;
     }
 
-    [DataContract(Namespace = "Discovery")]
+    [DataContract(Namespace = "Alexa.ConnectedHome.Discovery")]
     public class DiscoveryResponse
     {
         [DataMember(Name = "header")]
@@ -122,7 +124,7 @@ namespace PremiseAlexaBridgeService
         public DiscoveryResponsePayload payload;
     }
 
-    [DataContract(Namespace = "Discovery")]
+    [DataContract(Namespace = "Alexa.ConnectedHome.Discovery")]
     public class DiscoveryResponsePayload
     {
         [DataMember(Name = "discoveredAppliances", EmitDefaultValue = false)]
@@ -139,11 +141,31 @@ namespace PremiseAlexaBridgeService
     public enum ControlRequestType
     {
         Unknown,
-        SwitchOnOff,
-        AdjustNumericalSetting
+        HealthCheck,
+        TurnOnRequest,
+        TurnOffRequest,
+        SetTargetTemperature,
+        IncrementTargetTemperature,
+        DecrementTargetTemperature,
+        SetPercentage,
+        IncrementPercentage,
+        DecrementPercentage
     }
 
-    [DataContract(Namespace = "")]
+    public enum DeviceType
+    {
+        Unknown,
+        OnOff,
+        Dimmer,
+        Thermostat
+    }
+
+    public class ApplianceValue
+    {
+        public string value;
+    }
+
+    [DataContract(Namespace = "Alexa.ConnectedHome.Control")]
     public class ControlRequest
     {
         [DataMember(Name = "header")]
@@ -153,7 +175,7 @@ namespace PremiseAlexaBridgeService
         public ApplianceControlRequestPayload payload;
     }
 
-    [DataContract(Namespace = "")]
+    [DataContract(Namespace = "Alexa.ConnectedHome.Control")]
     public class ControlResponse
     {
         [DataMember(Name = "header")]
