@@ -29,7 +29,6 @@
         private void InitializeComponent()
         {
             this.components = new System.ComponentModel.Container();
-            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MainForm));
             this.hostText = new System.Windows.Forms.TextBox();
             this.label1 = new System.Windows.Forms.Label();
             this.label2 = new System.Windows.Forms.Label();
@@ -44,13 +43,14 @@
             this.statusStrip1 = new System.Windows.Forms.StatusStrip();
             this.statusText = new System.Windows.Forms.ToolStripStatusLabel();
             this.commandStatus = new System.Windows.Forms.ToolStripStatusLabel();
+            this.button1 = new System.Windows.Forms.Button();
             this.contextMenuStrip.SuspendLayout();
             this.statusStrip1.SuspendLayout();
             this.SuspendLayout();
             // 
             // hostText
             // 
-            this.hostText.Location = new System.Drawing.Point(80, 12);
+            this.hostText.Location = new System.Drawing.Point(46, 12);
             this.hostText.Name = "hostText";
             this.hostText.Size = new System.Drawing.Size(173, 20);
             this.hostText.TabIndex = 0;
@@ -58,7 +58,7 @@
             // label1
             // 
             this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(42, 15);
+            this.label1.Location = new System.Drawing.Point(8, 15);
             this.label1.Name = "label1";
             this.label1.Size = new System.Drawing.Size(32, 13);
             this.label1.TabIndex = 1;
@@ -67,7 +67,7 @@
             // label2
             // 
             this.label2.AutoSize = true;
-            this.label2.Location = new System.Drawing.Point(261, 15);
+            this.label2.Location = new System.Drawing.Point(227, 15);
             this.label2.Name = "label2";
             this.label2.Size = new System.Drawing.Size(29, 13);
             this.label2.TabIndex = 3;
@@ -75,7 +75,7 @@
             // 
             // portText
             // 
-            this.portText.Location = new System.Drawing.Point(296, 12);
+            this.portText.Location = new System.Drawing.Point(262, 12);
             this.portText.Name = "portText";
             this.portText.Size = new System.Drawing.Size(54, 20);
             this.portText.TabIndex = 1;
@@ -99,9 +99,9 @@
             // 
             // queryButton
             // 
-            this.queryButton.Location = new System.Drawing.Point(775, 10);
+            this.queryButton.Location = new System.Drawing.Point(741, 10);
             this.queryButton.Name = "queryButton";
-            this.queryButton.Size = new System.Drawing.Size(75, 23);
+            this.queryButton.Size = new System.Drawing.Size(43, 23);
             this.queryButton.TabIndex = 4;
             this.queryButton.Text = "Query";
             this.queryButton.UseVisualStyleBackColor = true;
@@ -110,7 +110,7 @@
             // label3
             // 
             this.label3.AutoSize = true;
-            this.label3.Location = new System.Drawing.Point(373, 15);
+            this.label3.Location = new System.Drawing.Point(339, 15);
             this.label3.Name = "label3";
             this.label3.Size = new System.Drawing.Size(79, 13);
             this.label3.TabIndex = 7;
@@ -118,7 +118,7 @@
             // 
             // accessToken
             // 
-            this.accessToken.Location = new System.Drawing.Point(458, 12);
+            this.accessToken.Location = new System.Drawing.Point(424, 12);
             this.accessToken.Name = "accessToken";
             this.accessToken.Size = new System.Drawing.Size(311, 20);
             this.accessToken.TabIndex = 3;
@@ -167,12 +167,23 @@
             this.commandStatus.Size = new System.Drawing.Size(42, 17);
             this.commandStatus.Text = "Status:";
             // 
+            // button1
+            // 
+            this.button1.Location = new System.Drawing.Point(790, 9);
+            this.button1.Name = "button1";
+            this.button1.Size = new System.Drawing.Size(43, 23);
+            this.button1.TabIndex = 10;
+            this.button1.Text = "Save";
+            this.button1.UseVisualStyleBackColor = true;
+            this.button1.Click += new System.EventHandler(this.button1_Click);
+            // 
             // MainForm
             // 
             this.AcceptButton = this.queryButton;
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(862, 475);
+            this.Controls.Add(this.button1);
             this.Controls.Add(this.statusStrip1);
             this.Controls.Add(this.label3);
             this.Controls.Add(this.accessToken);
@@ -182,7 +193,6 @@
             this.Controls.Add(this.portText);
             this.Controls.Add(this.label1);
             this.Controls.Add(this.hostText);
-            this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.Name = "MainForm";
             this.Text = "AlexaPremise Model Check";
             this.contextMenuStrip.ResumeLayout(false);
@@ -209,6 +219,7 @@
         private System.Windows.Forms.StatusStrip statusStrip1;
         private System.Windows.Forms.ToolStripStatusLabel statusText;
         private System.Windows.Forms.ToolStripStatusLabel commandStatus;
+        private System.Windows.Forms.Button button1;
     }
 }
 

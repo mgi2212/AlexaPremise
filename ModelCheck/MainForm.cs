@@ -4,6 +4,7 @@ using System;
 using System.Collections;
 using System.IO;
 using System.Net;
+using System.Text;
 using System.Windows.Forms;
 
 namespace ModelCheck
@@ -38,13 +39,13 @@ namespace ModelCheck
 
         private void queryButton_Click(object sender, EventArgs e)
         {
-            Alexa.DiscoveryRequest request = new Alexa.DiscoveryRequest();
+            Alexa.SmartHome.V1.DiscoveryRequest request = new Alexa.SmartHome.V1.DiscoveryRequest();
             request.payload.accessToken = accessToken.Text;
             string data = JsonConvert.SerializeObject(request);
 
             var dataToDeserialize = jsonData(string.Format(@"https://{0}:{1}/Alexa.svc/json/Discovery/", hostText.Text, portText.Text), data);
 
-            var items = JsonConvert.DeserializeObject<Alexa.DiscoveryResponse>(dataToDeserialize);
+            var items = JsonConvert.DeserializeObject<Alexa.SmartHome.V1.DiscoveryResponse>(dataToDeserialize);
 
             if (items.payload.discoveredAppliances == null)
             {
@@ -127,7 +128,7 @@ namespace ModelCheck
 
             try
             { 
-                Alexa.Appliance appliance = new Appliance();
+                Alexa.SmartHome.V1.Appliance appliance = new Alexa.SmartHome.V1.Appliance();
 
                 string idText = listView.SelectedItems[0].SubItems[0].Text;
                 appliance.applianceId = Guid.Parse(idText).ToString("D");
@@ -137,12 +138,12 @@ namespace ModelCheck
 
                 string command = (e.ClickedItem.Name == turnItemOn.Name) ? "TURN_ON" :  "TURN_OFF";
 
-                Alexa.ControlSwitchOnOffRequest request = new ControlSwitchOnOffRequest(accessToken.Text, appliance, command);
+                Alexa.SmartHome.V1.ControlSwitchOnOffRequest request = new Alexa.SmartHome.V1.ControlSwitchOnOffRequest(accessToken.Text, appliance, command);
                 string data = JsonConvert.SerializeObject(request);
 
                 var dataToDeserialize = jsonData(string.Format(@"https://{0}:{1}/Alexa.svc/json/Control/", hostText.Text, portText.Text), data);
 
-                var response = JsonConvert.DeserializeObject<Alexa.ControlResponse>(dataToDeserialize);
+                var response = JsonConvert.DeserializeObject<Alexa.SmartHome.V1.ControlResponse>(dataToDeserialize);
 
                 commandStatus.Text = string.Format("OnOffRequest: Success = {0}", response.payload.success);
             }
@@ -150,6 +151,11 @@ namespace ModelCheck
             {
                 commandStatus.Text = string.Format("OnOffRequest: Error = {0}", err.Message);
             }
+        }
+
+        private void button1_Click(object sender, EventArgs e)
+        {
+            ListViewToCSVUtils.ListViewToCSV(listView, @"c:\Tools\list.csv", true);
         }
     }
 
@@ -169,5 +175,36 @@ namespace ModelCheck
             return String.Compare(((ListViewItem)x).SubItems[col].Text, ((ListViewItem)y).SubItems[col].Text);
         }
     }
+    class ListViewToCSVUtils
+    {
+        public static void ListViewToCSV(ListView listView, string filePath, bool includeHidden)
+        {
+            //make header string
+            StringBuilder result = new StringBuilder();
+            WriteCSVRow(result, listView.Columns.Count, i => includeHidden || listView.Columns[i].Width > 0, i => listView.Columns[i].Text);
 
+            //export data rows
+            foreach (ListViewItem listItem in listView.Items)
+                WriteCSVRow(result, listView.Columns.Count, i => includeHidden || listView.Columns[i].Width > 0, i => listItem.SubItems[i].Text);
+
+            File.WriteAllText(filePath, result.ToString());
+        }
+
+        private static void WriteCSVRow(StringBuilder result, int itemsCount, Func<int, bool> isColumnNeeded, Func<int, string> columnValue)
+        {
+            bool isFirstTime = true;
+            for (int i = 0; i < itemsCount; i++)
+            {
+                if (!isColumnNeeded(i))
+                    continue;
+
+                if (!isFirstTime)
+                    result.Append(",");
+                isFirstTime = false;
+
+                result.Append(String.Format("\"{0}\"", columnValue(i)));
+            }
+            result.AppendLine();
+        }
+    }
 }

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ServiceModel.Web;
 using System.Threading.Tasks;
 using SYSWebSockClient;
+using Alexa.SmartHome;
 
 namespace PremiseAlexaBridgeService
 {
@@ -126,8 +127,9 @@ namespace PremiseAlexaBridgeService
 
             var response = new DiscoveryResponse();
             response.header = new Header();
+            response.header.messageId = alexaRequest.header.messageId;
             response.header.name = "DiscoverAppliancesResponse";
-            response.header.@namespace = "Discovery";
+            response.header.@namespace = alexaRequest.header.@namespace;
             response.payload = new DiscoveryResponsePayload();
 
             try
@@ -151,6 +153,12 @@ namespace PremiseAlexaBridgeService
             }
 
             //response.header = alexaRequest.header;
+            if (alexaRequest.header.payloadVersion != "2")
+            {
+                response.payload.exception = GetExceptionPayload("INTERNAL_ERROR", "'(0)' unexpected payload version.");
+                ServiceInstance.DisconnectServer(client);
+                return response;
+            }
 
             if (alexaRequest.header.name != "DiscoverAppliancesRequest")
             {
@@ -175,7 +183,7 @@ namespace PremiseAlexaBridgeService
         {
             List<Appliance> appliances = new List<Appliance>();
 
-            var returnClause = new string[] { "Name", "DisplayName", "FriendlyName", "FriendlyDescription", "IsReachable", "IsDiscoverable", "PowerState", "Brightness", "OID", "OPATH", "OTYPENAME", "Type" };
+            var returnClause = new string[] { "Name", "DisplayName", "FriendlyName", "FriendlyDescription", "IsReachable", "IsDiscoverable", "PowerState", "Brightness", "Temperature", "TemperatureMode", "OID", "OPATH", "OTYPENAME", "Type" };
             dynamic whereClause = new System.Dynamic.ExpandoObject();
             whereClause.TypeOf = this.ServiceInstance.AlexaApplianceClassPath;
 
@@ -191,9 +199,10 @@ namespace PremiseAlexaBridgeService
                 var objectId = (string)sysAppliance.OID;
                 var appliance = new Appliance()
                 {
+                    actions = new List<string>(),
                     applianceId = Guid.Parse(objectId).ToString("D"),
                     manufacturerName = "Premise Object",
-                    version = "1.0",
+                    version = "2.0",
                     isReachable = sysAppliance.IsReachable,
                     modelName = sysAppliance.OTYPENAME,
                     friendlyName = ((string)sysAppliance.FriendlyName).Trim(),
@@ -237,19 +246,42 @@ namespace PremiseAlexaBridgeService
                 }
 
                 // construct the additional details
+                bool hasPowerState = (sysAppliance.PowerState != null);
+                bool hasTemperature = (sysAppliance.Temperature != null);
                 bool hasDimmer = (sysAppliance.Brightness != null);
+
                 appliance.additionalApplianceDetails = new AdditionalApplianceDetails()
                 {
                     dimmable = hasDimmer.ToString(),
                     path = sysAppliance.OPATH
                 };
 
+                if (hasPowerState)
+                {
+                    appliance.actions.Add("turnOn");
+                    appliance.actions.Add("turnOff");
+                    appliance.additionalApplianceDetails.purpose = "Unknown";
+                }
+                if (hasDimmer)
+                {
+                    appliance.actions.Add("setPercentage");
+                    appliance.actions.Add("incrementPercentage");
+                    appliance.actions.Add("decrementPercentage");
+                    appliance.additionalApplianceDetails.purpose = "DimmableLight";
+                }
+                if (hasTemperature)
+                {
+                    appliance.actions.Add("setTemperature");
+                    appliance.actions.Add("incrementTemperature");
+                    appliance.actions.Add("decrementTemperature");
+                    appliance.additionalApplianceDetails.purpose = "Thermostat";
+                }
+
                 appliances.Add(appliance);
                 if (++count >= this.ServiceInstance.AlexaDeviceLimit)
                     break;
             }
 
-            //await this.ServiceInstance.HomeObject.SetValue("RefreshDevices", "False");
             await this.ServiceInstance.HomeObject.SetValue("LastRefreshed", DateTime.Now.ToString());
             await this.ServiceInstance.HomeObject.SetValue("HealthDescription", string.Format("Reported={0},Names Generated={1}", count, generatedNameCount));
             await this.ServiceInstance.HomeObject.SetValue("Health", "True");
@@ -281,12 +313,11 @@ namespace PremiseAlexaBridgeService
             // allocate and setup header
             var response = new ControlResponse();
             response.header = new Header();
-            response.header.name = "ControlResponse";   // generic in case of a null request
-            response.header.@namespace = "Control";
-
+            response.header.messageId = alexaRequest.header.messageId;
+            response.header.@namespace = alexaRequest.header.@namespace;
+            response.header.name = "Confirmation";   // generic in case of a null request
             // allocate a payload
             response.payload = new ApplianceControlResponsePayload();
-
             try
             {
                 ServiceInstance.ConnectToServer(client);
@@ -309,11 +340,13 @@ namespace PremiseAlexaBridgeService
 
             try
             {
-                response.header.name = alexaRequest.header.name.Replace("Request", "Response");
+                response.header.name = alexaRequest.header.name.Replace("Request", "Confirmation");
             }
             catch (Exception)
             {
-                // TODO: need to log these
+                response.payload.exception = GetExceptionPayload("INTERNAL_ERROR", "Bad request header.");
+                ServiceInstance.DisconnectServer(client);
+                return response;
             }
 
 
@@ -327,14 +360,42 @@ namespace PremiseAlexaBridgeService
 
             // check request types
             ControlRequestType requestType = ControlRequestType.Unknown;
+            DeviceType deviceType = DeviceType.Unknown;
 
-            switch (alexaRequest.header.name)
+            string command = alexaRequest.header.name.Trim().ToUpper();
+            switch (command)
             {
-                case "SwitchOnOffRequest":
-                    requestType = ControlRequestType.SwitchOnOff;
+                case "TURNOFFREQUEST":
+                    requestType = ControlRequestType.TurnOffRequest;
+                    deviceType = DeviceType.OnOff;
                     break;
-                case "AdjustNumericalSettingRequest":
-                    requestType = ControlRequestType.AdjustNumericalSetting;
+                case "TURNONREQUEST":
+                    requestType = ControlRequestType.TurnOnRequest;
+                    deviceType = DeviceType.OnOff;
+                    break;
+                case "SETTARGETTEMPERATUREREQUEST":
+                    requestType = ControlRequestType.SetTargetTemperature;
+                    deviceType = DeviceType.Thermostat;
+                    break;
+                case "INCREMENTTARGETTEMPERATUREREQUEST":
+                    requestType = ControlRequestType.IncrementTargetTemperature;
+                    deviceType = DeviceType.Thermostat;
+                    break;
+                case "DECREMENTTARGETTEMPERATUREREQUEST":
+                    requestType = ControlRequestType.DecrementTargetTemperature;
+                    deviceType = DeviceType.Thermostat;
+                    break;
+                case "SETPERCENTAGEREQUEST":
+                    requestType = ControlRequestType.SetPercentage;
+                    deviceType = DeviceType.Dimmer;
+                    break;
+                case "INCREMENTPERCENTAGEREQUEST":
+                    requestType = ControlRequestType.IncrementPercentage;
+                    deviceType = DeviceType.Dimmer;
+                    break;
+                case "DECREMENTPERCENTAGEREQUEST":
+                    requestType = ControlRequestType.DecrementPercentage;
+                    deviceType = DeviceType.Dimmer;
                     break;
                 default:
                     response.payload.exception = GetExceptionPayload("UNSUPPORTED_OPERATION", string.Format("{0} - Unknown Control Request.", alexaRequest.header.name));
@@ -342,10 +403,21 @@ namespace PremiseAlexaBridgeService
                     return response;
             }
 
+
             // get the object
-            Guid premiseId = new Guid(alexaRequest.payload.appliance.applianceId);
-            var applianceToControl = this.ServiceInstance.RootObject.GetObject(premiseId.ToString("B")).GetAwaiter().GetResult();
-            
+            IPremiseObject applianceToControl = null;
+            try
+            { 
+                Guid premiseId = new Guid(alexaRequest.payload.appliance.applianceId);
+                applianceToControl = this.ServiceInstance.RootObject.GetObject(premiseId.ToString("B")).GetAwaiter().GetResult();
+            }
+            catch
+            {
+                response.payload.exception = GetExceptionPayload("INTERNAL_ERROR", "Cannot Convert Appliance Id.");
+                ServiceInstance.DisconnectServer(client);
+                return response;
+            }
+
             // report failure
             if (applianceToControl == null)
             {
@@ -354,104 +426,121 @@ namespace PremiseAlexaBridgeService
                 return response;
             }
 
-            // check state and determine if it needs to be changed
-            if (requestType == ControlRequestType.SwitchOnOff)
+            if (deviceType == DeviceType.OnOff)
             {
-                //bool state = applianceToControl.GetValue<bool>("PowerState").GetAwaiter().GetResult();
-                switch (alexaRequest.payload.switchControlAction.ToUpper())
+                switch (requestType)
                 {
-                    case "TURN_OFF":
-                        //if (state == true)
-                        //{
-                            applianceToControl.SetValue("PowerState", "False").GetAwaiter().GetResult(); 
-                            response.payload.success = true;
-                        //}
-                        //else
-                        //{
-                        //    response.payload.exception = GetExceptionPayload("TARGET_ALREADY_AT_REQUESTED_STATE", "Appliance is off."); ;
-                        //    return response;
-                        //}
+                    case ControlRequestType.TurnOnRequest:
+                        applianceToControl.SetValue("PowerState", "True").GetAwaiter().GetResult();
                         break;
-                    case "TURN_ON":
-                        //if (state == false)
-                        //{
-                            applianceToControl.SetValue("PowerState", "True").GetAwaiter().GetResult();
-                            response.payload.success = true;
-                        //}
-                        //else
-                        //{
-                        //    response.payload.exception = GetExceptionPayload("TARGET_ALREADY_AT_REQUESTED_STATE", "Appliance is On."); 
-                        //    return response;
-                        //}
+                    case ControlRequestType.TurnOffRequest:
+                        applianceToControl.SetValue("PowerState", "False").GetAwaiter().GetResult();
                         break;
                     default:
-                        response.payload.exception = GetExceptionPayload("UNSUPPORTED_OPERATION", "Unknown or unsupported operation.");
-                        ServiceInstance.DisconnectServer(client);
-                        return response;
+                        break;
                 }
             }
-
-            // currently only percentage is viable here
-            if (requestType == ControlRequestType.AdjustNumericalSetting)
+            else if (deviceType == DeviceType.Dimmer)
             {
-                bool dimmable = bool.Parse(alexaRequest.payload.appliance.additionalApplianceDetails.dimmable);
+                double currentValue = 0.0;
+                double adjustValue = 0.0;
+                double valueToSend = 0.0;
 
-                if ((dimmable == false) || (alexaRequest.payload.adjustmentUnit.ToUpper() != "PERCENTAGE"))
+                switch (requestType)
                 {
-                    response.payload.exception = GetExceptionPayload("UNSUPPORTED_TARGET_SETTING", "Appliance is not dimmable.");
-                    if ((alexaRequest.payload.adjustmentUnit.ToUpper() != "PERCENTAGE"))
-                    {
-                        response.payload.exception.description = string.Format("{0} is an unsupported adjustment command.", alexaRequest.payload.adjustmentUnit);
-                    }
-                    ServiceInstance.DisconnectServer(client);
-                    return response;
+                    case ControlRequestType.SetPercentage:
+                        // obtain the adjustValue
+                        adjustValue = Math.Round(double.Parse(alexaRequest.payload.percentageState.value), 2).LimitToRange(0.00, 100.00);
+                        // convert from percentage and maintain fractional accuracy
+                        valueToSend = Math.Round(adjustValue / 100.00, 4);
+                        applianceToControl.SetValue("Brightness", valueToSend.ToString()).GetAwaiter().GetResult();
+                        break;
+                    case ControlRequestType.IncrementPercentage:
+                        // obtain the adjustValue
+                        adjustValue = Math.Round(double.Parse(alexaRequest.payload.deltaPercentage.value) / 100.00, 2).LimitToRange(0.00, 100.00);
+                        currentValue = Math.Round(applianceToControl.GetValue<Double>("Brightness").GetAwaiter().GetResult(), 2);
+                        // maintain fractional accuracy
+                        valueToSend = Math.Round(currentValue + adjustValue, 2).LimitToRange(0.00, 1.00);
+                        applianceToControl.SetValue("Brightness", valueToSend.ToString()).GetAwaiter().GetResult();
+                        break;
+                    case ControlRequestType.DecrementPercentage:
+                        // obtain the adjustValue
+                        adjustValue = Math.Round(double.Parse(alexaRequest.payload.deltaPercentage.value) / 100.00, 2).LimitToRange(0.00, 100.00);
+                        currentValue = Math.Round(applianceToControl.GetValue<Double>("Brightness").GetAwaiter().GetResult(), 2);
+                        // maintain fractional accuracy
+                        valueToSend = Math.Round(currentValue - adjustValue, 2).LimitToRange(0.00, 1.00);
+                        applianceToControl.SetValue("Brightness", valueToSend.ToString()).GetAwaiter().GetResult();
+                        break;
+                    default:
+                        break;
                 }
+            }
+            else if (deviceType == DeviceType.Thermostat)
+            {
+                int previousTemperatureMode;
+                int temperatureMode;
+                Temperature previousTargetTemperature = null;
+                Temperature targetTemperature = null;
+                double deltaTemperatureC = 0.0; // in C
 
-                /*
-                The adjustmentValue Value is the adjustment to apply to the specified appliance. This is a 64-bit
-                double value accurate up to two decimal places.
+                // obtain previous state (sys stores temperatures as K)
+                previousTemperatureMode = applianceToControl.GetValue<int>("TemperatureMode").GetAwaiter().GetResult();
+                previousTargetTemperature = new Temperature(applianceToControl.GetValue<double>("CurrentSetPoint").GetAwaiter().GetResult());
 
-                When the adjustmentUnit is PERCENTAGE and the adjustmentType is ABSOLUTE, 
-                the possible range of the adjustmentValue is 0.00 to 100.00 inclusive.
-
-                When the adjustmentUnit is PERCENTAGE and the adjustmentType is RELATIVE, 
-                the possible range of the adjustmentValue is -100.00 to 100.00 inclusive.
-                */
-
-                // obtain the adjustValue
-                double adjustValue = Math.Round(double.Parse(alexaRequest.payload.adjustmentValue), 2);
-
-                // allocate a value to send
-                double valueToSend = 0.00;
-
-                // determine relative or absolute operation
-                switch (alexaRequest.payload.adjustmentType.ToUpper())
+                switch (requestType)
                 {
-                    case "RELATIVE":
-                        // since it's relative, get current level of the dimmer and convert to percentage 
-                        double currentBrightnessValue = applianceToControl.GetValue<Double>("Brightness").GetAwaiter().GetResult();
-                        currentBrightnessValue = Math.Round(currentBrightnessValue * 100.00, 2);
-
-                        // do the math and limit the range of the result
-                        valueToSend = Math.Round(currentBrightnessValue + adjustValue, 2).LimitToRange(0.00, 100.00);
+                    case ControlRequestType.SetTargetTemperature:
+                        // get target temperature in C
+                        targetTemperature = new Temperature();
+                        targetTemperature.Celcius = double.Parse(alexaRequest.payload.targetTemperature.value);
+                        break;
+                    case ControlRequestType.IncrementTargetTemperature:
+                        // get delta temp in C
+                        deltaTemperatureC = double.Parse(alexaRequest.payload.deltaTemperature.value);
+                        // increment the targetTemp
+                        targetTemperature = new Temperature();
+                        targetTemperature.Celcius = previousTargetTemperature.Celcius + deltaTemperatureC;
                         break;
 
-                    case "ABSOLUTE":
-                        valueToSend = adjustValue.LimitToRange(0.00, 100.00);
+                    case ControlRequestType.DecrementTargetTemperature:
+                        // get delta temp in C
+                        deltaTemperatureC = double.Parse(alexaRequest.payload.deltaTemperature.value);
+                        // decrement the targetTemp
+                        targetTemperature = new Temperature();
+                        targetTemperature.Celcius = previousTargetTemperature.Celcius - deltaTemperatureC;
                         break;
 
                     default:
-                        response.payload.exception = GetExceptionPayload("UNSUPPORTED_TARGET_SETTING", "Appliance is not ajustable.");
-                        ServiceInstance.DisconnectServer(client);
-                        return response;
+                        targetTemperature = new Temperature(0.00);
+                        previousTemperatureMode = 10; // error
+                        break;
                 }
 
-                // convert from percentage and maintain fractional accuracy
-                valueToSend = Math.Round(valueToSend / 100.00, 4);
+                // set new target temperature
+                applianceToControl.SetValue("CurrentSetPoint", targetTemperature.Kelvin.ToString()).GetAwaiter().GetResult();
+                response.payload.targetTemperature = new ApplianceValue();
+                response.payload.targetTemperature.value = targetTemperature.Celcius.ToString();
 
-                // set the device
-                applianceToControl.SetValue("Brightness", valueToSend.ToString()).GetAwaiter().GetResult();
-                response.payload.success = true;
+                // get new mode 
+                temperatureMode = applianceToControl.GetValue<int>("TemperatureMode").GetAwaiter().GetResult();
+                // report new mode
+                response.payload.temperatureMode = new ApplianceValue();
+                response.payload.temperatureMode.value = TemperatureMode.ModeToString(temperatureMode);
+
+                // alloc a previousState object
+                response.payload.previousState = new AppliancePreviousState();
+
+                // report previous mode
+                response.payload.previousState.mode = new ApplianceValue();
+                response.payload.previousState.mode.value = TemperatureMode.ModeToString(previousTemperatureMode);
+
+                // report previous targetTemperature in C
+                response.payload.previousState.targetTemperature = new ApplianceValue();
+                response.payload.previousState.targetTemperature.value = previousTargetTemperature.Celcius.ToString();
+            }
+            else
+            {
+                response.payload.exception = GetExceptionPayload("UNSUPPORTED_OPERATION", string.Format("{0} - Unknown Device Type.", alexaRequest.header.name));
             }
 
             ServiceInstance.DisconnectServer(client);
