@@ -50,6 +50,11 @@ namespace Alexa.SmartHome
         [DataMember(Name = "version", EmitDefaultValue = false, Order = 9)]
         public string version { get; set; }
 
+        public static int CompareByFriendlyName(Appliance appliance1, Appliance appliance2)
+        {
+            return String.Compare(appliance1.friendlyName, appliance2.friendlyName, StringComparison.InvariantCultureIgnoreCase);
+        }
+
     }
 
 
@@ -101,7 +106,7 @@ namespace Alexa.SmartHome
         public string initiationTimestamp; 
     }
 
-    [DataContract(Namespace = "")]
+    [DataContract(Name = "payload", Namespace = "Alexa.ConnectedHome.Control")]
     public class ApplianceControlResponsePayload
     {
 

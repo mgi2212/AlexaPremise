@@ -310,7 +310,6 @@
     }
     #endregion
 
-
     #region CreateObject
     internal class CreateObjectFuture : JsonRPCFuture
     {

@@ -1,5 +1,5 @@
 ﻿var https = require('https');
-var REMOTE_CLOUD_BASE_PATH = "/PremiseAlexaBridgeService.svc/json/";
+var REMOTE_CLOUD_BASE_PATH = "/Alexa.svc/jsons/";
 var REMOTE_CLOUD_HOSTNAME = "alexa.quigleys.us";
 var REMOTE_CLOUD_PORT = 8733;
 var log = log;
@@ -46,7 +46,7 @@ exports.handler = function (event, context) {
 function proxyEventToCustomer(event, context, path) {
     var get_data = "";
 
-    log('getCustomerInfoRequest', event);
+    //log('getCustomerInfoRequest', event);
 
     // prepare request options
     var get_options = {
@@ -61,7 +61,7 @@ function proxyEventToCustomer(event, context, path) {
         }
     };
 
-    log('getCustomerInfoRequest', get_options);
+    // log('getCustomerInfoRequest', get_options);
     var result = "";
 
     // Set up the request
@@ -75,7 +75,7 @@ function proxyEventToCustomer(event, context, path) {
 
         response.on('end', function () {
             var json_result = JSON.parse(result);
-            log('BeforeProxy', JSON.stringify(json_result));
+            // log('BeforeProxy', JSON.stringify(json_result));
             event.payload.accessToken = json_result.user_id; // the on prem system expects the amazon user id from this call
             proxyEvent(event, context, path);
         });
@@ -108,7 +108,7 @@ function proxyEvent(event, context, path) {
     };
 
     var result = "";
-    log('proxyEvent', post_data);
+    // log('proxyEvent', post_data);
     // Set up the request
     var post_req = https.request(post_options, function (response) {
 
@@ -119,9 +119,9 @@ function proxyEvent(event, context, path) {
         });
 
         response.on('end', function () {
-            log('Response', JSON.stringify(JSON.parse(result)));
+            // log('Response', JSON.stringify(JSON.parse(result)));
             context.succeed(JSON.parse(result));
-            //log('Success','the end' );
+            log('Success','the end' );
         });
 
         response.on('error', function (e) {
@@ -138,5 +138,5 @@ function proxyEvent(event, context, path) {
 function log(title, msg) {
     console.log('*************** ' + title + ' *************');
     console.log(msg);
-    console.log('*************** ' + title + ' End*************');
+    console.log('************* ' + title + ' End ***********');
 }
