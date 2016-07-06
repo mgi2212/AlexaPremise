@@ -1,10 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Configuration;
-using System.Diagnostics;
-using System.Threading;
-using System.Runtime.InteropServices;
-using System.ServiceModel;
 using SYSWebSockClient;
 
 namespace PremiseAlexaBridgeService
@@ -23,11 +18,8 @@ namespace PremiseAlexaBridgeService
         internal string PremiseUserPassword;
         internal string PremiseHomeObject;
 
-        //private readonly SYSClient Server;
-        //private SYSClient Server;
         internal IPremiseObject RootObject;
         internal IPremiseObject HomeObject;
-        //internal IPremiseObject AlexaStatus;
 
         private PremiseServer()
         {
@@ -55,9 +47,6 @@ namespace PremiseAlexaBridgeService
             {
                 this.AlexaCheckStateBeforeSetValue = true;
             }
-
-            //this.Server = new SYSClient();
-            //this.ConnectToServer();
         }
 
         public void ConnectToServer(SYSClient client)
@@ -65,27 +54,12 @@ namespace PremiseAlexaBridgeService
             this.HomeObject = client.Connect(this.PremiseServerAddress).GetAwaiter().GetResult(); // TODO: , _premiseUser, _premisePassword);
 
             this.RootObject = this.HomeObject.GetRoot().GetAwaiter().GetResult();
-
-            //var returnClause = new string[] { "OID","Name" };
-            //dynamic whereClause = new System.Dynamic.ExpandoObject();
-            //whereClause.TypeOf = this.AlexaStatusClassPath;
-
-            //var statusRecords = this.HomeObject.Select(returnClause, whereClause).GetAwaiter().GetResult();
-
-            //foreach (var item in statusRecords)
-            //{
-            //    var objectId = (string) item.OID;
-            //    this.AlexaStatus = this.RootObject.WrapObjectId(objectId);
-            //    break;
-            //}
-            ////TODO: No AlexaStatus Object in Sys is bad
         }
 
         public void DisconnectServer(SYSClient client)
         {
             this.HomeObject = null;
             this.RootObject = null;
-            //this.AlexaStatus = null;
             client.Disconnect();
         }
 

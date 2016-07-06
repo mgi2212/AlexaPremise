@@ -1,9 +1,9 @@
-﻿using System;
+﻿using Alexa.SmartHome;
+using System;
 using System.Collections.Generic;
 using System.ServiceModel.Web;
 using System.Threading.Tasks;
 using SYSWebSockClient;
-using Alexa.SmartHome;
 
 namespace PremiseAlexaBridgeService
 {
@@ -23,12 +23,8 @@ namespace PremiseAlexaBridgeService
     {
         PremiseServer ServiceInstance;
 
-        //ILog log;
-
         public void Preload(string[] parameters)
         {
-            //log = LogManager.GetLogger(LogManager.Adapter.GetType());
-            //log.Debug("AlexaPremiseBridge Preload");
             ServiceInstance = PremiseServer.Instance;
         }
     }
@@ -47,13 +43,12 @@ namespace PremiseAlexaBridgeService
         [WebInvoke(Method = "POST", RequestFormat = WebMessageFormat.Json, ResponseFormat = WebMessageFormat.Json, BodyStyle = WebMessageBodyStyle.Bare, UriTemplate = "/System/")]
         public SystemResponse System(SystemRequest alexaRequest)
         {
-
-            SYSClient client = new SYSClient();
-
             var response = new SystemResponse();
             response.header = new Header();
             response.header.@namespace = "System";
             response.payload = new SystemResponsePayload();
+
+            SYSClient client = new SYSClient();
 
             try
             {
@@ -61,39 +56,27 @@ namespace PremiseAlexaBridgeService
             }
             catch (Exception)
             {
-                response.payload.exception = GetExceptionPayload("INTERNAL_ERROR", "Cannot Connect To Premise Server!");
+                response.header.@namespace = Faults.Namespace;
+                response.header.name = Faults.DependentServiceUnavailableError;
+                response.payload.exception = new ExceptionResponsePayload()
+                {
+                    dependentServiceName = "Premise Server"
+                };
                 return response;
             }
-
-
-            SystemRequestType requestType = SystemRequestType.Unknown;
-
+            
             switch (alexaRequest.header.name)
             {
                 case "HealthCheckRequest":
                     this.InformLastContact("System:HealthCheckRequest");
-
-                    if (!CheckAccessToken(alexaRequest.payload.accessToken).GetAwaiter().GetResult())
-                    {
-                        response.payload.exception = GetExceptionPayload("INVALID_ACCESS_TOKEN", "Access denied.");
-                        break;
-                    }
-
-                    requestType = SystemRequestType.HealthCheck;
                     response.header.name = "HealthCheckResponse";
                     response.payload = this.GetHealthCheckResponse();
                     break;
 
                 default:
-                    try
-                    {
-                        response.header.name = alexaRequest.header.name.Replace("Request", "Response");
-                    }
-                    catch
-                    {
-                        response.header.name = "UnknownResponse";
-                    }
-                    response.payload.exception = GetExceptionPayload("UNSUPPORTED_OPERATION", string.Format("{0} or unsupported Request = '{1}'.", requestType.ToString(), alexaRequest.header.name));
+                    response.header.@namespace = Faults.Namespace;
+                    response.header.name = Faults.UnsupportedOperationError;
+                    response.payload.exception = new ExceptionResponsePayload();
                     break;
             }
             ServiceInstance.DisconnectServer(client);
@@ -123,8 +106,6 @@ namespace PremiseAlexaBridgeService
         public DiscoveryResponse Discovery(DiscoveryRequest alexaRequest)
         {
 
-            SYSClient client = new SYSClient();
-
             var response = new DiscoveryResponse();
             response.header = new Header();
             response.header.messageId = alexaRequest.header.messageId;
@@ -132,49 +113,96 @@ namespace PremiseAlexaBridgeService
             response.header.@namespace = alexaRequest.header.@namespace;
             response.payload = new DiscoveryResponsePayload();
 
+            #region CheckRequest
+
+            if (alexaRequest == null)
+            {
+                response.header.@namespace = Faults.Namespace;
+                response.header.name = Faults.UnexpectedInformationReceivedError;
+                response.payload.exception = new ExceptionResponsePayload()
+                {
+                    faultingParameter = "alexaRequest"
+                }; 
+                return response;
+            }
+
+            if (alexaRequest.header == null)
+            {
+                response.header.@namespace = Faults.Namespace;
+                response.header.name = Faults.UnexpectedInformationReceivedError;
+                response.payload.exception = new ExceptionResponsePayload()
+                {
+                    faultingParameter = "alexaRequest.header"
+                };
+                return response;
+            }
+
+            if (alexaRequest.header.payloadVersion != "2")
+            {
+                response.header.@namespace = Faults.Namespace;
+                response.header.name = Faults.UnexpectedInformationReceivedError;
+                response.payload.exception = new ExceptionResponsePayload()
+                {
+                    faultingParameter = "alexaRequest.header.payloadVersion"
+                }; 
+                return response;
+            }
+
+            #endregion
+
+            if (alexaRequest.header.name != "DiscoverAppliancesRequest")
+            {
+                response.header.@namespace = Faults.Namespace;
+                response.header.name = Faults.UnexpectedInformationReceivedError;
+                response.payload.exception = new ExceptionResponsePayload()
+                {
+                    faultingParameter = "alexaRequest.header.name"
+                };
+                return response;
+            }
+
+            SYSClient client = new SYSClient();
+
+            #region CheckPremise
+
             try
             {
                 ServiceInstance.ConnectToServer(client);
             }
             catch (Exception)
             {
-                response.payload.exception = GetExceptionPayload("INTERNAL_ERROR", "Cannot Connect To Server!");
+                response.header.@namespace = Faults.Namespace;
+                response.header.name = Faults.DependentServiceUnavailableError;
+                response.payload.exception = new ExceptionResponsePayload()
+                {
+                    dependentServiceName = "Premise Server"
+                }; 
                 return response;
             }
 
-            this.InformLastContact("DiscoveryRequest");
+            #endregion
 
-
-            if (alexaRequest == null)
+            try
             {
-                response.payload.exception = GetExceptionPayload("INTERNAL_ERROR", "Null request header!");
-                ServiceInstance.DisconnectServer(client);
-                return response;
-            }
+                this.InformLastContact("DiscoveryRequest");
 
-            //response.header = alexaRequest.header;
-            if (alexaRequest.header.payloadVersion != "2")
+                if (!CheckAccessToken(alexaRequest.payload.accessToken).GetAwaiter().GetResult())
+                {
+                    response.header.@namespace = Faults.Namespace;
+                    response.header.name = Faults.InvalidAccessTokenError;
+                    ServiceInstance.DisconnectServer(client);
+                    return response;
+                }
+                response.payload.discoveredAppliances = this.GetAppliances().GetAwaiter().GetResult();
+                response.payload.discoveredAppliances.Sort(Appliance.CompareByFriendlyName);
+            }
+            catch (Exception)
             {
-                response.payload.exception = GetExceptionPayload("INTERNAL_ERROR", "'(0)' unexpected payload version.");
-                ServiceInstance.DisconnectServer(client);
-                return response;
+                response.header.@namespace = Faults.Namespace;
+                response.header.name = Faults.DriverInternalError;
+                response.payload.exception = new ExceptionResponsePayload();
             }
 
-            if (alexaRequest.header.name != "DiscoverAppliancesRequest")
-            {
-                response.payload.exception = GetExceptionPayload("INTERNAL_ERROR", "'(0)' is an unexpected request.");
-                ServiceInstance.DisconnectServer(client);
-                return response;
-            }
-
-            if (!CheckAccessToken(alexaRequest.payload.accessToken).GetAwaiter().GetResult())
-            {
-                response.payload.exception = GetExceptionPayload("INVALID_ACCESS_TOKEN", "Access denied.");
-                ServiceInstance.DisconnectServer(client);
-                return response;
-            }
-
-            response.payload.discoveredAppliances = this.GetAppliances().GetAwaiter().GetResult();
             ServiceInstance.DisconnectServer(client);
             return response;
         }
@@ -271,9 +299,9 @@ namespace PremiseAlexaBridgeService
                 }
                 if (hasTemperature)
                 {
-                    appliance.actions.Add("setTemperature");
-                    appliance.actions.Add("incrementTemperature");
-                    appliance.actions.Add("decrementTemperature");
+                    appliance.actions.Add("setTargetTemperature");
+                    appliance.actions.Add("incrementTargetTemperature");
+                    appliance.actions.Add("decrementTargetTemperature");
                     appliance.additionalApplianceDetails.purpose = "Thermostat";
                 }
 
@@ -285,7 +313,6 @@ namespace PremiseAlexaBridgeService
             await this.ServiceInstance.HomeObject.SetValue("LastRefreshed", DateTime.Now.ToString());
             await this.ServiceInstance.HomeObject.SetValue("HealthDescription", string.Format("Reported={0},Names Generated={1}", count, generatedNameCount));
             await this.ServiceInstance.HomeObject.SetValue("Health", "True");
-
             return appliances;
         }
 
@@ -308,7 +335,6 @@ namespace PremiseAlexaBridgeService
         [WebInvoke(Method = "POST", RequestFormat = WebMessageFormat.Json, ResponseFormat = WebMessageFormat.Json, BodyStyle = WebMessageBodyStyle.Bare, UriTemplate = "/Control/")]
         public ControlResponse Control(ControlRequest alexaRequest)
         {
-            SYSClient client = new SYSClient();
 
             // allocate and setup header
             var response = new ControlResponse();
@@ -318,25 +344,43 @@ namespace PremiseAlexaBridgeService
             response.header.name = "Confirmation";   // generic in case of a null request
             // allocate a payload
             response.payload = new ApplianceControlResponsePayload();
-            try
-            {
-                ServiceInstance.ConnectToServer(client);
-            }
-            catch (Exception)
-            {
-                response.payload.exception = GetExceptionPayload("INTERNAL_ERROR", "Cannot Connect To Server!");
-                return response;
-            }
 
-            this.InformLastContact("ControlRequest:" + alexaRequest.payload.appliance.additionalApplianceDetails.path);
+            #region CheckRequest
 
-            // check for a bad request
             if (alexaRequest == null)
             {
-                response.payload.exception = GetExceptionPayload("INTERNAL_ERROR", "Null request header.");
-                ServiceInstance.DisconnectServer(client);
+                response.header.@namespace = Faults.Namespace;
+                response.header.name = Faults.UnexpectedInformationReceivedError;
+                response.payload.exception = new ExceptionResponsePayload()
+                {
+                    faultingParameter = "alexaRequest"
+                };
                 return response;
             }
+
+            if (alexaRequest.header == null)
+            {
+                response.header.@namespace = Faults.Namespace;
+                response.header.name = Faults.UnexpectedInformationReceivedError;
+                response.payload.exception = new ExceptionResponsePayload()
+                {
+                    faultingParameter = "alexaRequest.header"
+                };
+                return response;
+            }
+
+            if (alexaRequest.header.payloadVersion != "2")
+            {
+                response.header.@namespace = Faults.Namespace;
+                response.header.name = Faults.UnexpectedInformationReceivedError;
+                response.payload.exception = new ExceptionResponsePayload()
+                {
+                    faultingParameter = "alexaRequest.header.payloadVersion"
+                };
+                return response;
+            }
+
+            #endregion
 
             try
             {
@@ -344,203 +388,247 @@ namespace PremiseAlexaBridgeService
             }
             catch (Exception)
             {
-                response.payload.exception = GetExceptionPayload("INTERNAL_ERROR", "Bad request header.");
-                ServiceInstance.DisconnectServer(client);
+                response.header.@namespace = Faults.Namespace;
+                response.header.name = Faults.UnexpectedInformationReceivedError;
+                response.payload.exception = new ExceptionResponsePayload()
+                {
+                    faultingParameter = "alexaRequest.header.name"
+                };
+                return response;
+
+            }
+
+            SYSClient client = new SYSClient();
+
+            #region CheckPremiseAccess
+
+            try
+            {
+                ServiceInstance.ConnectToServer(client);
+            }
+            catch (Exception)
+            {
+                response.header.@namespace = Faults.Namespace;
+                response.header.name = Faults.DependentServiceUnavailableError;
+                response.payload.exception = new ExceptionResponsePayload()
+                {
+                    dependentServiceName = "Premise Server"
+                };
                 return response;
             }
 
-
-            // check access privleges
             if (!CheckAccessToken(alexaRequest.payload.accessToken).GetAwaiter().GetResult())
             {
-                response.payload.exception = GetExceptionPayload("INVALID_ACCESS_TOKEN", "Access denied.");
+                response.header.@namespace = Faults.Namespace;
+                response.header.name = Faults.InvalidAccessTokenError;
+                response.payload.exception = new ExceptionResponsePayload();
                 ServiceInstance.DisconnectServer(client);
                 return response;
             }
 
-            // check request types
-            ControlRequestType requestType = ControlRequestType.Unknown;
-            DeviceType deviceType = DeviceType.Unknown;
+            #endregion
 
-            string command = alexaRequest.header.name.Trim().ToUpper();
-            switch (command)
-            {
-                case "TURNOFFREQUEST":
-                    requestType = ControlRequestType.TurnOffRequest;
-                    deviceType = DeviceType.OnOff;
-                    break;
-                case "TURNONREQUEST":
-                    requestType = ControlRequestType.TurnOnRequest;
-                    deviceType = DeviceType.OnOff;
-                    break;
-                case "SETTARGETTEMPERATUREREQUEST":
-                    requestType = ControlRequestType.SetTargetTemperature;
-                    deviceType = DeviceType.Thermostat;
-                    break;
-                case "INCREMENTTARGETTEMPERATUREREQUEST":
-                    requestType = ControlRequestType.IncrementTargetTemperature;
-                    deviceType = DeviceType.Thermostat;
-                    break;
-                case "DECREMENTTARGETTEMPERATUREREQUEST":
-                    requestType = ControlRequestType.DecrementTargetTemperature;
-                    deviceType = DeviceType.Thermostat;
-                    break;
-                case "SETPERCENTAGEREQUEST":
-                    requestType = ControlRequestType.SetPercentage;
-                    deviceType = DeviceType.Dimmer;
-                    break;
-                case "INCREMENTPERCENTAGEREQUEST":
-                    requestType = ControlRequestType.IncrementPercentage;
-                    deviceType = DeviceType.Dimmer;
-                    break;
-                case "DECREMENTPERCENTAGEREQUEST":
-                    requestType = ControlRequestType.DecrementPercentage;
-                    deviceType = DeviceType.Dimmer;
-                    break;
-                default:
-                    response.payload.exception = GetExceptionPayload("UNSUPPORTED_OPERATION", string.Format("{0} - Unknown Control Request.", alexaRequest.header.name));
-                    ServiceInstance.DisconnectServer(client);
-                    return response;
-            }
-
-
-            // get the object
-            IPremiseObject applianceToControl = null;
             try
             { 
-                Guid premiseId = new Guid(alexaRequest.payload.appliance.applianceId);
-                applianceToControl = this.ServiceInstance.RootObject.GetObject(premiseId.ToString("B")).GetAwaiter().GetResult();
+                this.InformLastContact("ControlRequest:" + alexaRequest.payload.appliance.additionalApplianceDetails.path);
+
+                // check request types
+                ControlRequestType requestType = ControlRequestType.Unknown;
+                DeviceType deviceType = DeviceType.Unknown;
+
+                string command = alexaRequest.header.name.Trim().ToUpper();
+                switch (command)
+                {
+                    case "TURNOFFREQUEST":
+                        requestType = ControlRequestType.TurnOffRequest;
+                        deviceType = DeviceType.OnOff;
+                        break;
+                    case "TURNONREQUEST":
+                        requestType = ControlRequestType.TurnOnRequest;
+                        deviceType = DeviceType.OnOff;
+                        break;
+                    case "SETTARGETTEMPERATUREREQUEST":
+                        requestType = ControlRequestType.SetTargetTemperature;
+                        deviceType = DeviceType.Thermostat;
+                        break;
+                    case "INCREMENTTARGETTEMPERATUREREQUEST":
+                        requestType = ControlRequestType.IncrementTargetTemperature;
+                        deviceType = DeviceType.Thermostat;
+                        break;
+                    case "DECREMENTTARGETTEMPERATUREREQUEST":
+                        requestType = ControlRequestType.DecrementTargetTemperature;
+                        deviceType = DeviceType.Thermostat;
+                        break;
+                    case "SETPERCENTAGEREQUEST":
+                        requestType = ControlRequestType.SetPercentage;
+                        deviceType = DeviceType.Dimmer;
+                        break;
+                    case "INCREMENTPERCENTAGEREQUEST":
+                        requestType = ControlRequestType.IncrementPercentage;
+                        deviceType = DeviceType.Dimmer;
+                        break;
+                    case "DECREMENTPERCENTAGEREQUEST":
+                        requestType = ControlRequestType.DecrementPercentage;
+                        deviceType = DeviceType.Dimmer;
+                        break;
+                    default:
+                        response.header.@namespace = Faults.Namespace;
+                        response.header.name = Faults.UnsupportedOperationError;
+                        response.payload.exception = new ExceptionResponsePayload();
+                        ServiceInstance.DisconnectServer(client);
+                        return response;
+                }
+
+                // get the object
+                IPremiseObject applianceToControl = null;
+                try
+                { 
+                    Guid premiseId = new Guid(alexaRequest.payload.appliance.applianceId);
+                    applianceToControl = this.ServiceInstance.RootObject.GetObject(premiseId.ToString("B")).GetAwaiter().GetResult();
+                }
+                catch
+                {
+                    response.header.@namespace = Faults.Namespace;
+                    response.header.name = Faults.NoSuchTargetError;
+                    response.payload.exception = new ExceptionResponsePayload();
+                    ServiceInstance.DisconnectServer(client);
+                    return response;
+                }
+
+                // report failure
+                if (applianceToControl == null)
+                {
+                    response.header.@namespace = Faults.Namespace;
+                    response.header.name = Faults.NoSuchTargetError;
+                    response.payload.exception = new ExceptionResponsePayload();
+                    ServiceInstance.DisconnectServer(client);
+                    return response;
+                }
+
+                if (deviceType == DeviceType.OnOff)
+                {
+                    switch (requestType)
+                    {
+                        case ControlRequestType.TurnOnRequest:
+                            applianceToControl.SetValue("PowerState", "True").GetAwaiter().GetResult();
+                            break;
+                        case ControlRequestType.TurnOffRequest:
+                            applianceToControl.SetValue("PowerState", "False").GetAwaiter().GetResult();
+                            break;
+                        default:
+                            break;
+                    }
+                }
+                else if (deviceType == DeviceType.Dimmer)
+                {
+                    double currentValue = 0.0;
+                    double adjustValue = 0.0;
+                    double valueToSend = 0.0;
+
+                    switch (requestType)
+                    {
+                        case ControlRequestType.SetPercentage:
+                            // obtain the adjustValue
+                            adjustValue = Math.Round(double.Parse(alexaRequest.payload.percentageState.value), 2).LimitToRange(0.00, 100.00);
+                            // convert from percentage and maintain fractional accuracy
+                            valueToSend = Math.Round(adjustValue / 100.00, 4);
+                            applianceToControl.SetValue("Brightness", valueToSend.ToString()).GetAwaiter().GetResult();
+                            break;
+                        case ControlRequestType.IncrementPercentage:
+                            // obtain the adjustValue
+                            adjustValue = Math.Round(double.Parse(alexaRequest.payload.deltaPercentage.value) / 100.00, 2).LimitToRange(0.00, 100.00);
+                            currentValue = Math.Round(applianceToControl.GetValue<Double>("Brightness").GetAwaiter().GetResult(), 2);
+                            // maintain fractional accuracy
+                            valueToSend = Math.Round(currentValue + adjustValue, 2).LimitToRange(0.00, 1.00);
+                            applianceToControl.SetValue("Brightness", valueToSend.ToString()).GetAwaiter().GetResult();
+                            break;
+                        case ControlRequestType.DecrementPercentage:
+                            // obtain the adjustValue
+                            adjustValue = Math.Round(double.Parse(alexaRequest.payload.deltaPercentage.value) / 100.00, 2).LimitToRange(0.00, 100.00);
+                            currentValue = Math.Round(applianceToControl.GetValue<Double>("Brightness").GetAwaiter().GetResult(), 2);
+                            // maintain fractional accuracy
+                            valueToSend = Math.Round(currentValue - adjustValue, 2).LimitToRange(0.00, 1.00);
+                            applianceToControl.SetValue("Brightness", valueToSend.ToString()).GetAwaiter().GetResult();
+                            break;
+                        default:
+                            break;
+                    }
+                }
+                else if (deviceType == DeviceType.Thermostat)
+                {
+                    int previousTemperatureMode;
+                    int temperatureMode;
+                    Temperature previousTargetTemperature = null;
+                    Temperature targetTemperature = null;
+                    double deltaTemperatureC = 0.0; // in C
+
+                    // obtain previous state (sys stores temperatures as K)
+                    previousTemperatureMode = applianceToControl.GetValue<int>("TemperatureMode").GetAwaiter().GetResult();
+                    previousTargetTemperature = new Temperature(applianceToControl.GetValue<double>("CurrentSetPoint").GetAwaiter().GetResult());
+
+                    switch (requestType)
+                    {
+                        case ControlRequestType.SetTargetTemperature:
+                            // get target temperature in C
+                            targetTemperature = new Temperature();
+                            targetTemperature.Celcius = double.Parse(alexaRequest.payload.targetTemperature.value);
+                            break;
+                        case ControlRequestType.IncrementTargetTemperature:
+                            // get delta temp in C
+                            deltaTemperatureC = double.Parse(alexaRequest.payload.deltaTemperature.value);
+                            // increment the targetTemp
+                            targetTemperature = new Temperature();
+                            targetTemperature.Celcius = previousTargetTemperature.Celcius + deltaTemperatureC;
+                            break;
+
+                        case ControlRequestType.DecrementTargetTemperature:
+                            // get delta temp in C
+                            deltaTemperatureC = double.Parse(alexaRequest.payload.deltaTemperature.value);
+                            // decrement the targetTemp
+                            targetTemperature = new Temperature();
+                            targetTemperature.Celcius = previousTargetTemperature.Celcius - deltaTemperatureC;
+                            break;
+
+                        default:
+                            targetTemperature = new Temperature(0.00);
+                            previousTemperatureMode = 10; // error
+                            break;
+                    }
+
+                    // set new target temperature
+                    applianceToControl.SetValue("CurrentSetPoint", targetTemperature.Kelvin.ToString()).GetAwaiter().GetResult();
+                    response.payload.targetTemperature = new ApplianceValue();
+                    response.payload.targetTemperature.value = targetTemperature.Celcius.ToString();
+
+                    // get new mode 
+                    temperatureMode = applianceToControl.GetValue<int>("TemperatureMode").GetAwaiter().GetResult();
+                    // report new mode
+                    response.payload.temperatureMode = new ApplianceValue();
+                    response.payload.temperatureMode.value = TemperatureMode.ModeToString(temperatureMode);
+
+                    // alloc a previousState object
+                    response.payload.previousState = new AppliancePreviousState();
+
+                    // report previous mode
+                    response.payload.previousState.mode = new ApplianceValue();
+                    response.payload.previousState.mode.value = TemperatureMode.ModeToString(previousTemperatureMode);
+
+                    // report previous targetTemperature in C
+                    response.payload.previousState.targetTemperature = new ApplianceValue();
+                    response.payload.previousState.targetTemperature.value = previousTargetTemperature.Celcius.ToString();
+                }
+                else
+                {
+                    response.header.@namespace = Faults.Namespace;
+                    response.header.name = Faults.UnsupportedOperationError;
+                    response.payload.exception = new ExceptionResponsePayload();
+                }
             }
             catch
             {
-                response.payload.exception = GetExceptionPayload("INTERNAL_ERROR", "Cannot Convert Appliance Id.");
-                ServiceInstance.DisconnectServer(client);
-                return response;
-            }
-
-            // report failure
-            if (applianceToControl == null)
-            {
-                response.payload.exception = GetExceptionPayload("NO_SUCH_TARGET", string.Format("Cannot find device {0} ({1})", alexaRequest.payload.appliance.additionalApplianceDetails.path, alexaRequest.payload.appliance.applianceId));
-                ServiceInstance.DisconnectServer(client);
-                return response;
-            }
-
-            if (deviceType == DeviceType.OnOff)
-            {
-                switch (requestType)
-                {
-                    case ControlRequestType.TurnOnRequest:
-                        applianceToControl.SetValue("PowerState", "True").GetAwaiter().GetResult();
-                        break;
-                    case ControlRequestType.TurnOffRequest:
-                        applianceToControl.SetValue("PowerState", "False").GetAwaiter().GetResult();
-                        break;
-                    default:
-                        break;
-                }
-            }
-            else if (deviceType == DeviceType.Dimmer)
-            {
-                double currentValue = 0.0;
-                double adjustValue = 0.0;
-                double valueToSend = 0.0;
-
-                switch (requestType)
-                {
-                    case ControlRequestType.SetPercentage:
-                        // obtain the adjustValue
-                        adjustValue = Math.Round(double.Parse(alexaRequest.payload.percentageState.value), 2).LimitToRange(0.00, 100.00);
-                        // convert from percentage and maintain fractional accuracy
-                        valueToSend = Math.Round(adjustValue / 100.00, 4);
-                        applianceToControl.SetValue("Brightness", valueToSend.ToString()).GetAwaiter().GetResult();
-                        break;
-                    case ControlRequestType.IncrementPercentage:
-                        // obtain the adjustValue
-                        adjustValue = Math.Round(double.Parse(alexaRequest.payload.deltaPercentage.value) / 100.00, 2).LimitToRange(0.00, 100.00);
-                        currentValue = Math.Round(applianceToControl.GetValue<Double>("Brightness").GetAwaiter().GetResult(), 2);
-                        // maintain fractional accuracy
-                        valueToSend = Math.Round(currentValue + adjustValue, 2).LimitToRange(0.00, 1.00);
-                        applianceToControl.SetValue("Brightness", valueToSend.ToString()).GetAwaiter().GetResult();
-                        break;
-                    case ControlRequestType.DecrementPercentage:
-                        // obtain the adjustValue
-                        adjustValue = Math.Round(double.Parse(alexaRequest.payload.deltaPercentage.value) / 100.00, 2).LimitToRange(0.00, 100.00);
-                        currentValue = Math.Round(applianceToControl.GetValue<Double>("Brightness").GetAwaiter().GetResult(), 2);
-                        // maintain fractional accuracy
-                        valueToSend = Math.Round(currentValue - adjustValue, 2).LimitToRange(0.00, 1.00);
-                        applianceToControl.SetValue("Brightness", valueToSend.ToString()).GetAwaiter().GetResult();
-                        break;
-                    default:
-                        break;
-                }
-            }
-            else if (deviceType == DeviceType.Thermostat)
-            {
-                int previousTemperatureMode;
-                int temperatureMode;
-                Temperature previousTargetTemperature = null;
-                Temperature targetTemperature = null;
-                double deltaTemperatureC = 0.0; // in C
-
-                // obtain previous state (sys stores temperatures as K)
-                previousTemperatureMode = applianceToControl.GetValue<int>("TemperatureMode").GetAwaiter().GetResult();
-                previousTargetTemperature = new Temperature(applianceToControl.GetValue<double>("CurrentSetPoint").GetAwaiter().GetResult());
-
-                switch (requestType)
-                {
-                    case ControlRequestType.SetTargetTemperature:
-                        // get target temperature in C
-                        targetTemperature = new Temperature();
-                        targetTemperature.Celcius = double.Parse(alexaRequest.payload.targetTemperature.value);
-                        break;
-                    case ControlRequestType.IncrementTargetTemperature:
-                        // get delta temp in C
-                        deltaTemperatureC = double.Parse(alexaRequest.payload.deltaTemperature.value);
-                        // increment the targetTemp
-                        targetTemperature = new Temperature();
-                        targetTemperature.Celcius = previousTargetTemperature.Celcius + deltaTemperatureC;
-                        break;
-
-                    case ControlRequestType.DecrementTargetTemperature:
-                        // get delta temp in C
-                        deltaTemperatureC = double.Parse(alexaRequest.payload.deltaTemperature.value);
-                        // decrement the targetTemp
-                        targetTemperature = new Temperature();
-                        targetTemperature.Celcius = previousTargetTemperature.Celcius - deltaTemperatureC;
-                        break;
-
-                    default:
-                        targetTemperature = new Temperature(0.00);
-                        previousTemperatureMode = 10; // error
-                        break;
-                }
-
-                // set new target temperature
-                applianceToControl.SetValue("CurrentSetPoint", targetTemperature.Kelvin.ToString()).GetAwaiter().GetResult();
-                response.payload.targetTemperature = new ApplianceValue();
-                response.payload.targetTemperature.value = targetTemperature.Celcius.ToString();
-
-                // get new mode 
-                temperatureMode = applianceToControl.GetValue<int>("TemperatureMode").GetAwaiter().GetResult();
-                // report new mode
-                response.payload.temperatureMode = new ApplianceValue();
-                response.payload.temperatureMode.value = TemperatureMode.ModeToString(temperatureMode);
-
-                // alloc a previousState object
-                response.payload.previousState = new AppliancePreviousState();
-
-                // report previous mode
-                response.payload.previousState.mode = new ApplianceValue();
-                response.payload.previousState.mode.value = TemperatureMode.ModeToString(previousTemperatureMode);
-
-                // report previous targetTemperature in C
-                response.payload.previousState.targetTemperature = new ApplianceValue();
-                response.payload.previousState.targetTemperature.value = previousTargetTemperature.Celcius.ToString();
-            }
-            else
-            {
-                response.payload.exception = GetExceptionPayload("UNSUPPORTED_OPERATION", string.Format("{0} - Unknown Device Type.", alexaRequest.header.name));
+                response.header.@namespace = Faults.Namespace;
+                response.header.name = Faults.DriverInternalError;
+                response.payload.exception = new ExceptionResponsePayload();
             }
 
             ServiceInstance.DisconnectServer(client);
@@ -550,16 +638,6 @@ namespace PremiseAlexaBridgeService
         #endregion
 
         #region Utility
-
-        private static ExceptionResponsePayload GetExceptionPayload(string exceptionCode, string exceptionDescription)
-        {
-            var err = new ExceptionResponsePayload()
-            {
-                code = exceptionCode,
-                description = exceptionDescription
-            };
-            return err;
-        }
 
         private async void InformLastContact(string command)
         {
