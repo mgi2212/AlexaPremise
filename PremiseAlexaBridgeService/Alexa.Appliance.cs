@@ -6,7 +6,27 @@ using SYSWebSockClient;
 namespace Alexa.SmartHome
 {
 
-    [DataContract(Namespace ="Alexa.ConnectedHome.Discovery")]
+    [DataContract(Namespace = "")]
+    public class ApplianceIdPayload
+    {
+
+        [DataMember(Name = "applianceId", Order = 1)]
+        public string applianceId { get; set; }
+
+        [DataMember(Name = "additionalApplianceDetails", EmitDefaultValue = false, Order = 2)]
+        public AdditionalApplianceDetails additionalApplianceDetails { get; set; }
+    }
+
+    [DataContract(Namespace = "")]
+    public class SpacePayload
+    {
+        [DataMember(Name = "name", Order = 1)]
+        public string name { get; set; }
+    }
+
+    #region Discovery
+
+    [DataContract(Namespace = "Alexa.ConnectedHome.Discovery")]
     public class AdditionalApplianceDetails
     {
         [DataMember(Name = "purpose", Order = 1)]
@@ -30,44 +50,60 @@ namespace Alexa.SmartHome
         public AdditionalApplianceDetails additionalApplianceDetails { get; set; }
 
         [DataMember(Name = "applianceId", Order = 3)]
-        public string applianceId { get; set;}
+        private string _applianceId;
+        public string applianceId
+        {
+            get { return _applianceId; }
+            set { _applianceId = value != null && value.Length > 256 ? value.Substring(0, 256) : value;}
+        }
 
         [DataMember(Name = "friendlyDescription", EmitDefaultValue = false, Order = 4)]
-        public string friendlyDescription { get; set; }
+        private string _friendlyDescription;
+        public string friendlyDescription {
+            get { return _friendlyDescription; }
+            set { _friendlyDescription = value != null && value.Length > 128 ? value.Substring(0, 128) : value; }
+        }
 
         [DataMember(Name = "friendlyName", EmitDefaultValue = false, Order = 5)]
-        public string friendlyName { get; set; }
+        private string _friendlyName; 
+        public string friendlyName {
+            get { return _friendlyName; }
+            set { _friendlyName = value != null && value.Length > 128 ? value.Substring(0, 128) : value; }
+        }
 
         [DataMember(Name = "isReachable", EmitDefaultValue = true, Order = 6)]
         public bool isReachable { get; set; }
 
         [DataMember(Name = "manufacturerName", EmitDefaultValue = false, Order = 7)]
-        public string manufacturerName { get; set; }
+        private string _manufacturerName;
+        public string manufacturerName {
+            get { return _manufacturerName; }
+            set { _manufacturerName = value != null && value.Length > 128 ? value.Substring(0, 128) : value; }
+        }
 
         [DataMember(Name = "modelName", EmitDefaultValue = false, Order = 8)]
-        public string modelName {get; set; }
+        private string _modelName;
+        public string modelName {
+            get { return _modelName; }
+            set { _modelName = value != null && value.Length > 128 ? value.Substring(0, 128) : value; }
+        }
 
         [DataMember(Name = "version", EmitDefaultValue = false, Order = 9)]
-        public string version { get; set; }
+        private string _version;
+        public string version {
+            get { return _version; }
+            set { _version = value != null && value.Length > 128 ? value.Substring(0, 128) : value; }
+        }
 
         public static int CompareByFriendlyName(Appliance appliance1, Appliance appliance2)
         {
             return String.Compare(appliance1.friendlyName, appliance2.friendlyName, StringComparison.InvariantCultureIgnoreCase);
         }
-
     }
 
+    #endregion
 
-    [DataContract(Namespace = "")]
-    public class ApplianceIdPayload
-    {
-
-        [DataMember(Name = "applianceId", Order = 1)]
-        public string applianceId { get; set; }
-
-        [DataMember(Name = "additionalApplianceDetails", EmitDefaultValue = false, Order = 2)]
-        public AdditionalApplianceDetails additionalApplianceDetails { get; set; }
-    }
+    #region Control
 
     [DataContract(Name = "previousState", Namespace = "Alexa.ConnectedHome.Control")]
     public class AppliancePreviousState
@@ -78,7 +114,25 @@ namespace Alexa.SmartHome
         public ApplianceValue targetTemperature;
     }
 
-    [DataContract(Name="payload", Namespace = "Alexa.ConnectedHome.Control")]
+    [DataContract(Name = "color", Namespace = "Alexa.ConnectedHome.Control")]
+    public class ApplianceColorValue
+    {
+        [DataMember(Name = "hue", EmitDefaultValue = false)]
+        public ApplianceValue hue;
+        [DataMember(Name = "saturation", EmitDefaultValue = false)]
+        public ApplianceValue saturation;
+        [DataMember(Name = "brightness", EmitDefaultValue = false)]
+        public ApplianceValue brightness;
+    }
+
+    [DataContract(Name = "colorTemperature", Namespace = "Alexa.ConnectedHome.Control")]
+    public class ApplianceColorTemperatureValue
+    {
+        [DataMember(Name = "value", EmitDefaultValue = false)]
+        public ApplianceValue value;
+    }
+
+    [DataContract(Name = "payload", Namespace = "Alexa.ConnectedHome.Control")]
     public class ApplianceControlRequestPayload
     {
         [DataMember(Name = "accessToken", Order = 1)]
@@ -87,7 +141,7 @@ namespace Alexa.SmartHome
         [DataMember(Name = "appliance", Order = 2)]
         public ApplianceIdPayload appliance;
 
-        [DataMember(Name = "targetTemperature", EmitDefaultValue =false)]
+        [DataMember(Name = "targetTemperature", EmitDefaultValue = false)]
         public ApplianceValue targetTemperature;
 
         [DataMember(Name = "temperatureMode", EmitDefaultValue = false)]
@@ -103,7 +157,13 @@ namespace Alexa.SmartHome
         public ApplianceValue deltaPercentage;
 
         [DataMember(Name = "initiationTimestamp", EmitDefaultValue = false)]
-        public string initiationTimestamp; 
+        public string initiationTimestamp;
+
+        [DataMember(Name = "color", EmitDefaultValue = false)]
+        public ApplianceColorValue color;
+
+        [DataMember(Name = "colorTemperature", EmitDefaultValue = false)]
+        public ApplianceColorTemperatureValue colorTemperature;
     }
 
     [DataContract(Name = "payload", Namespace = "Alexa.ConnectedHome.Control")]
@@ -122,5 +182,101 @@ namespace Alexa.SmartHome
         [DataMember(Name = "exception", EmitDefaultValue = false, Order = 2)]
         public ExceptionResponsePayload exception { get; set; }
     }
+
+    #endregion
+
+    #region Query
+
+    [DataContract(Name = "roomStatus", Namespace = "Alexa.ConnectedHome.Query")]
+    public class ApplianceRoomStatus
+    {
+        [DataMember(Name = "friendlyName", EmitDefaultValue = false)]
+        public string friendlyName;
+
+        [DataMember(Name = "occupied", EmitDefaultValue = false)]
+        public string occupied;
+
+        [DataMember(Name = "occupancyCount", EmitDefaultValue = false)]
+        public string occupancyCount;
+
+        [DataMember(Name = "lastOccupied", EmitDefaultValue = false)]
+        public string lastOccupied;
+
+        [DataMember(Name = "clean", EmitDefaultValue = false)]
+        public string clean;
+
+        [DataMember(Name = "freeze", EmitDefaultValue = false)]
+        public string freeze;
+
+        [DataMember(Name = "mode", EmitDefaultValue = false)]
+        public string mode;
+
+        [DataMember(Name = "deviceCount", EmitDefaultValue = false)]
+        public string deviceCount;
+
+    }
+
+    [DataContract(Name = "temperatureReading", Namespace = "Alexa.ConnectedHome.Query")]
+    public class ApplianceTemperatureReading
+    {
+        [DataMember(Name = "value", EmitDefaultValue = false, Order = 1)]
+        public double value;
+        [DataMember(Name = "scale", EmitDefaultValue = false, Order = 2 )]
+        public string scale;
+    }
+
+    [DataContract(Name = "temperatureMode", Namespace = "Alexa.ConnectedHome.Query")]
+    public class ApplianceTemperatureMode
+    {
+        [DataMember(Name = "value", EmitDefaultValue = false)]
+        public string value;
+        [DataMember(Name = "friendlyName", EmitDefaultValue = false)]
+        public string friendlyName;
+    }
+
+    [DataContract(Name = "payload", Namespace = "Alexa.ConnectedHome.Query")]
+    public class ApplianceQueryRequestPayload
+    {
+        [DataMember(Name = "accessToken", Order = 1)]
+        public string accessToken { get; set; }
+
+        [DataMember(Name = "appliance", Order = 2)]
+        public ApplianceIdPayload appliance;
+
+        [DataMember(Name = "space", EmitDefaultValue = false)]
+        public SpacePayload space;
+
+    }
+
+    [DataContract(Name = "payload", Namespace = "Alexa.ConnectedHome.Query")]
+    public class ApplianceQueryResponsePayload
+    {
+
+        [DataMember(Name = "temperatureReading", EmitDefaultValue = false, Order = 1)]
+        public ApplianceTemperatureReading temperatureReading;
+
+        [DataMember(Name = "targetTemperature", EmitDefaultValue = false)]
+        public ApplianceTemperatureReading targetTemperature;
+
+        [DataMember(Name = "coolingTargetTemperature", EmitDefaultValue = false)]
+        public ApplianceTemperatureReading coolingTargetTemperature;
+
+        [DataMember(Name = "heatingTargetTemperature", EmitDefaultValue = false)]
+        public ApplianceTemperatureReading heatingTargetTemperature;
+
+        [DataMember(Name = "temperatureMode", EmitDefaultValue = false)]
+        public ApplianceTemperatureMode temperatureMode;
+
+        [DataMember(Name = "roomStatus", EmitDefaultValue = false)]
+        public ApplianceRoomStatus applianceRoomStatus;
+
+        [DataMember(Name = "applianceResponseTimestamp", EmitDefaultValue = false, Order = 7)]
+        public string applianceResponseTimestamp;
+
+        [DataMember(Name = "exception", EmitDefaultValue = false, Order = 8)]
+        public ExceptionResponsePayload exception { get; set; }
+    }
+
+    #endregion
 
 }

@@ -13,6 +13,9 @@ namespace PremiseAlexaBridgeService
         ControlResponse Control(ControlRequest request);
 
         [OperationContract]
+        QueryResponse Query(QueryRequest request);
+
+        [OperationContract]
         SystemResponse System(SystemRequest request);
     }
 }

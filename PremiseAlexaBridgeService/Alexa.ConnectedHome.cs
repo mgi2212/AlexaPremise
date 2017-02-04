@@ -32,6 +32,7 @@ namespace Alexa.SmartHome
     public static class Faults
     {
         public const string Namespace = "Alexa.ConnectedHome.Control";
+        public const string QueryNamespace = "Alexa.ConnectedHome.Query";
         // User Faults:
         // These errors occur when the request is invalid due to customer error. For example the customer asks to set a
         // thermostat to 1000 degrees.
@@ -198,6 +199,20 @@ namespace Alexa.SmartHome
 
     #region Control
 
+    public enum QueryRequestType
+    {
+        Unknown,
+        GetTemperatureReading,
+        GetTargetTemperature,
+        GetSpaceMode,
+        GetHouseStatus,
+        PowerState,
+        DimmerLevel,
+        Color,
+        ColorTemperature,
+    }
+
+
     public enum ControlRequestType
     {
         Unknown,
@@ -209,7 +224,11 @@ namespace Alexa.SmartHome
         DecrementTargetTemperature,
         SetPercentage,
         IncrementPercentage,
-        DecrementPercentage
+        DecrementPercentage,
+        SetColor,
+        SetColorTemperature,
+        IncrementColorTemperature,
+        DecrementColorTemperature
     }
 
     public enum DeviceType
@@ -217,7 +236,10 @@ namespace Alexa.SmartHome
         Unknown,
         OnOff,
         Dimmer,
-        Thermostat
+        Thermostat,
+        ColorLight,
+        Space,
+        Status
     }
 
     public class ApplianceValue
@@ -244,6 +266,32 @@ namespace Alexa.SmartHome
         [DataMember(Name = "payload")]
         public ApplianceControlResponsePayload payload;
     }
+
+    #endregion
+
+    #region Query
+
+    [DataContract(Namespace = "Alexa.ConnectedHome.Query")]
+    public class QueryRequest
+    {
+        [DataMember(Name = "header")]
+        public Header header;
+
+        [DataMember(Name = "payload")]
+        public ApplianceQueryRequestPayload payload;
+    }
+
+    [DataContract(Namespace = "Alexa.ConnectedHome.Query")]
+    public class QueryResponse
+    {
+        [DataMember(Name = "header")]
+        public Header header;
+
+        [DataMember(Name = "payload")]
+        public ApplianceQueryResponsePayload payload;
+    }
+
+
 
     #endregion
 
