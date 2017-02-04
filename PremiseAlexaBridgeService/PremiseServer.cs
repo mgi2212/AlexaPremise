@@ -12,6 +12,7 @@ namespace PremiseAlexaBridgeService
         internal bool AlexaCheckStateBeforeSetValue;
         internal string AlexaStatusClassPath;
         internal string AlexaApplianceClassPath;
+        internal string AlexaLocationClassPath;
 
         internal string PremiseServerAddress;
         internal string PremiseUserName;
@@ -29,6 +30,7 @@ namespace PremiseAlexaBridgeService
             this.PremiseHomeObject = ConfigurationManager.AppSettings["premiseHomeObject"];
             this.AlexaStatusClassPath = ConfigurationManager.AppSettings["premiseAlexaStatusClassPath"];
             this.AlexaApplianceClassPath = ConfigurationManager.AppSettings["premiseAlexaApplianceClassPath"];
+            this.AlexaLocationClassPath = ConfigurationManager.AppSettings["premiseAlexaLocationClassPath"];
 
             try
             {

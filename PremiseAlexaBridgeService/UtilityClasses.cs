@@ -21,6 +21,34 @@ namespace PremiseAlexaBridgeService
         }
     }
 
+    internal static class RoomMode
+    {
+        public static string ModeToString(int mode)
+        {
+            if (mode == -2)
+                return "Freeze";
+            if (mode == -2)
+                return "Clean";
+            if (mode == -1)
+                return "Idle";
+            if (mode == 0)
+                return "Unoccupied";
+            if (mode == 1)
+                return "Morning";
+            if (mode == 2)
+                return "Day";
+            if (mode == 3)
+                return "Evening";
+            if (mode == 4)
+                return "Night";
+            if (mode == 5)
+                return "Sleep";
+
+            return "ERROR";
+        }
+    }
+
+
 
     internal class Temperature
     {
