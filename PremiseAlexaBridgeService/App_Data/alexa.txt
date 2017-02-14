@@ -1,79 +1,82 @@
-﻿netsh advfirewall firewall add rule name="Open Port 8773" dir=in action=allow protocol=TCP localport=8733
-aws lambda add-permission --function-name arn:aws:lambda:us-east-1:115882003426:function:AlexaPremiseDriver --statement-id 1 --action lambda:invokeFunction --principal arn:aws:iam::185440857803:user/LambdaExecutionUser
-aws lambda add-permission --function-name arn:aws:lambda:us-east-1:115882003426:function:AlexaPremiseDriver --statement-id 2 --action lambda:invokeFunction --principal arn:aws:iam::882658230287:user/LambdaExecutionUser
-//alexa.caelumllc.com 8173 amzn1.account.AHCY3ZDCJ2RSRM3SMEANBN2DYNGA
-//alexapremise.kindel.net 443 amzn1.account.AGJYA77MWXON4PADJR35H2HHL7NQ
-//alexa.quigleys.us 8733 amzn1.account.AHHO677DA2UVHYY724MCRSBYZOVQ
-//alexa.quigleys.us 8733 amzn1.account.AFUVBW6UNIFO6IMP3SRXTR6P2IWA
-
-http://localhost:8733/Alexa.svc/json/System/
+﻿
+Custom Skill Interaction Model
 {
-"header": {
-"namespace": "System",
-"name": "HealthCheckRequest",
-"payloadVersion": "1"
-},
-"payload": {
-"initiationTimestamp": 1435302567000
-}
-}
-
-http://localhost:8733/Alexa.svc/json/Discovery/
-{
-    "header": {
-        "namespace": "Discovery",
-        "name": "DiscoverAppliancesRequest",
-        "payloadVersion": "1"
-    },
-    "payload": {
-        "accessToken": "amzn1.account.AHHO677DA2UVHYY724MCRSBYZOVQ"
-    }
-}
-http://localhost:8733/Alexa.svc/json/Control/
-
-{
-    "header": {
-        "namespace": "Control",
-        "name": "SwitchOnOffRequest",
-        "payloadVersion": "1"
-    },
-    "payload": {
-        "accessToken": "amzn1.account.AHHO677DA2UVHYY724MCRSBYZOVQ",
-        "switchControlAction": "TURN_ON",
-        "appliance": {
-            "applianceId": "A266E75A-9FCF-496B-B6EF-7B83E0BFDA73",
-            "additionalApplianceDetails": {
-                "dimmable": true,
-                "path": "sys://Home/House/First/Den/Credenza"
-            }
+  "intents": [
+    {
+      "intent": "IsRoom",
+      "slots": [
+        {
+          "name": "Prefix",
+          "type": "ROOM_PREFIX"
+        },
+        {
+          "name": "Room",
+          "type": "AMAZON.Room"
+        },
+        {
+          "name": "Mode",
+          "type": "ROOM_MODE"
         }
-    }
-}
-
-
-
-
-{
-    "header": {
-        "namespace": "Control",
-        "name": "AdjustNumericalSettingRequest",
-        "payloadVersion": "1"
+      ]
     },
-    "payload": {
-        "accessToken": "dan",
-		"adjustmentType":"ABSOLUTE",
-		"adjustmentUnit":"PERCENTAGE",
-		"adjustmentValue":100.0,
-        "appliance": {
-            "applianceId": "A266E75A-9FCF-496B-B6EF-7B83E0BFDA73",
-            "additionalApplianceDetails": {
-                "dimmable": true,
-                "path": "sys://Home/House/First/Den/Credenza"
-            }
-        }
+    {
+      "intent": "AMAZON.HelpIntent"
+    },
+    {
+      "intent": "AMAZON.CancelIntent"
+    },
+    {
+      "intent": "AMAZON.StopIntent"
     }
+  ]
 }
 
+
+
+
+ROOM_MODE
+clean
+occupied
+frozen
+sleep
+morning
+day
+evening
+night
+unocupied
+
+ROOM_PREFIX
+upstairs
+downstairs
+master
+kids
+children
+outside
+basement
+attic
+butlers
+guest
+
+Sample Utterances:
+IsRoom if the {Room} is occupied
+IsRoom if the {Prefix} {Room} is occupied
+IsRoom is {Room} {Mode}
+IsRoom is the {Room} {Mode}
+IsRoom is the {Prefix} {Room} {Mode}
+IsRoom is {Room} in {Mode} mode
+IsRoom is the {Room} in {Mode} mode
+IsRoom is the {Prefix} {Room} in {Mode} mode
+IsRoom what mode is {Room} in
+IsRoom what mode is the {Room} in
+IsRoom what mode is the {Prefix} {Room} in
+IsRoom what is the {Room} status
+IsRoom what is the {Prefix} {Room} status
+IsRoom what is the status of the {Prefix} {Room}
+IsRoom what is the status of the {Room}
+
+
+
+PREWARM CACHE:
  If using PreWarmCache option changes to: 
  c:\windows\system32\inetsrv\config\applicationHost.config 
 
