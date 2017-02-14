@@ -214,6 +214,12 @@ namespace Alexa.SmartHome
         [DataMember(Name = "deviceCount", EmitDefaultValue = false)]
         public string deviceCount;
 
+        [DataMember(Name = "currentTemperature", EmitDefaultValue = false)]
+        public string currentTemperature;
+
+        [DataMember(Name = "lightsOnCount", EmitDefaultValue = false)]
+        public string lightsOnCount;
+
     }
 
     [DataContract(Name = "temperatureReading", Namespace = "Alexa.ConnectedHome.Query")]
