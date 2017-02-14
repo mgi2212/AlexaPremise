@@ -875,7 +875,7 @@ namespace PremiseAlexaBridgeService
                 else if (requestType == QueryRequestType.GetSpaceMode)
                 {
 
-                    var returnClause = new string[] { "Name", "Description", "CleanMode", "Freeze", "DisplayedTemporalMode", "Occupancy", "LastOccupied", "OccupancyCount", "OID", "OPATH", "OTYPENAME", "Type" };
+                    var returnClause = new string[] { "Name", "Description", "CleanMode", "Freeze", "DisplayedTemporalMode", "Occupancy", "LastOccupied", "OccupancyCount", "Temperature", "OID", "OPATH", "OTYPENAME", "Type" };
                     dynamic whereClause = new System.Dynamic.ExpandoObject();
                     whereClause.TypeOf = this.ServiceInstance.AlexaLocationClassPath;
                     var sysRooms = this.ServiceInstance.HomeObject.Select(returnClause, whereClause).GetAwaiter().GetResult();
@@ -890,22 +890,39 @@ namespace PremiseAlexaBridgeService
                             var devices = this_room.GetChildren().GetAwaiter().GetResult();
 
                             var count = 0;
+                            var onCount = 0;
+                            Temperature temperature = null;
 
                             foreach (var device in devices)
                             {
                                 if (device.IsOfType("{3470B9B5-E685-4EB2-ABC0-2F4CCD7F686A}").GetAwaiter().GetResult() == true)
                                 {
                                     count++;
+                                    if (device.IsOfType("{65C7B5C2-153D-4711-BAD7-D334FDB12338}").GetAwaiter().GetResult() == true)
+                                    {
+                                        temperature = new Temperature(device.GetValue<double>("Temperature").GetAwaiter().GetResult());
+                                    }
+                                    else if (device.IsOfType("{0B1DA7E1-1731-49AC-9814-47470E78EFAB}").GetAwaiter().GetResult() == true)
+                                    {
+                                        onCount += (device.GetValue<bool>("PowerState").GetAwaiter().GetResult() == true) ? 1 : 0;
+                                    }
                                 }
                             }
+                            //ICollection<IPremiseObject> i = this_room.GetAggregatedProperties().GetAwaiter().GetResult();
+
                             response.payload.applianceRoomStatus = new ApplianceRoomStatus();
                             response.payload.applianceRoomStatus.friendlyName = room.Description;
                             response.payload.applianceRoomStatus.occupied = room.Occupancy;
                             response.payload.applianceRoomStatus.freeze = room.Freeze;
                             response.payload.applianceRoomStatus.clean = room.CleanMode;
                             response.payload.applianceRoomStatus.occupancyCount = room.OccupancyCount;
+                            //response.payload.applianceRoomStatus.lastOccupied = room.lastOccupied.ToString();
                             response.payload.applianceRoomStatus.mode = RoomMode.ModeToString((int)room.DisplayedTemporalMode);
                             response.payload.applianceRoomStatus.deviceCount = count.ToString();
+                            if (temperature != null) {
+                                response.payload.applianceRoomStatus.currentTemperature = double.Parse(string.Format("{0:N2}", temperature.Fahrenheit)).ToString();
+                            }
+                            response.payload.applianceRoomStatus.lightsOnCount = onCount.ToString();
                             ServiceInstance.DisconnectServer(client);
                             return response;
                         }
@@ -1019,8 +1036,9 @@ namespace PremiseAlexaBridgeService
                     response.payload.exception = new ExceptionResponsePayload();
                 }
             }
-            catch
+            catch (Exception e)
             {
+                string t = e.Message;
                 response.header.@namespace = Faults.QueryNamespace;
                 response.header.name = Faults.DriverInternalError;
                 response.payload.exception = new ExceptionResponsePayload();
