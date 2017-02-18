@@ -984,7 +984,6 @@ namespace PremiseAlexaBridgeService
 
         private void ProcessGetSpaceModeRequest(IPremiseObject homeObject, IPremiseObject rootObject, QueryRequest alexaRequest, QueryResponse response)
         {
-
             var returnClause = new string[] { "Name", "Description", "CleanMode", "Freeze", "DisplayedTemporalMode", "Occupancy", "LastOccupied", "OccupancyCount", "Temperature", "OID", "OPATH", "OTYPENAME", "Type" };
             dynamic whereClause = new System.Dynamic.ExpandoObject();
             whereClause.TypeOf = this.ServiceInstance.AlexaLocationClassPath;
@@ -993,9 +992,13 @@ namespace PremiseAlexaBridgeService
             foreach (var room in sysRooms)
             {
                 string room_name = room.Name;
+                string room_description = room.Description;
+                string toMatch = alexaRequest.payload.space.name.ToLower();
 
-                if (room_name.ToLower() == alexaRequest.payload.space.name.ToLower())
+                if ((room_name.Trim().ToLower() == toMatch) || (room_description.Trim().ToLower() == toMatch))
                 {
+                    InformLastContact(homeObject, "Get Space Status (success): " + toMatch);
+
                     IPremiseObject this_room = rootObject.GetObject(room.OID.ToString("B")).GetAwaiter().GetResult();
                     var devices = this_room.GetChildren().GetAwaiter().GetResult();
 
@@ -1023,7 +1026,7 @@ namespace PremiseAlexaBridgeService
                     //ICollection<IPremiseObject> i = this_room.GetAggregatedProperties().GetAwaiter().GetResult();
                     //response.payload.applianceRoomStatus.lastOccupied = room.lastOccupied.ToString();
 
-                    response.payload.applianceRoomStatus = new ApplianceRoomStatus();
+                    response.payload.applianceRoomStatus = new ApplianceRoomStatus(); 
                     response.payload.applianceRoomStatus.friendlyName = room.Description;
                     response.payload.applianceRoomStatus.occupied = room.Occupancy;
                     response.payload.applianceRoomStatus.freeze = room.Freeze;
@@ -1036,8 +1039,14 @@ namespace PremiseAlexaBridgeService
                         response.payload.applianceRoomStatus.currentTemperature = double.Parse(string.Format("{0:N2}", temperature.Fahrenheit)).ToString();
                     }
                     response.payload.applianceRoomStatus.lightsOnCount = onCount.ToString();
+                    return;
                 }
             }
+
+            InformLastContact(homeObject, "Get Space Status (no such room): " + alexaRequest.payload.space.name.ToLower());
+            response.header.@namespace = Faults.QueryNamespace;
+            response.header.name = Faults.NoSuchTargetError;
+            response.payload.exception = new ExceptionResponsePayload();
         }
 
         #endregion
