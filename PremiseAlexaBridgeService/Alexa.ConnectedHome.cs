@@ -183,6 +183,13 @@ namespace Alexa.SmartHome
 
         [DataMember(Name = "payload")]
         public DiscoveryResponsePayload payload;
+
+        public DiscoveryResponse ()
+        {
+            header = new Header();
+            header.messageId = "0"; // default
+            payload = new DiscoveryResponsePayload();
+        }
     }
 
     [DataContract(Namespace = "Alexa.ConnectedHome.Discovery")]
@@ -265,6 +272,14 @@ namespace Alexa.SmartHome
 
         [DataMember(Name = "payload")]
         public ApplianceControlResponsePayload payload;
+
+        public ControlResponse()
+        {
+            header = new Header();
+            header.messageId = "0"; // default
+            payload = new ApplianceControlResponsePayload();
+        }
+
     }
 
     #endregion
@@ -289,6 +304,13 @@ namespace Alexa.SmartHome
 
         [DataMember(Name = "payload")]
         public ApplianceQueryResponsePayload payload;
+
+        public QueryResponse()
+        {
+            header = new Header();
+            header.messageId = "0"; // default
+            payload = new ApplianceQueryResponsePayload();
+        }
     }
 
 

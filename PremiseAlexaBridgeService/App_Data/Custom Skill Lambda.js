@@ -19,7 +19,7 @@ const languageStrings = {
         translation: {
             SKILL_NAME: 'Premise Custom Skill',
             OCCUPIED_MESSAGE:'is occupied',
-            HELP_MESSAGE: 'You can ask me if a specific room is occupied or what it's status is, you can say exit... What can I help you with?',
+            HELP_MESSAGE: 'You can ask me if a specific room is occupied or what it\'s status is, you can say exit... What can I help you with?',
         HELP_REPROMPT: 'What can I help you with?',
     STOP_MESSAGE: 'Goodbye!',
     },
@@ -28,7 +28,7 @@ const languageStrings = {
     translation: {
             SKILL_NAME: 'Premise Custom Skill',
             OCCUPIED_MESSAGE:'is occupied',
-            HELP_MESSAGE: 'You can ask me if a specific room is occupied or what it's status is, you can say exit... What can I help you with?',
+            HELP_MESSAGE: 'You can ask me if a specific room is occupied or what it\'s status is, you can say exit... What can I help you with?',
             HELP_REPROMPT: 'What can I help you with?',
                         STOP_MESSAGE: 'Goodbye!',
                         },

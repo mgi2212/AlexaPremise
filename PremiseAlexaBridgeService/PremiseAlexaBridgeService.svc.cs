@@ -49,11 +49,13 @@ namespace PremiseAlexaBridgeService
             response.header.@namespace = "System";
             response.payload = new SystemResponsePayload();
 
+            IPremiseObject homeObject;
+
             SYSClient client = new SYSClient();
 
             try
             {
-                ServiceInstance.ConnectToServer(client);
+                homeObject = ServiceInstance.ConnectToServer(client);
             }
             catch (Exception)
             {
@@ -69,9 +71,9 @@ namespace PremiseAlexaBridgeService
             switch (alexaRequest.header.name)
             {
                 case "HealthCheckRequest":
-                    this.InformLastContact("System:HealthCheckRequest");
+                    InformLastContact(homeObject, "System:HealthCheckRequest");
                     response.header.name = "HealthCheckResponse";
-                    response.payload = this.GetHealthCheckResponse();
+                    response.payload = this.GetHealthCheckResponse(homeObject);
                     break;
 
                 default:
@@ -84,13 +86,13 @@ namespace PremiseAlexaBridgeService
             return response;
         }
 
-        private SystemResponsePayload GetHealthCheckResponse()
+        private SystemResponsePayload GetHealthCheckResponse(IPremiseObject homeObject)
         {
             SystemResponsePayload payload = new SystemResponsePayload();
             var returnClause = new string[] { "Health", "HealthDescription" };
             dynamic whereClause = new System.Dynamic.ExpandoObject();
-            payload.isHealthy = this.ServiceInstance.HomeObject.GetValue<bool>("Health").GetAwaiter().GetResult();
-            payload.description = this.ServiceInstance.HomeObject.GetValue<string>("HealthDescription").GetAwaiter().GetResult();
+            payload.isHealthy = homeObject.GetValue<bool>("Health").GetAwaiter().GetResult();
+            payload.description = homeObject.GetValue<string>("HealthDescription").GetAwaiter().GetResult();
             return payload;
         }
 
@@ -107,17 +109,14 @@ namespace PremiseAlexaBridgeService
         public DiscoveryResponse Discovery(DiscoveryRequest alexaRequest)
         {
 
+            IPremiseObject homeObject, rootObject;
             var response = new DiscoveryResponse();
-            response.header = new Header();
-            response.header.messageId = alexaRequest.header.messageId;
-            response.header.name = "DiscoverAppliancesResponse";
-            response.header.@namespace = alexaRequest.header.@namespace;
-            response.payload = new DiscoveryResponsePayload();
 
             #region CheckRequest
 
             if (alexaRequest == null)
             {
+                response.header.messageId = "0";
                 response.header.@namespace = Faults.Namespace;
                 response.header.name = Faults.UnexpectedInformationReceivedError;
                 response.payload.exception = new ExceptionResponsePayload()
@@ -129,6 +128,7 @@ namespace PremiseAlexaBridgeService
 
             if (alexaRequest.header == null)
             {
+                response.header.messageId = "0";
                 response.header.@namespace = Faults.Namespace;
                 response.header.name = Faults.UnexpectedInformationReceivedError;
                 response.payload.exception = new ExceptionResponsePayload()
@@ -140,6 +140,7 @@ namespace PremiseAlexaBridgeService
 
             if (alexaRequest.header.payloadVersion != "2")
             {
+                response.header.messageId = "0";
                 response.header.@namespace = Faults.Namespace;
                 response.header.name = Faults.UnexpectedInformationReceivedError;
                 response.payload.exception = new ExceptionResponsePayload()
@@ -151,10 +152,31 @@ namespace PremiseAlexaBridgeService
 
             #endregion
 
+            #region InitialzeResponse
+
+            try
+            {
+                response.header.name = alexaRequest.header.name.Replace("Request", "Response");
+                response.header.messageId = alexaRequest.header.messageId;
+                response.header.@namespace = alexaRequest.header.@namespace;
+            }
+            catch (Exception)
+            {
+                response.header.@namespace = Faults.QueryNamespace;
+                response.header.name = Faults.UnexpectedInformationReceivedError;
+                response.payload.exception = new ExceptionResponsePayload()
+                {
+                    faultingParameter = "alexaRequest.header.name"
+                };
+                return response;
+            }
+
+            #endregion
+
             if (alexaRequest.header.name != "DiscoverAppliancesRequest")
             {
                 response.header.@namespace = Faults.Namespace;
-                response.header.name = Faults.UnexpectedInformationReceivedError;
+                response.header.name = Faults.UnsupportedOperationError;
                 response.payload.exception = new ExceptionResponsePayload()
                 {
                     faultingParameter = "alexaRequest.header.name"
@@ -164,11 +186,12 @@ namespace PremiseAlexaBridgeService
 
             SYSClient client = new SYSClient();
 
-            #region CheckPremise
+            #region ConnectToPremise
 
             try
             {
-                ServiceInstance.ConnectToServer(client);
+                homeObject = ServiceInstance.ConnectToServer(client);
+                rootObject = homeObject.GetRoot().GetAwaiter().GetResult();
             }
             catch (Exception)
             {
@@ -185,17 +208,27 @@ namespace PremiseAlexaBridgeService
 
             try
             {
-                this.InformLastContact("DiscoveryRequest");
 
-                if (!CheckAccessToken(alexaRequest.payload.accessToken).GetAwaiter().GetResult())
+                #region VerifyAccess
+
+                if (!CheckAccessToken(homeObject, alexaRequest.payload.accessToken).GetAwaiter().GetResult())
                 {
                     response.header.@namespace = Faults.Namespace;
                     response.header.name = Faults.InvalidAccessTokenError;
                     ServiceInstance.DisconnectServer(client);
                     return response;
                 }
-                response.payload.discoveredAppliances = this.GetAppliances().GetAwaiter().GetResult();
+
+                #endregion
+
+                #region Perform Discovery
+
+                InformLastContact(homeObject, alexaRequest.header.name);
+
+                response.payload.discoveredAppliances = this.GetAppliances(homeObject).GetAwaiter().GetResult();
                 response.payload.discoveredAppliances.Sort(Appliance.CompareByFriendlyName);
+
+                #endregion
             }
             catch (Exception)
             {
@@ -208,7 +241,7 @@ namespace PremiseAlexaBridgeService
             return response;
         }
 
-        private async Task<List<Appliance>> GetAppliances()
+        private async Task<List<Appliance>> GetAppliances(IPremiseObject homeObject)
         {
             List<Appliance> appliances = new List<Appliance>();
 
@@ -216,7 +249,7 @@ namespace PremiseAlexaBridgeService
             dynamic whereClause = new System.Dynamic.ExpandoObject();
             whereClause.TypeOf = this.ServiceInstance.AlexaApplianceClassPath;
 
-            var sysAppliances = await this.ServiceInstance.HomeObject.Select(returnClause, whereClause);
+            var sysAppliances = await homeObject.Select(returnClause, whereClause);
             int count = 0;
             int generatedNameCount = 0;
             int generatedDescriptionCount = 0;
@@ -231,7 +264,7 @@ namespace PremiseAlexaBridgeService
                 {
                     actions = new List<string>(),
                     applianceId = Guid.Parse(objectId).ToString("D"),
-                    manufacturerName = "Premise Object",
+                    manufacturerName = "Premise",
                     version = "2.1",
                     isReachable = sysAppliance.IsReachable,
                     modelName = sysAppliance.OTYPENAME,
@@ -245,7 +278,7 @@ namespace PremiseAlexaBridgeService
                 {
                     generatedNameCount++;
                     // parent should be a container - so get that name
-                    var premiseObject = await this.ServiceInstance.HomeObject.GetObject(objectId);
+                    var premiseObject = await homeObject.GetObject(objectId);
                     var parent = await premiseObject.GetParent();
                     string parentName = (await parent.GetName()).Trim();
 
@@ -263,7 +296,7 @@ namespace PremiseAlexaBridgeService
                 bool hasColor = (sysAppliance.Hue != null);
                 if (hasColor)
                 {
-                    hasTemperature = false; 
+                    hasTemperature = false;
                 }
 
                 // Deal with empty FriendlyDescription
@@ -271,7 +304,7 @@ namespace PremiseAlexaBridgeService
                 {
                     generatedDescriptionCount++;
                     // parent should be a container - so get that name
-                    var premiseObject = await this.ServiceInstance.HomeObject.GetObject(objectId);
+                    var premiseObject = await homeObject.GetObject(objectId);
                     var parent = await premiseObject.GetParent();
                     string parentName = (await parent.GetDescription()).Trim();
 
@@ -282,7 +315,7 @@ namespace PremiseAlexaBridgeService
                     // results in something like = "A Sconce in the Entry."
                     // appending the path may make it easier to locate in the early Amazon UI - we'll see
                     // appliance.friendlyDescription = string.Format("A {0} in the {1}. Path={2}", sysAppliance.OTYPENAME, parentName, sysAppliance.OPATH).Trim();
-                    
+
                     //if (hasDimmer)
                     //    appliance.friendlyDescription = string.Format("Premise dimmable {0} in the {1}", sysAppliance.OTYPENAME, parentName).Trim();
                     //else
@@ -335,9 +368,9 @@ namespace PremiseAlexaBridgeService
                     break;
             }
 
-            await this.ServiceInstance.HomeObject.SetValue("LastRefreshed", DateTime.Now.ToString());
-            await this.ServiceInstance.HomeObject.SetValue("HealthDescription", string.Format("Reported={0},Names Generated={1}, Descriptions Generated={2}", count, generatedNameCount, generatedDescriptionCount));
-            await this.ServiceInstance.HomeObject.SetValue("Health", "True");
+            await homeObject.SetValue("LastRefreshed", DateTime.Now.ToString());
+            await homeObject.SetValue("HealthDescription", string.Format("Reported={0},Names Generated={1}, Descriptions Generated={2}", count, generatedNameCount, generatedDescriptionCount));
+            await homeObject.SetValue("Health", "True");
             return appliances;
         }
 
@@ -361,19 +394,18 @@ namespace PremiseAlexaBridgeService
         public ControlResponse Control(ControlRequest alexaRequest)
         {
 
-            // allocate and setup header
+            IPremiseObject homeObject, rootObject;
             var response = new ControlResponse();
-            response.header = new Header();
-            response.header.messageId = alexaRequest.header.messageId;
-            response.header.@namespace = alexaRequest.header.@namespace;
-            response.header.name = "Confirmation";   // generic in case of a null request
+
+            //response.header = new Header();
             // allocate a payload
-            response.payload = new ApplianceControlResponsePayload();
+            //response.payload = new ApplianceControlResponsePayload();
 
             #region CheckRequest
 
             if (alexaRequest == null)
             {
+                response.header.messageId = "0";
                 response.header.@namespace = Faults.Namespace;
                 response.header.name = Faults.UnexpectedInformationReceivedError;
                 response.payload.exception = new ExceptionResponsePayload()
@@ -385,6 +417,7 @@ namespace PremiseAlexaBridgeService
 
             if (alexaRequest.header == null)
             {
+                response.header.messageId = "0";
                 response.header.@namespace = Faults.Namespace;
                 response.header.name = Faults.UnexpectedInformationReceivedError;
                 response.payload.exception = new ExceptionResponsePayload()
@@ -396,6 +429,7 @@ namespace PremiseAlexaBridgeService
 
             if (alexaRequest.header.payloadVersion != "2")
             {
+                response.header.messageId = "0";
                 response.header.@namespace = Faults.Namespace;
                 response.header.name = Faults.UnexpectedInformationReceivedError;
                 response.payload.exception = new ExceptionResponsePayload()
@@ -407,8 +441,12 @@ namespace PremiseAlexaBridgeService
 
             #endregion
 
+            #region BuildResponse 
+
             try
             {
+                response.header.messageId = alexaRequest.header.messageId;
+                response.header.@namespace = alexaRequest.header.@namespace;
                 response.header.name = alexaRequest.header.name.Replace("Request", "Confirmation");
             }
             catch (Exception)
@@ -423,13 +461,16 @@ namespace PremiseAlexaBridgeService
 
             }
 
+            #endregion
+
             SYSClient client = new SYSClient();
 
-            #region CheckPremiseAccess
+            #region ConnectToPremise
 
             try
             {
-                ServiceInstance.ConnectToServer(client);
+                homeObject = ServiceInstance.ConnectToServer(client);
+                rootObject = homeObject.GetRoot().GetAwaiter().GetResult();
             }
             catch (Exception)
             {
@@ -442,20 +483,20 @@ namespace PremiseAlexaBridgeService
                 return response;
             }
 
-            if (!CheckAccessToken(alexaRequest.payload.accessToken).GetAwaiter().GetResult())
-            {
-                response.header.@namespace = Faults.Namespace;
-                response.header.name = Faults.InvalidAccessTokenError;
-                response.payload.exception = new ExceptionResponsePayload();
-                ServiceInstance.DisconnectServer(client);
-                return response;
-            }
-
             #endregion
 
             try
             {
-                this.InformLastContact("ControlRequest:" + alexaRequest.payload.appliance.additionalApplianceDetails.path);
+                if (!CheckAccessToken(homeObject, alexaRequest.payload.accessToken).GetAwaiter().GetResult())
+                {
+                    response.header.@namespace = Faults.Namespace;
+                    response.header.name = Faults.InvalidAccessTokenError;
+                    response.payload.exception = new ExceptionResponsePayload();
+                    ServiceInstance.DisconnectServer(client);
+                    return response;
+                }
+
+                InformLastContact(homeObject, "ControlRequest:" + alexaRequest.payload.appliance.additionalApplianceDetails.path);
 
                 // check request types
                 ControlRequestType requestType = ControlRequestType.Unknown;
@@ -526,19 +567,13 @@ namespace PremiseAlexaBridgeService
                 try
                 {
                     Guid premiseId = new Guid(alexaRequest.payload.appliance.applianceId);
-                    applianceToControl = this.ServiceInstance.RootObject.GetObject(premiseId.ToString("B")).GetAwaiter().GetResult();
+                    applianceToControl = rootObject.GetObject(premiseId.ToString("B")).GetAwaiter().GetResult();
+                    if (applianceToControl == null)
+                    {
+                        throw new Exception();
+                    }
                 }
                 catch
-                {
-                    response.header.@namespace = Faults.Namespace;
-                    response.header.name = Faults.NoSuchTargetError;
-                    response.payload.exception = new ExceptionResponsePayload();
-                    ServiceInstance.DisconnectServer(client);
-                    return response;
-                }
-
-                // report failure
-                if (applianceToControl == null)
                 {
                     response.header.@namespace = Faults.Namespace;
                     response.header.name = Faults.NoSuchTargetError;
@@ -738,14 +773,8 @@ namespace PremiseAlexaBridgeService
         public QueryResponse Query(QueryRequest alexaRequest)
         {
 
-            // allocate and setup header
             var response = new QueryResponse();
-            response.header = new Header();
-            response.header.messageId = alexaRequest.header.messageId;
-            response.header.@namespace = alexaRequest.header.@namespace;
-            response.header.name = "Confirmation";   // generic in case of a null request
-            // allocate a payload
-            response.payload = new ApplianceQueryResponsePayload();
+            IPremiseObject homeObject, rootObject;
 
             #region CheckRequest
 
@@ -784,8 +813,11 @@ namespace PremiseAlexaBridgeService
 
             #endregion
 
+            #region Initialize Response
             try
             {
+                response.header.messageId = alexaRequest.header.messageId;
+                response.header.@namespace = alexaRequest.header.@namespace;
                 response.header.name = alexaRequest.header.name.Replace("Request", "Response"); //alexaRequest.header.name + "Response";
             }
             catch (Exception)
@@ -797,16 +829,18 @@ namespace PremiseAlexaBridgeService
                     faultingParameter = "alexaRequest.header.name"
                 };
                 return response;
-
             }
+
+            #endregion
 
             SYSClient client = new SYSClient();
 
-            #region CheckPremiseAccess
+            #region ConnectToPremise
 
             try
             {
-                ServiceInstance.ConnectToServer(client);
+                homeObject = ServiceInstance.ConnectToServer(client);
+                rootObject = homeObject.GetRoot().GetAwaiter().GetResult();
             }
             catch (Exception)
             {
@@ -819,229 +853,50 @@ namespace PremiseAlexaBridgeService
                 return response;
             }
 
-            if (!CheckAccessToken(alexaRequest.payload.accessToken).GetAwaiter().GetResult())
-            {
-                response.header.@namespace = Faults.QueryNamespace;
-                response.header.name = Faults.InvalidAccessTokenError;
-                response.payload.exception = new ExceptionResponsePayload();
-                ServiceInstance.DisconnectServer(client);
-                return response;
-            }
-
             #endregion
+
+            #region Dispatch Query
 
             try
             {
-
-                // check request types
-                QueryRequestType requestType = QueryRequestType.Unknown;
-                DeviceType deviceType = DeviceType.Unknown;
-
-                string command = alexaRequest.header.name.Trim().ToUpper();
-                switch (command)
-                {
-                    case "GETHOUSESTATUS":
-                        requestType = QueryRequestType.GetHouseStatus;
-                        deviceType = DeviceType.Status;
-                        break;
-                    case "GETSPACEMODE":
-                        requestType = QueryRequestType.GetSpaceMode;
-                        deviceType = DeviceType.Space;
-                        break;
-                    case "GETTARGETTEMPERATUREREQUEST":
-                        requestType = QueryRequestType.GetTargetTemperature;
-                        deviceType = DeviceType.Thermostat;
-                        break;
-                    case "GETTEMPERATUREREADINGREQUEST":
-                        requestType = QueryRequestType.GetTemperatureReading;
-                        deviceType = DeviceType.Thermostat;
-                        break;
-
-                    default:
-                        response.header.@namespace = Faults.QueryNamespace;
-                        response.header.name = Faults.UnsupportedOperationError;
-                        response.payload.exception = new ExceptionResponsePayload();
-                        ServiceInstance.DisconnectServer(client);
-                        return response;
-                }
-
-                IPremiseObject applianceToQuery = null;
-
-
-                if (requestType == QueryRequestType.GetHouseStatus)
-                {
-                    var name = alexaRequest.payload.space.name; 
-                }
-                else if (requestType == QueryRequestType.GetSpaceMode)
-                {
-
-                    var returnClause = new string[] { "Name", "Description", "CleanMode", "Freeze", "DisplayedTemporalMode", "Occupancy", "LastOccupied", "OccupancyCount", "Temperature", "OID", "OPATH", "OTYPENAME", "Type" };
-                    dynamic whereClause = new System.Dynamic.ExpandoObject();
-                    whereClause.TypeOf = this.ServiceInstance.AlexaLocationClassPath;
-                    var sysRooms = this.ServiceInstance.HomeObject.Select(returnClause, whereClause).GetAwaiter().GetResult();
-
-                    foreach (var room in sysRooms) {
-
-                        string room_name = room.Name;
-
-                        if (room_name.ToLower() == alexaRequest.payload.space.name.ToLower())
-                        {
-                            IPremiseObject this_room = this.ServiceInstance.RootObject.GetObject(room.OID.ToString("B")).GetAwaiter().GetResult();
-                            var devices = this_room.GetChildren().GetAwaiter().GetResult();
-
-                            var count = 0;
-                            var onCount = 0;
-                            Temperature temperature = null;
-
-                            foreach (var device in devices)
-                            {
-                                if (device.IsOfType("{3470B9B5-E685-4EB2-ABC0-2F4CCD7F686A}").GetAwaiter().GetResult() == true)
-                                {
-                                    count++;
-                                    if (device.IsOfType("{65C7B5C2-153D-4711-BAD7-D334FDB12338}").GetAwaiter().GetResult() == true)
-                                    {
-                                        temperature = new Temperature(device.GetValue<double>("Temperature").GetAwaiter().GetResult());
-                                    }
-                                    else if (device.IsOfType("{0B1DA7E1-1731-49AC-9814-47470E78EFAB}").GetAwaiter().GetResult() == true)
-                                    {
-                                        onCount += (device.GetValue<bool>("PowerState").GetAwaiter().GetResult() == true) ? 1 : 0;
-                                    }
-                                }
-                            }
-                            //ICollection<IPremiseObject> i = this_room.GetAggregatedProperties().GetAwaiter().GetResult();
-
-                            response.payload.applianceRoomStatus = new ApplianceRoomStatus();
-                            response.payload.applianceRoomStatus.friendlyName = room.Description;
-                            response.payload.applianceRoomStatus.occupied = room.Occupancy;
-                            response.payload.applianceRoomStatus.freeze = room.Freeze;
-                            response.payload.applianceRoomStatus.clean = room.CleanMode;
-                            response.payload.applianceRoomStatus.occupancyCount = room.OccupancyCount;
-                            //response.payload.applianceRoomStatus.lastOccupied = room.lastOccupied.ToString();
-                            response.payload.applianceRoomStatus.mode = RoomMode.ModeToString((int)room.DisplayedTemporalMode);
-                            response.payload.applianceRoomStatus.deviceCount = count.ToString();
-                            if (temperature != null) {
-                                response.payload.applianceRoomStatus.currentTemperature = double.Parse(string.Format("{0:N2}", temperature.Fahrenheit)).ToString();
-                            }
-                            response.payload.applianceRoomStatus.lightsOnCount = onCount.ToString();
-                            ServiceInstance.DisconnectServer(client);
-                            return response;
-                        }
-                    }
-                }
-                else
-                {
-                    this.InformLastContact("QueryRequest:" + alexaRequest.payload.appliance.additionalApplianceDetails.path);
-
-                    // get the object
-                    try
-                    {
-                        Guid premiseId = new Guid(alexaRequest.payload.appliance.applianceId);
-                        applianceToQuery = this.ServiceInstance.RootObject.GetObject(premiseId.ToString("B")).GetAwaiter().GetResult();
-                    }
-                    catch
-                    {
-                        response.header.@namespace = Faults.QueryNamespace;
-                        response.header.name = Faults.NoSuchTargetError;
-                        response.payload.exception = new ExceptionResponsePayload();
-                        ServiceInstance.DisconnectServer(client);
-                        return response;
-                    }
-                }
-
-
-                // report failure
-                if (applianceToQuery == null)
+                if (!CheckAccessToken(homeObject, alexaRequest.payload.accessToken).GetAwaiter().GetResult())
                 {
                     response.header.@namespace = Faults.QueryNamespace;
-                    response.header.name = Faults.NoSuchTargetError;
+                    response.header.name = Faults.InvalidAccessTokenError;
                     response.payload.exception = new ExceptionResponsePayload();
                     ServiceInstance.DisconnectServer(client);
                     return response;
                 }
 
-                String state = "unknown";
-
-                if (deviceType == DeviceType.OnOff)
+                string command = alexaRequest.header.name.Trim().ToUpper();
+                switch (command)
                 {
-                    switch (requestType)
-                    {
-                        case QueryRequestType.PowerState:
-                            state = applianceToQuery.GetValue("PowerState").GetAwaiter().GetResult();
-                            break;
-                        default:
-                            break;
-                    }
-                }
-                else if (deviceType == DeviceType.Dimmer)
-                {
-                    switch (requestType)
-                    {
-                        case QueryRequestType.DimmerLevel:
-                            state = applianceToQuery.GetValue("Brightness").GetAwaiter().GetResult();
-                            break;
-                        default:
-                            break;
-                    }
-                }
-                else if (deviceType == DeviceType.ColorLight)
-                {
-                    switch (requestType)
-                    {
-                        case QueryRequestType.ColorTemperature:
-                            state = applianceToQuery.GetValue("ColorTemperature").GetAwaiter().GetResult();
-                            break;
-                        case QueryRequestType.Color:
-                            state = applianceToQuery.GetValue("Hue").GetAwaiter().GetResult();
-                            break;
-                        default:
-                            break;
-                    }
-                }
-
-                else if (deviceType == DeviceType.Thermostat)
-                {
-
-                    switch (requestType)
-                    {
-                        case QueryRequestType.GetTargetTemperature:
-                            
-                            Temperature coolingSetPoint = new Temperature(applianceToQuery.GetValue<double>("CoolingSetPoint").GetAwaiter().GetResult());
-                            Temperature heatingSetPoint = new Temperature(applianceToQuery.GetValue<double>("HeatingSetPoint").GetAwaiter().GetResult());
-                            int temperatureMode = applianceToQuery.GetValue<int>("TemperatureMode").GetAwaiter().GetResult();
-                            response.payload.temperatureMode = new ApplianceTemperatureMode();
-                            response.payload.temperatureMode.value = TemperatureMode.ModeToString(temperatureMode);
-                            response.payload.heatingTargetTemperature = new ApplianceTemperatureReading();
-                            response.payload.heatingTargetTemperature.value = double.Parse(string.Format("{0:N2}", heatingSetPoint.Celcius));
-                            response.payload.heatingTargetTemperature.scale = "CELSIUS";
-                            response.payload.coolingTargetTemperature = new ApplianceTemperatureReading();
-                            response.payload.coolingTargetTemperature.value = double.Parse(string.Format("{0:N2}", coolingSetPoint.Celcius));
-                            response.payload.coolingTargetTemperature.scale = "CELSIUS";
-                            //response.payload.applianceResponseTimestamp = DateTime.UtcNow.ToUniversalTime().ToString("yyyy-MM-dd'T'HH:mm:ss.ffZ");// XmlConvert.ToString(DateTime.UtcNow.ToUniversalTime(), XmlDateTimeSerializationMode.Utc);
-                            break;
-                        case QueryRequestType.GetTemperatureReading:
-                            Temperature temperature = new Temperature(applianceToQuery.GetValue<double>("Temperature").GetAwaiter().GetResult());
-                            response.payload.temperatureReading = new ApplianceTemperatureReading();
-                            response.payload.temperatureReading.value = double.Parse(string.Format("{0:N2}", temperature.Celcius));
-                            response.payload.temperatureReading.scale = "CELSIUS";
-                            //response.payload.applianceResponseTimestamp = DateTime.UtcNow.ToUniversalTime().ToString("yyyy-MM-dd'T'HH:mm:ss.ffZ"); //XmlConvert.ToString(DateTime.UtcNow.ToUniversalTime(), XmlDateTimeSerializationMode.Utc);
-                            break;
-                        default:
-                            break;
-                    }
-                }
-                else
-                {
-                    response.header.@namespace = Faults.QueryNamespace;
-                    response.header.name = Faults.UnsupportedOperationError;
-                    response.payload.exception = new ExceptionResponsePayload();
+                    //case "GETHOUSESTATUS":
+                    case "GETSPACEMODE":
+                        ProcessGetSpaceModeRequest(homeObject, rootObject, alexaRequest, response);
+                        break;
+                    case "GETTARGETTEMPERATUREREQUEST":
+                        ProcessDeviceStateQueryRequest(QueryRequestType.GetTargetTemperature, homeObject, rootObject, alexaRequest, response);
+                        break;
+                    case "GETTEMPERATUREREADINGREQUEST":
+                        ProcessDeviceStateQueryRequest(QueryRequestType.GetTemperatureReading, homeObject, rootObject, alexaRequest, response);
+                        break;
+                    default:
+                        response.header.@namespace = Faults.QueryNamespace;
+                        response.header.name = Faults.UnsupportedOperationError;
+                        response.payload.exception = new ExceptionResponsePayload();
+                        response.payload.exception.errorInfo = new ErrorInfo();
+                        response.payload.exception.errorInfo.description = "Unsupported Query Request Type";
+                        break;
                 }
             }
             catch (Exception e)
             {
-                string t = e.Message;
                 response.header.@namespace = Faults.QueryNamespace;
                 response.header.name = Faults.DriverInternalError;
                 response.payload.exception = new ExceptionResponsePayload();
+                response.payload.exception.errorInfo = new ErrorInfo();
+                response.payload.exception.errorInfo.description = e.Message;
             }
 
             ServiceInstance.DisconnectServer(client);
@@ -1050,17 +905,156 @@ namespace PremiseAlexaBridgeService
 
         #endregion
 
-        #region Utility
+        #region Process Device State Query
 
-        private async void InformLastContact(string command)
+        private void ProcessDeviceStateQueryRequest(QueryRequestType requestType, IPremiseObject homeObject, IPremiseObject rootObject, QueryRequest alexaRequest, QueryResponse response)
         {
-            await this.ServiceInstance.HomeObject.SetValue("LastHeardFromAlexa", DateTime.Now.ToString());
-            await this.ServiceInstance.HomeObject.SetValue("LastHeardCommand", command);
+
+            IPremiseObject applianceToQuery;
+
+            InformLastContact(homeObject, "QueryRequest:" + alexaRequest.payload.appliance.additionalApplianceDetails.path);
+
+            try
+            {
+                // Find the object
+                Guid premiseId = new Guid(alexaRequest.payload.appliance.applianceId);
+                applianceToQuery = rootObject.GetObject(premiseId.ToString("B")).GetAwaiter().GetResult();
+                if (applianceToQuery == null)
+                {
+                    throw new Exception();
+                }
+
+                switch (requestType)
+                {
+                    /*
+                    case QueryRequestType.PowerState:
+                        string state = applianceToQuery.GetValue("PowerState").GetAwaiter().GetResult();
+                        break;
+                    case QueryRequestType.DimmerLevel:
+                        string state = applianceToQuery.GetValue("Brightness").GetAwaiter().GetResult();
+                        break;
+                    case QueryRequestType.ColorTemperature:
+                        string state = applianceToQuery.GetValue("ColorTemperature").GetAwaiter().GetResult();
+                        break;
+                    case QueryRequestType.Color:
+                        string state = applianceToQuery.GetValue("Hue").GetAwaiter().GetResult();
+                        break;
+                    */
+                    case QueryRequestType.GetTargetTemperature:
+                        Temperature coolingSetPoint = new Temperature(applianceToQuery.GetValue<double>("CoolingSetPoint").GetAwaiter().GetResult());
+                        Temperature heatingSetPoint = new Temperature(applianceToQuery.GetValue<double>("HeatingSetPoint").GetAwaiter().GetResult());
+                        int temperatureMode = applianceToQuery.GetValue<int>("TemperatureMode").GetAwaiter().GetResult();
+                        response.payload.temperatureMode = new ApplianceTemperatureMode();
+                        response.payload.temperatureMode.value = TemperatureMode.ModeToString(temperatureMode);
+                        response.payload.heatingTargetTemperature = new ApplianceTemperatureReading();
+                        response.payload.heatingTargetTemperature.value = double.Parse(string.Format("{0:N2}", heatingSetPoint.Celcius));
+                        response.payload.heatingTargetTemperature.scale = "CELSIUS";
+                        response.payload.coolingTargetTemperature = new ApplianceTemperatureReading();
+                        response.payload.coolingTargetTemperature.value = double.Parse(string.Format("{0:N2}", coolingSetPoint.Celcius));
+                        response.payload.coolingTargetTemperature.scale = "CELSIUS";
+                        //response.payload.applianceResponseTimestamp = DateTime.UtcNow.ToUniversalTime().ToString("yyyy-MM-dd'T'HH:mm:ss.ffZ");// XmlConvert.ToString(DateTime.UtcNow.ToUniversalTime(), XmlDateTimeSerializationMode.Utc);
+                        break;
+                    case QueryRequestType.GetTemperatureReading:
+                        Temperature temperature = new Temperature(applianceToQuery.GetValue<double>("Temperature").GetAwaiter().GetResult());
+                        response.payload.temperatureReading = new ApplianceTemperatureReading();
+                        response.payload.temperatureReading.value = double.Parse(string.Format("{0:N2}", temperature.Celcius));
+                        response.payload.temperatureReading.scale = "CELSIUS";
+                        //response.payload.applianceResponseTimestamp = DateTime.UtcNow.ToUniversalTime().ToString("yyyy-MM-dd'T'HH:mm:ss.ffZ"); //XmlConvert.ToString(DateTime.UtcNow.ToUniversalTime(), XmlDateTimeSerializationMode.Utc);
+                        break;
+                    default:
+                        response.header.@namespace = Faults.QueryNamespace;
+                        response.header.name = Faults.UnsupportedOperationError;
+                        response.payload.exception = new ExceptionResponsePayload();
+                        response.payload.exception.errorInfo = new ErrorInfo();
+                        response.payload.exception.errorInfo.description = "Unsupported Query Request Type";
+                        break;
+                }
+            }
+            catch
+            {
+                response.header.@namespace = Faults.QueryNamespace;
+                response.header.name = Faults.NoSuchTargetError;
+                response.payload.exception = new ExceptionResponsePayload();
+            }
         }
 
-        private async Task<bool> CheckAccessToken(string token)
+        #endregion
+
+        #region Process Space Mode Query
+
+        private void ProcessGetSpaceModeRequest(IPremiseObject homeObject, IPremiseObject rootObject, QueryRequest alexaRequest, QueryResponse response)
         {
-            var accessToken = await this.ServiceInstance.HomeObject.GetValue<string>("AccessToken");
+
+            var returnClause = new string[] { "Name", "Description", "CleanMode", "Freeze", "DisplayedTemporalMode", "Occupancy", "LastOccupied", "OccupancyCount", "Temperature", "OID", "OPATH", "OTYPENAME", "Type" };
+            dynamic whereClause = new System.Dynamic.ExpandoObject();
+            whereClause.TypeOf = this.ServiceInstance.AlexaLocationClassPath;
+            var sysRooms = homeObject.Select(returnClause, whereClause).GetAwaiter().GetResult();
+
+            foreach (var room in sysRooms)
+            {
+                string room_name = room.Name;
+
+                if (room_name.ToLower() == alexaRequest.payload.space.name.ToLower())
+                {
+                    IPremiseObject this_room = rootObject.GetObject(room.OID.ToString("B")).GetAwaiter().GetResult();
+                    var devices = this_room.GetChildren().GetAwaiter().GetResult();
+
+                    var count = 0;
+                    var onCount = 0;
+                    Temperature temperature = null;
+
+                    foreach (var device in devices)
+                    {
+                        if (device.IsOfType("{3470B9B5-E685-4EB2-ABC0-2F4CCD7F686A}").GetAwaiter().GetResult() == true)
+                        {
+                            count++;
+                            if (device.IsOfType("{65C7B5C2-153D-4711-BAD7-D334FDB12338}").GetAwaiter().GetResult() == true)
+                            {
+                                temperature = new Temperature(device.GetValue<double>("Temperature").GetAwaiter().GetResult());
+                            }
+                            else if (device.IsOfType("{0B1DA7E1-1731-49AC-9814-47470E78EFAB}").GetAwaiter().GetResult() == true)
+                            {
+                                onCount += (device.GetValue<bool>("PowerState").GetAwaiter().GetResult() == true) ? 1 : 0;
+                            }
+                        }
+                    }
+
+                    // TODO: Aggregated properties
+                    //ICollection<IPremiseObject> i = this_room.GetAggregatedProperties().GetAwaiter().GetResult();
+                    //response.payload.applianceRoomStatus.lastOccupied = room.lastOccupied.ToString();
+
+                    response.payload.applianceRoomStatus = new ApplianceRoomStatus();
+                    response.payload.applianceRoomStatus.friendlyName = room.Description;
+                    response.payload.applianceRoomStatus.occupied = room.Occupancy;
+                    response.payload.applianceRoomStatus.freeze = room.Freeze;
+                    response.payload.applianceRoomStatus.clean = room.CleanMode;
+                    response.payload.applianceRoomStatus.occupancyCount = room.OccupancyCount;
+                    response.payload.applianceRoomStatus.mode = RoomMode.ModeToString((int)room.DisplayedTemporalMode);
+                    response.payload.applianceRoomStatus.deviceCount = count.ToString();
+                    if (temperature != null)
+                    {
+                        response.payload.applianceRoomStatus.currentTemperature = double.Parse(string.Format("{0:N2}", temperature.Fahrenheit)).ToString();
+                    }
+                    response.payload.applianceRoomStatus.lightsOnCount = onCount.ToString();
+                }
+            }
+        }
+
+        #endregion
+
+        #endregion
+
+        #region Utility
+
+        private static async void InformLastContact(IPremiseObject homeObject, string command)
+        {
+            await homeObject.SetValue("LastHeardFromAlexa", DateTime.Now.ToString());
+            await homeObject.SetValue("LastHeardCommand", command);
+        }
+
+        private static async Task<bool> CheckAccessToken(IPremiseObject homeObject, string token)
+        {
+            var accessToken = await homeObject.GetValue<string>("AccessToken");
             List<string> tokens = new List<string>(accessToken.Split(','));
             return (-1 != tokens.IndexOf(token));
         }
