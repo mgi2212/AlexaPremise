@@ -71,7 +71,7 @@ namespace PremiseAlexaBridgeService
             switch (alexaRequest.header.name)
             {
                 case "HealthCheckRequest":
-                    InformLastContact(homeObject, "System:HealthCheckRequest");
+                    InformLastContact(homeObject, "System:HealthCheckRequest").GetAwaiter().GetResult();
                     response.header.name = "HealthCheckResponse";
                     response.payload = this.GetHealthCheckResponse(homeObject);
                     break;
@@ -101,7 +101,7 @@ namespace PremiseAlexaBridgeService
         #region Discovery
 
         /// <summary>
-        /// Discovry - proxy call to premise looking for the AlexaEx class
+        /// Discovery - proxy call to premise looking for the AlexaEx class
         /// </summary>
         /// <param name="alexaRequest"></param>
         /// <returns></returns>
@@ -114,38 +114,13 @@ namespace PremiseAlexaBridgeService
 
             #region CheckRequest
 
-            if (alexaRequest == null)
+            if ((alexaRequest == null) || (alexaRequest.header == null) || (alexaRequest.header.payloadVersion != "2"))
             {
-                response.header.messageId = "0";
                 response.header.@namespace = Faults.Namespace;
                 response.header.name = Faults.UnexpectedInformationReceivedError;
                 response.payload.exception = new ExceptionResponsePayload()
                 {
                     faultingParameter = "alexaRequest"
-                };
-                return response;
-            }
-
-            if (alexaRequest.header == null)
-            {
-                response.header.messageId = "0";
-                response.header.@namespace = Faults.Namespace;
-                response.header.name = Faults.UnexpectedInformationReceivedError;
-                response.payload.exception = new ExceptionResponsePayload()
-                {
-                    faultingParameter = "alexaRequest.header"
-                };
-                return response;
-            }
-
-            if (alexaRequest.header.payloadVersion != "2")
-            {
-                response.header.messageId = "0";
-                response.header.@namespace = Faults.Namespace;
-                response.header.name = Faults.UnexpectedInformationReceivedError;
-                response.payload.exception = new ExceptionResponsePayload()
-                {
-                    faultingParameter = "alexaRequest.header.payloadVersion"
                 };
                 return response;
             }
@@ -223,7 +198,7 @@ namespace PremiseAlexaBridgeService
 
                 #region Perform Discovery
 
-                InformLastContact(homeObject, alexaRequest.header.name);
+                InformLastContact(homeObject, alexaRequest.header.name).GetAwaiter().GetResult();
 
                 response.payload.discoveredAppliances = this.GetAppliances(homeObject).GetAwaiter().GetResult();
                 response.payload.discoveredAppliances.Sort(Appliance.CompareByFriendlyName);
@@ -277,13 +252,33 @@ namespace PremiseAlexaBridgeService
                 if (string.IsNullOrEmpty(appliance.friendlyName))
                 {
                     generatedNameCount++;
-                    // parent should be a container - so get that name
                     var premiseObject = await homeObject.GetObject(objectId);
+
+                    // parent should be a container - so get that 
                     var parent = await premiseObject.GetParent();
-                    string parentName = (await parent.GetName()).Trim();
+                    
+                    // use displayName and if not that, the the object name. (note: this should help handle cases for objects with names lile like LivingRoom)
+                    string parentName = (await parent.GetDisplayName()).Trim();
+                    if (string.IsNullOrEmpty(parentName))
+                    {
+                        parentName = (await parent.GetName()).Trim();
+                    }
+
+                    if (parentName.IndexOf("(Occupied)") != 01)
+                    {
+                        parentName = parentName.Replace("(Occupied)", "").Trim();
+                    }
+
+                    string deviceName = sysAppliance.FriendlyName;
+                    deviceName = deviceName.Trim();
+                    if (string.IsNullOrEmpty(deviceName))
+                    {
+                        deviceName = sysAppliance.Name;
+                        deviceName = deviceName.Trim();
+                    }
 
                     // preceed the parent container name with the appliance name
-                    appliance.friendlyName = string.Format("{0} {1}", parentName, sysAppliance.Name).Trim();
+                    appliance.friendlyName = string.Format("{0} {1}", parentName, deviceName).Trim();
 
                     // set the value in the dom
                     await premiseObject.SetValue("FriendlyName", appliance.friendlyName);
@@ -307,19 +302,11 @@ namespace PremiseAlexaBridgeService
                     var premiseObject = await homeObject.GetObject(objectId);
                     var parent = await premiseObject.GetParent();
                     string parentName = (await parent.GetDescription()).Trim();
-
                     if (parentName.Length == 0)
                     {
                         parentName = (await parent.GetName()).Trim();
                     }
                     // results in something like = "A Sconce in the Entry."
-                    // appending the path may make it easier to locate in the early Amazon UI - we'll see
-                    // appliance.friendlyDescription = string.Format("A {0} in the {1}. Path={2}", sysAppliance.OTYPENAME, parentName, sysAppliance.OPATH).Trim();
-
-                    //if (hasDimmer)
-                    //    appliance.friendlyDescription = string.Format("Premise dimmable {0} in the {1}", sysAppliance.OTYPENAME, parentName).Trim();
-                    //else
-
                     appliance.friendlyDescription = string.Format("Premise {0} in the {1}", sysAppliance.OTYPENAME, parentName).Trim();
                     // set the value in the premise dom
                     await premiseObject.SetValue("FriendlyDescription", appliance.friendlyDescription);
@@ -397,44 +384,15 @@ namespace PremiseAlexaBridgeService
             IPremiseObject homeObject, rootObject;
             var response = new ControlResponse();
 
-            //response.header = new Header();
-            // allocate a payload
-            //response.payload = new ApplianceControlResponsePayload();
-
             #region CheckRequest
 
-            if (alexaRequest == null)
+            if ((alexaRequest == null) || (alexaRequest.header == null) || (alexaRequest.header.payloadVersion != "2"))
             {
-                response.header.messageId = "0";
                 response.header.@namespace = Faults.Namespace;
                 response.header.name = Faults.UnexpectedInformationReceivedError;
                 response.payload.exception = new ExceptionResponsePayload()
                 {
                     faultingParameter = "alexaRequest"
-                };
-                return response;
-            }
-
-            if (alexaRequest.header == null)
-            {
-                response.header.messageId = "0";
-                response.header.@namespace = Faults.Namespace;
-                response.header.name = Faults.UnexpectedInformationReceivedError;
-                response.payload.exception = new ExceptionResponsePayload()
-                {
-                    faultingParameter = "alexaRequest.header"
-                };
-                return response;
-            }
-
-            if (alexaRequest.header.payloadVersion != "2")
-            {
-                response.header.messageId = "0";
-                response.header.@namespace = Faults.Namespace;
-                response.header.name = Faults.UnexpectedInformationReceivedError;
-                response.payload.exception = new ExceptionResponsePayload()
-                {
-                    faultingParameter = "alexaRequest.header.payloadVersion"
                 };
                 return response;
             }
@@ -496,7 +454,7 @@ namespace PremiseAlexaBridgeService
                     return response;
                 }
 
-                InformLastContact(homeObject, "ControlRequest:" + alexaRequest.payload.appliance.additionalApplianceDetails.path);
+                InformLastContact(homeObject, "ControlRequest:" + alexaRequest.payload.appliance.additionalApplianceDetails.path).GetAwaiter().GetResult();
 
                 // check request types
                 ControlRequestType requestType = ControlRequestType.Unknown;
@@ -759,54 +717,24 @@ namespace PremiseAlexaBridgeService
 
         /// <summary>
         /// Query Requests are processed here
-        /// 1) validate the json
-        /// 2) determine the request type
-        /// 3) check for 'token' access privs
-        /// 4) find the premise object to control
-        /// 5) check state
-        /// 6) change state if needed
-        /// 7) report back
         /// </summary>
         /// <param name="alexaRequest"></param>
         /// <returns></returns>
         [WebInvoke(Method = "POST", RequestFormat = WebMessageFormat.Json, ResponseFormat = WebMessageFormat.Json, BodyStyle = WebMessageBodyStyle.Bare, UriTemplate = "/Query/")]
         public QueryResponse Query(QueryRequest alexaRequest)
         {
-
             var response = new QueryResponse();
             IPremiseObject homeObject, rootObject;
 
             #region CheckRequest
 
-            if (alexaRequest == null)
+            if ((alexaRequest == null) || (alexaRequest.header == null) || (alexaRequest.header.payloadVersion != "2"))
             {
                 response.header.@namespace = Faults.Namespace;
                 response.header.name = Faults.UnexpectedInformationReceivedError;
                 response.payload.exception = new ExceptionResponsePayload()
                 {
                     faultingParameter = "alexaRequest"
-                };
-                return response;
-            }
-
-            if (alexaRequest.header == null)
-            {
-                response.header.@namespace = Faults.Namespace;
-                response.header.name = Faults.UnexpectedInformationReceivedError;
-                response.payload.exception = new ExceptionResponsePayload()
-                {
-                    faultingParameter = "alexaRequest.header"
-                };
-                return response;
-            }
-
-            if (alexaRequest.header.payloadVersion != "2")
-            {
-                response.header.@namespace = Faults.Namespace;
-                response.header.name = Faults.UnexpectedInformationReceivedError;
-                response.payload.exception = new ExceptionResponsePayload()
-                {
-                    faultingParameter = "alexaRequest.header.payloadVersion"
                 };
                 return response;
             }
@@ -872,7 +800,7 @@ namespace PremiseAlexaBridgeService
                 switch (command)
                 {
                     //case "GETHOUSESTATUS":
-                    case "GETSPACEMODE":
+                    case "GETSPACEMODEREQUEST":
                         ProcessGetSpaceModeRequest(homeObject, rootObject, alexaRequest, response);
                         break;
                     case "GETTARGETTEMPERATUREREQUEST":
@@ -901,9 +829,8 @@ namespace PremiseAlexaBridgeService
 
             ServiceInstance.DisconnectServer(client);
             return response;
+            #endregion
         }
-
-        #endregion
 
         #region Process Device State Query
 
@@ -912,7 +839,7 @@ namespace PremiseAlexaBridgeService
 
             IPremiseObject applianceToQuery;
 
-            InformLastContact(homeObject, "QueryRequest:" + alexaRequest.payload.appliance.additionalApplianceDetails.path);
+            InformLastContact(homeObject, "QueryRequest:" + alexaRequest.payload.appliance.additionalApplianceDetails.path).GetAwaiter().GetResult();
 
             try
             {
@@ -984,66 +911,77 @@ namespace PremiseAlexaBridgeService
 
         private void ProcessGetSpaceModeRequest(IPremiseObject homeObject, IPremiseObject rootObject, QueryRequest alexaRequest, QueryResponse response)
         {
-            var returnClause = new string[] { "Name", "Description", "CleanMode", "Freeze", "DisplayedTemporalMode", "Occupancy", "LastOccupied", "OccupancyCount", "Temperature", "OID", "OPATH", "OTYPENAME", "Type" };
-            dynamic whereClause = new System.Dynamic.ExpandoObject();
-            whereClause.TypeOf = this.ServiceInstance.AlexaLocationClassPath;
-            var sysRooms = homeObject.Select(returnClause, whereClause).GetAwaiter().GetResult();
-
-            foreach (var room in sysRooms)
+            string toMatch =  alexaRequest.payload.space.name;
+            if (string.IsNullOrEmpty(toMatch) == false)
             {
-                string room_name = room.Name;
-                string room_description = room.Description;
-                string toMatch = alexaRequest.payload.space.name.ToLower();
+                toMatch = toMatch.Trim();
+                var returnClause = new string[] { "Name", "Description", "CleanMode", "Freeze", "DisplayedTemporalMode", "Occupancy", "LastOccupied", "OccupancyCount", "Temperature", "OID", "OPATH", "OTYPENAME", "Type" };
+                dynamic whereClause = new System.Dynamic.ExpandoObject();
+                whereClause.TypeOf = this.ServiceInstance.AlexaLocationClassPath;
+                var sysRooms = homeObject.Select(returnClause, whereClause).GetAwaiter().GetResult();
 
-                if ((room_name.Trim().ToLower() == toMatch) || (room_description.Trim().ToLower() == toMatch))
+                foreach (var room in sysRooms)
                 {
-                    InformLastContact(homeObject, "Get Space Status (success): " + toMatch);
+                    string room_name = room.Name;
+                    string room_description = room.Description;
 
-                    IPremiseObject this_room = rootObject.GetObject(room.OID.ToString("B")).GetAwaiter().GetResult();
-                    var devices = this_room.GetChildren().GetAwaiter().GetResult();
-
-                    var count = 0;
-                    var onCount = 0;
-                    Temperature temperature = null;
-
-                    foreach (var device in devices)
+                    if ((room_name.Trim().ToLower() == toMatch) || (room_description.Trim().ToLower() == toMatch))
                     {
-                        if (device.IsOfType("{3470B9B5-E685-4EB2-ABC0-2F4CCD7F686A}").GetAwaiter().GetResult() == true)
+                        InformLastContact(homeObject, "Get Space Status (success): " + toMatch).GetAwaiter().GetResult();
+
+                        IPremiseObject this_room = rootObject.GetObject(room.OID.ToString("B")).GetAwaiter().GetResult();
+                        var devices = this_room.GetChildren().GetAwaiter().GetResult();
+
+                        var count = 0;
+                        var onCount = 0;
+                        Temperature temperature = null;
+
+                        foreach (var device in devices)
                         {
-                            count++;
-                            if (device.IsOfType("{65C7B5C2-153D-4711-BAD7-D334FDB12338}").GetAwaiter().GetResult() == true)
+                            if (device.IsOfType("{3470B9B5-E685-4EB2-ABC0-2F4CCD7F686A}").GetAwaiter().GetResult() == true)
                             {
-                                temperature = new Temperature(device.GetValue<double>("Temperature").GetAwaiter().GetResult());
-                            }
-                            else if (device.IsOfType("{0B1DA7E1-1731-49AC-9814-47470E78EFAB}").GetAwaiter().GetResult() == true)
-                            {
-                                onCount += (device.GetValue<bool>("PowerState").GetAwaiter().GetResult() == true) ? 1 : 0;
+                                count++;
+                                if (device.IsOfType("{65C7B5C2-153D-4711-BAD7-D334FDB12338}").GetAwaiter().GetResult() == true)
+                                {
+                                    temperature = new Temperature(device.GetValue<double>("Temperature").GetAwaiter().GetResult());
+                                }
+                                else if (device.IsOfType("{0B1DA7E1-1731-49AC-9814-47470E78EFAB}").GetAwaiter().GetResult() == true)
+                                {
+                                    onCount += (device.GetValue<bool>("PowerState").GetAwaiter().GetResult() == true) ? 1 : 0;
+                                }
                             }
                         }
-                    }
 
-                    // TODO: Aggregated properties
-                    //ICollection<IPremiseObject> i = this_room.GetAggregatedProperties().GetAwaiter().GetResult();
-                    //response.payload.applianceRoomStatus.lastOccupied = room.lastOccupied.ToString();
+                        // TODO: Aggregated properties
+                        //ICollection<IPremiseObject> i = this_room.GetAggregatedProperties().GetAwaiter().GetResult();
+                        //response.payload.applianceRoomStatus.lastOccupied = room.lastOccupied.ToString();
 
-                    response.payload.applianceRoomStatus = new ApplianceRoomStatus(); 
-                    response.payload.applianceRoomStatus.friendlyName = room.Description;
-                    response.payload.applianceRoomStatus.occupied = room.Occupancy;
-                    response.payload.applianceRoomStatus.freeze = room.Freeze;
-                    response.payload.applianceRoomStatus.clean = room.CleanMode;
-                    response.payload.applianceRoomStatus.occupancyCount = room.OccupancyCount;
-                    response.payload.applianceRoomStatus.mode = RoomMode.ModeToString((int)room.DisplayedTemporalMode);
-                    response.payload.applianceRoomStatus.deviceCount = count.ToString();
-                    if (temperature != null)
-                    {
-                        response.payload.applianceRoomStatus.currentTemperature = double.Parse(string.Format("{0:N2}", temperature.Fahrenheit)).ToString();
+                        response.payload.applianceRoomStatus = new ApplianceRoomStatus();
+                        response.payload.applianceRoomStatus.friendlyName = room.Description;
+                        response.payload.applianceRoomStatus.occupied = room.Occupancy;
+                        response.payload.applianceRoomStatus.freeze = room.Freeze;
+                        response.payload.applianceRoomStatus.clean = room.CleanMode;
+                        response.payload.applianceRoomStatus.occupancyCount = room.OccupancyCount;
+                        response.payload.applianceRoomStatus.mode = RoomMode.ModeToString((int)room.DisplayedTemporalMode);
+                        response.payload.applianceRoomStatus.deviceCount = count.ToString();
+                        if (temperature != null)
+                        {
+                            response.payload.applianceRoomStatus.currentTemperature = double.Parse(string.Format("{0:N2}", temperature.Fahrenheit)).ToString();
+                        }
+                        response.payload.applianceRoomStatus.lightsOnCount = onCount.ToString();
+                        return;
                     }
-                    response.payload.applianceRoomStatus.lightsOnCount = onCount.ToString();
-                    return;
                 }
             }
 
-            InformLastContact(homeObject, "Get Space Status (no such room): " + alexaRequest.payload.space.name.ToLower());
+            if (string.IsNullOrEmpty(toMatch))
+            {
+                InformLastContact(homeObject, "Get Space Status (space name missing in request)").GetAwaiter().GetResult();
+            }
+            else
+            { 
+                InformLastContact(homeObject, "Get Space Status (no such room): " + alexaRequest.payload.space.name.ToLower()).GetAwaiter().GetResult();
+            }
             response.header.@namespace = Faults.QueryNamespace;
             response.header.name = Faults.NoSuchTargetError;
             response.payload.exception = new ExceptionResponsePayload();
@@ -1055,7 +993,7 @@ namespace PremiseAlexaBridgeService
 
         #region Utility
 
-        private static async void InformLastContact(IPremiseObject homeObject, string command)
+        private static async Task InformLastContact(IPremiseObject homeObject, string command)
         {
             await homeObject.SetValue("LastHeardFromAlexa", DateTime.Now.ToString());
             await homeObject.SetValue("LastHeardCommand", command);

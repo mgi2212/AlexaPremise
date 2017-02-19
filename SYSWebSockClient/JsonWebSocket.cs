@@ -23,7 +23,7 @@
         protected async void Connect(string uri)
         {
             this.WebSocket = new ClientWebSocket();
-            this.WebSocket.ConnectAsync(new Uri(uri), CancellationToken.None).ContinueWith(
+            await this.WebSocket.ConnectAsync(new Uri(uri), CancellationToken.None).ContinueWith(
                 (task) =>
                 {
                     this.OnConnect();
