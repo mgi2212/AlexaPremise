@@ -134,6 +134,7 @@
     <Content Include="App_Data\Alexa.xdo" />
     <None Include="Properties\PublishProfiles\AD2.pubxml" />
     <None Include="Properties\PublishProfiles\Kindel.pubxml" />
+    <None Include="Properties\PublishProfiles\PremiseTest.pubxml" />
     <None Include="Web.Debug.config">
       <DependentUpon>Web.config</DependentUpon>
     </None>

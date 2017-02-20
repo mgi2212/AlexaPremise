@@ -915,7 +915,7 @@ namespace PremiseAlexaBridgeService
             if (string.IsNullOrEmpty(toMatch) == false)
             {
                 toMatch = toMatch.Trim();
-                var returnClause = new string[] { "Name", "Description", "CleanMode", "Freeze", "DisplayedTemporalMode", "Occupancy", "LastOccupied", "OccupancyCount", "Temperature", "OID", "OPATH", "OTYPENAME", "Type" };
+                var returnClause = new string[] { "Name", "DisplayName", "Description", "CurrentScene", "Occupancy", "LastOccupied", "OccupancyCount", "OID", "OPATH", "OTYPENAME", "Type" };
                 dynamic whereClause = new System.Dynamic.ExpandoObject();
                 whereClause.TypeOf = this.ServiceInstance.AlexaLocationClassPath;
                 var sysRooms = homeObject.Select(returnClause, whereClause).GetAwaiter().GetResult();
@@ -923,7 +923,11 @@ namespace PremiseAlexaBridgeService
                 foreach (var room in sysRooms)
                 {
                     string room_name = room.Name;
-                    string room_description = room.Description;
+                    string room_description = room.DisplayName;
+                    if ((!string.IsNullOrEmpty(room_description)) && (room_description.IndexOf("(Occupied)") != -1))
+                    {
+                        room_description = room_description.Replace("(Occupied)", "").Trim();
+                    }
 
                     if ((room_name.Trim().ToLower() == toMatch) || (room_description.Trim().ToLower() == toMatch))
                     {
@@ -957,12 +961,10 @@ namespace PremiseAlexaBridgeService
                         //response.payload.applianceRoomStatus.lastOccupied = room.lastOccupied.ToString();
 
                         response.payload.applianceRoomStatus = new ApplianceRoomStatus();
-                        response.payload.applianceRoomStatus.friendlyName = room.Description;
+                        response.payload.applianceRoomStatus.friendlyName = toMatch;
                         response.payload.applianceRoomStatus.occupied = room.Occupancy;
-                        response.payload.applianceRoomStatus.freeze = room.Freeze;
-                        response.payload.applianceRoomStatus.clean = room.CleanMode;
                         response.payload.applianceRoomStatus.occupancyCount = room.OccupancyCount;
-                        response.payload.applianceRoomStatus.mode = RoomMode.ModeToString((int)room.DisplayedTemporalMode);
+                        response.payload.applianceRoomStatus.currentScene = room.CurrentScene;
                         response.payload.applianceRoomStatus.deviceCount = count.ToString();
                         if (temperature != null)
                         {

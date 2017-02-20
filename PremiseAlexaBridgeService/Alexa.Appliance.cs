@@ -202,14 +202,8 @@ namespace Alexa.SmartHome
         [DataMember(Name = "lastOccupied", EmitDefaultValue = false)]
         public string lastOccupied;
 
-        [DataMember(Name = "clean", EmitDefaultValue = false)]
-        public string clean;
-
-        [DataMember(Name = "freeze", EmitDefaultValue = false)]
-        public string freeze;
-
-        [DataMember(Name = "mode", EmitDefaultValue = false)]
-        public string mode;
+        [DataMember(Name = "currentScene", EmitDefaultValue = false)]
+        public string currentScene;
 
         [DataMember(Name = "deviceCount", EmitDefaultValue = false)]
         public string deviceCount;
