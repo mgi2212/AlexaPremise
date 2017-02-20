@@ -25,7 +25,7 @@ namespace PremiseAlexaBridgeService
     {
         public static string ModeToString(int mode)
         {
-            if (mode == -2)
+            if (mode == -3)
                 return "Freeze";
             if (mode == -2)
                 return "Clean";
