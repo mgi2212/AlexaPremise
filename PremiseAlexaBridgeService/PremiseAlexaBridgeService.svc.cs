@@ -18,6 +18,15 @@ namespace PremiseAlexaBridgeService
             if (value > inclusiveMaximum) { return inclusiveMaximum; }
             return value;
         }
+
+        public static int LimitToRange(
+            this int value, int inclusiveMinimum, int inclusiveMaximum)
+        {
+            if (value < inclusiveMinimum) { return inclusiveMinimum; }
+            if (value > inclusiveMaximum) { return inclusiveMaximum; }
+            return value;
+        }
+
     }
 
     public class PreWarmCache : System.Web.Hosting.IProcessHostPreloadClient
@@ -220,7 +229,7 @@ namespace PremiseAlexaBridgeService
         {
             List<Appliance> appliances = new List<Appliance>();
 
-            var returnClause = new string[] { "Name", "DisplayName", "FriendlyName", "FriendlyDescription", "IsReachable", "IsDiscoverable", "PowerState", "Brightness", "Temperature", "TemperatureMode", "Hue", "OID", "OPATH", "OTYPENAME", "Type" };
+            var returnClause = new string[] { "Name", "DisplayName", "FriendlyName", "FriendlyDescription", "IsReachable", "IsDiscoverable", "PowerState", "Brightness", "Temperature", "TemperatureMode", "Host", "Port", "Path", "Hue", "OID", "OPATH", "OTYPENAME", "Type" };
             dynamic whereClause = new System.Dynamic.ExpandoObject();
             whereClause.TypeOf = this.ServiceInstance.AlexaApplianceClassPath;
 
@@ -256,7 +265,7 @@ namespace PremiseAlexaBridgeService
 
                     // parent should be a container - so get that 
                     var parent = await premiseObject.GetParent();
-                    
+
                     // use displayName and if not that, the the object name. (note: this should help handle cases for objects with names lile like LivingRoom)
                     string parentName = (await parent.GetDisplayName()).Trim();
                     if (string.IsNullOrEmpty(parentName))
@@ -285,6 +294,7 @@ namespace PremiseAlexaBridgeService
                 }
 
                 // construct the additional details
+                bool hasHost = (sysAppliance.Host != null);
                 bool hasPowerState = (sysAppliance.PowerState != null);
                 bool hasTemperature = (sysAppliance.Temperature != null); // note a color light will have a temperature property
                 bool hasDimmer = (sysAppliance.Brightness != null);
@@ -319,6 +329,10 @@ namespace PremiseAlexaBridgeService
                     path = sysAppliance.OPATH
                 };
 
+                if (hasHost)
+                {
+                    appliance.actions.Add("retrieveCameraStreamUri");
+                }
                 if (hasPowerState)
                 {
                     appliance.actions.Add("turnOn");
@@ -496,11 +510,11 @@ namespace PremiseAlexaBridgeService
                         deviceType = DeviceType.Dimmer;
                         break;
                     case "SETCOLORREQUEST":
-                        requestType = ControlRequestType.SetColor;
+                        requestType = ControlRequestType.SetColorRequest;
                         deviceType = DeviceType.ColorLight;
                         break;
                     case "SETCOLORTEMPERATUREREQUEST":
-                        requestType = ControlRequestType.SetColorTemperature;
+                        requestType = ControlRequestType.SetColorTemperatureRequest ;
                         deviceType = DeviceType.ColorLight;
                         break;
                     case "INCREMENTCOLORTEMPERATUREREQUEST":
@@ -591,40 +605,58 @@ namespace PremiseAlexaBridgeService
                 }
                 else if (deviceType == DeviceType.ColorLight)
                 {
+                    const double adjustValue = 100.0;
                     double currentValue = 0.0;
-                    double adjustValue = 0.0;
                     double valueToSend = 0.0;
+                    response.payload.achievedState = new AchievedState();
 
                     switch (requestType)
                     {
-                        case ControlRequestType.SetColor:
+                        case ControlRequestType.SetColorRequest:
                             // obtain the adjustValue
-                            double hue = Math.Round(double.Parse(alexaRequest.payload.color.hue.value), 1).LimitToRange(0.0, 360.0);
-                            double saturation = Math.Round(double.Parse(alexaRequest.payload.color.saturation.value) / 100.00, 2).LimitToRange(0.00, 100.00);
-                            double brightness = Math.Round(double.Parse(alexaRequest.payload.color.brightness.value) / 100.00, 2).LimitToRange(0.00, 100.00);
-                            // convert from percentage and maintain fractional accuracy
+                            double hue = Math.Round(alexaRequest.payload.color.hue.LimitToRange(0, 360), 1);
+                            double saturation = Math.Round(alexaRequest.payload.color.saturation, 4);
+                            double brightness = Math.Round(alexaRequest.payload.color.brightness, 4);
+                            // set the values
                             applianceToControl.SetValue("Hue", hue.ToString()).GetAwaiter().GetResult();
                             applianceToControl.SetValue("Saturation", saturation.ToString()).GetAwaiter().GetResult();
                             applianceToControl.SetValue("Brightness", brightness.ToString()).GetAwaiter().GetResult();
+                            // read them back for achieved state
+                            response.payload.achievedState.color = new ApplianceColorValue();
+                            response.payload.achievedState.color.hue = Math.Round(applianceToControl.GetValue<Double>("Hue").GetAwaiter().GetResult(), 1); 
+                            response.payload.achievedState.color.saturation = Math.Round(applianceToControl.GetValue<Double>("Saturation").GetAwaiter().GetResult(), 4); 
+                            response.payload.achievedState.color.brightness = Math.Round(applianceToControl.GetValue<Double>("Brightness").GetAwaiter().GetResult(), 4); 
                             break;
-                        case ControlRequestType.SetColorTemperature:
-                            valueToSend = Math.Round(double.Parse(alexaRequest.payload.colorTemperature.value.value), 1).LimitToRange(1000.0, 10000.0);
-                            applianceToControl.SetValue("Temperature", valueToSend.ToString()).GetAwaiter().GetResult();
+
+                        case ControlRequestType.SetColorTemperatureRequest:
+                            valueToSend = alexaRequest.payload.colorTemperature.value.LimitToRange(1000, 10000);
+                            // set the value
+                            applianceToControl.SetValue("Temperature", Math.Round(valueToSend, 0).ToString()).GetAwaiter().GetResult();
+                            // read it back
+                            response.payload.achievedState.colorTemperature = new ApplianceColorTemperatureValue();
+                            response.payload.achievedState.colorTemperature.value = applianceToControl.GetValue<int>("Temperature").GetAwaiter().GetResult();
                             break;
+
                         case ControlRequestType.IncrementColorTemperature:
-                            currentValue = Math.Round(applianceToControl.GetValue<Double>("Temperature").GetAwaiter().GetResult(), 2);
-                            adjustValue = 100.00;
-                            // maintain fractional accuracy
-                            valueToSend = Math.Round(currentValue + adjustValue, 2).LimitToRange(1000.00, 10000.00);
+                            currentValue = applianceToControl.GetValue<int>("Temperature").GetAwaiter().GetResult();
+                            valueToSend = Math.Round(currentValue + adjustValue, 0).LimitToRange(1000, 10000);
+                            // set the value
                             applianceToControl.SetValue("Temperature", valueToSend.ToString()).GetAwaiter().GetResult();
+                            // read it back
+                            response.payload.achievedState.colorTemperature = new ApplianceColorTemperatureValue();
+                            response.payload.achievedState.colorTemperature.value = applianceToControl.GetValue<int>("Temperature").GetAwaiter().GetResult();
                             break;
+
                         case ControlRequestType.DecrementColorTemperature:
                             currentValue = Math.Round(applianceToControl.GetValue<Double>("Temperature").GetAwaiter().GetResult(), 2);
-                            adjustValue = 100.00;
-                            // maintain fractional accuracy
-                            valueToSend = Math.Round(currentValue - adjustValue, 2).LimitToRange(1000.00, 10000.00);
+                            valueToSend = Math.Round(currentValue - adjustValue, 0).LimitToRange(1000, 10000);
+                            // set the value
                             applianceToControl.SetValue("Temperature", valueToSend.ToString()).GetAwaiter().GetResult();
+                            // read it back
+                            response.payload.achievedState.colorTemperature = new ApplianceColorTemperatureValue();
+                            response.payload.achievedState.colorTemperature.value = applianceToControl.GetValue<int>("Temperature").GetAwaiter().GetResult();
                             break;
+
                         default:
                             break;
                     }
@@ -803,6 +835,9 @@ namespace PremiseAlexaBridgeService
                     case "GETSPACEMODEREQUEST":
                         ProcessGetSpaceModeRequest(homeObject, rootObject, alexaRequest, response);
                         break;
+                    case "RETRIEVECAMERASTREAMURIREQUEST":
+                        ProcessDeviceStateQueryRequest(QueryRequestType.RetrieveCameraStreamUri, homeObject, rootObject, alexaRequest, response);
+                        break;
                     case "GETTARGETTEMPERATUREREQUEST":
                         ProcessDeviceStateQueryRequest(QueryRequestType.GetTargetTemperature, homeObject, rootObject, alexaRequest, response);
                         break;
@@ -867,6 +902,15 @@ namespace PremiseAlexaBridgeService
                         string state = applianceToQuery.GetValue("Hue").GetAwaiter().GetResult();
                         break;
                     */
+                    case QueryRequestType.RetrieveCameraStreamUri:
+                        {
+                            response.payload.uri = new ApplianceValue();
+                            string host = applianceToQuery.GetValue<string>("Host").GetAwaiter().GetResult();
+                            string port = applianceToQuery.GetValue<string>("Port").GetAwaiter().GetResult();
+                            string path = applianceToQuery.GetValue<string>("Path").GetAwaiter().GetResult();
+                            response.payload.uri.value = string.Format(@"rtsp://{0}:{1}{2}", host, port, path);
+                        }
+                        break;
                     case QueryRequestType.GetTargetTemperature:
                         Temperature coolingSetPoint = new Temperature(applianceToQuery.GetValue<double>("CoolingSetPoint").GetAwaiter().GetResult());
                         Temperature heatingSetPoint = new Temperature(applianceToQuery.GetValue<double>("HeatingSetPoint").GetAwaiter().GetResult());

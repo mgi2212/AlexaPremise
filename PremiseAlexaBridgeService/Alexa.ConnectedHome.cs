@@ -217,6 +217,7 @@ namespace Alexa.SmartHome
         DimmerLevel,
         Color,
         ColorTemperature,
+        RetrieveCameraStreamUri
     }
 
 
@@ -232,8 +233,8 @@ namespace Alexa.SmartHome
         SetPercentage,
         IncrementPercentage,
         DecrementPercentage,
-        SetColor,
-        SetColorTemperature,
+        SetColorRequest,
+        SetColorTemperatureRequest,
         IncrementColorTemperature,
         DecrementColorTemperature
     }
@@ -246,6 +247,7 @@ namespace Alexa.SmartHome
         Thermostat,
         ColorLight,
         Space,
+        Camera,
         Status
     }
 
@@ -253,6 +255,12 @@ namespace Alexa.SmartHome
     {
         public string value;
     }
+
+    public class ApplianceIntegerValue
+    {
+        public int value;
+    }
+
 
     [DataContract(Namespace = "Alexa.ConnectedHome.Control")]
     public class ControlRequest

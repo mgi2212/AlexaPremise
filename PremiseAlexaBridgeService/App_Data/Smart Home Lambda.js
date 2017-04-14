@@ -1,14 +1,9 @@
-﻿//'use strict';
-// This is the Smart Home skill for the Alexa-Premise bridge.
+﻿'use strict';
 var https = require('https');
 var AWS = require("aws-sdk");
 var log = log;
 
-//var REMOTE_CLOUD_BASE_PATH = "/Alexa.svc/jsons/";
-//var REMOTE_CLOUD_HOSTNAME = "alexa.quigleys.us";
-//var REMOTE_CLOUD_PORT = 8733;
-
-var healthyResponse = {
+const healthyResponse = {
     "header": {
         "messageId": "",
         "namespace": "Alexa.ConnectedHome.System",
@@ -17,13 +12,12 @@ var healthyResponse = {
     },
     "payload": {
         "isHealthy": true,
-        "description": "The system is currently healthy"
+        "description": "The system is currently healthy."
     }
 };
 
+// handles events from Alexa service
 exports.handler = function (event, context) {
-
-    //log('alexaEventHandler', event);
 
     switch (event.header.namespace) {
 
@@ -52,6 +46,7 @@ exports.handler = function (event, context) {
     }
 };
 
+// queries amazon for customer profile information (name, email, user_id)
 function getCustomerProfile(event, context, command) {
 
     // prepare request options
@@ -67,11 +62,8 @@ function getCustomerProfile(event, context, command) {
         }
     };
 
-    //log('getCustomerProfileRequest', get_options);
-
     // Set up the request
     var result = "";
-
     var get_req = https.request(get_options, function (response) {
 
         response.setEncoding('utf-8');
@@ -82,7 +74,6 @@ function getCustomerProfile(event, context, command) {
 
         response.on('end', function () {
             var customer_info = JSON.parse(result);
-            log('getCustomerProfileResponse', JSON.stringify(customer_info));
             getCustomerEndpoint(event, context, command, customer_info);
         });
 
@@ -97,6 +88,7 @@ function getCustomerProfile(event, context, command) {
     get_req.end();
 }
 
+// Queries a dynamoDb table for customer endpoint using user_id as the key
 function getCustomerEndpoint(event, context, command, customer_info) {
 
     var dynamodb = new AWS.DynamoDB();
@@ -110,8 +102,6 @@ function getCustomerEndpoint(event, context, command, customer_info) {
         }
     };
 
-    //log("getCustomerEndpointRequest", params);
-
     dynamodb.getItem(params, function (err, data) {
 
         if (err) {
@@ -121,13 +111,13 @@ function getCustomerEndpoint(event, context, command, customer_info) {
             log('getCustomerEndpointResponse', 'Record not found for ' + customer_info.user_id);
             context.fail('Failed to find customer endpoint.');
         } else {
-            //log('getCustomerEndpointResponse', 'Record found for ' + customer_info.email);
             proxyEvent(event, context, command, data.Item);
         }
-
     });
 }
 
+// proxies the event to the AlexaPremise service running locally at the customer endpoint URI
+// requires globally valid ssl cert for the local service
 function proxyEvent(event, context, command, customer_endpoint) {
 
     // replace the accessToken with the one from the customer db account
@@ -135,20 +125,20 @@ function proxyEvent(event, context, command, customer_endpoint) {
 
     // Set up the request
     var post_data = JSON.stringify(event, 'utf-8');
-    log('proxyEventData', JSON.stringify(JSON.parse(post_data)));
 
     // prepare request options
     var post_options = {
-        host: customer_endpoint.host.S,                 // REMOTE_CLOUD_HOSTNAME,
-        port: customer_endpoint.port.S,                 // REMOTE_CLOUD_PORT,
-        path: customer_endpoint.app_path.S + command + '/', //path: REMOTE_CLOUD_BASE_PATH + command + '/',
+        host: customer_endpoint.host.S,                     // REMOTE_CLOUD_HOSTNAME,
+        port: customer_endpoint.port.S,                     // REMOTE_CLOUD_PORT,
+        path: customer_endpoint.app_path.S + command + '/', // path: REMOTE_CLOUD_BASE_PATH + command + '/',
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
             'Content-Length': post_data.length
         }
     };
-    //log('proxyEventOptions', post_options);
+    log('Customer Endpoint', post_options);
+    log('Directive', JSON.stringify(JSON.parse(post_data)));
 
     var result = "";
     var post_req = https.request(post_options, function (response) {
@@ -162,12 +152,7 @@ function proxyEvent(event, context, command, customer_endpoint) {
         response.on('end', function () {
 
             var directive = JSON.parse(result);
-            log('proxyDirective', JSON.stringify(directive));
-
-            //if (directive.payload.applianceResponseTimestamp !== undefined) {
-            //    delete directive.payload.applianceResponseTimestamp;
-            //    log('proxyDirectiveFixed', JSON.stringify(directive));
-            //}
+            log('Response', JSON.stringify(directive));
             context.succeed(directive);
         });
 
@@ -182,7 +167,6 @@ function proxyEvent(event, context, command, customer_endpoint) {
 }
 
 function log(title, msg) {
-    console.log('************** ' + title + ' *************');
+    console.log(':' + title + ':');
     console.log(msg);
-    console.log('************ ' + title + ' End ***********');
 }

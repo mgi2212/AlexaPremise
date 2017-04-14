@@ -1,16 +1,17 @@
-﻿'use strict';
+﻿/*
+ * Demonstrates a simple CRUD microservice for a dynamoDb using API Gateway. 
+ */
 
-console.log('Loading function');
+'use strict';
 var AWS = require("aws-sdk");
 var log = log;
 
-/**
- * Demonstrates a simple HTTP endpoint using API Gateway. 
- */
 exports.handler = (event, context, callback) => {
-    //console.log('Received event:', JSON.stringify(event, null, 2));
 
-    var dynamo = new AWS.DynamoDB();
+    if (event.httpMethod !== 'POST') {
+        done(new Error(`Unsupported http method "${event.httpMethod}"`));
+        return;
+    }
 
     const done = (err, res) => callback(null, {
         statusCode: err ? '400' : '200',
@@ -20,71 +21,69 @@ exports.handler = (event, context, callback) => {
         },
     });
 
-    switch (event.httpMethod) {
-        case 'POST':
-            var command = JSON.parse(event.body);
-            //console.log(JSON.stringify(command.dbBody));
+    var dynamo = new AWS.DynamoDB();
+    var command = JSON.parse(event.body);
 
-            if (command.function === "updateItem") {
-
-                var updateParams = {
-                    TableName: 'PremiseBridgeCustomer',
-                    Key: {
-                        "id": { "S": command.id }
-                    },
-                    UpdateExpression: "SET host=:h, port=:p, app_path=:a, access_token=:t",
-                    "ExpressionAttributeValues": {
-                        ":h": { "S": command.host },
-                        ":p": { "S": command.port },
-                        ":a": { "S": command.app_path },
-                        ":t": { "S": command.access_token }
-                    },
-                    ReturnValues: "UPDATED_NEW"
-                };
-
-                dynamo.updateItem(updateParams, done);
-            }
-            else if (command.function === "deleteItem") {
-
-                var deleteParams = {
-                    TableName: 'PremiseBridgeCustomer',
-                    Key: {
-                        "id": { "S": command.id }
-                    }
-                };
-
-                dynamo.deleteItem(deleteParams, done);
-            }
-            else if (command.function === "getItem") {
-
-                var getParams = {
-                    TableName: 'PremiseBridgeCustomer',
-                    Key: {
-                        "id": { "S": command.id }
-                    }
-                };
-
-                dynamo.getItem(getParams, done);
-            }
-            else if (command.function === "putItem") {
-
-                var putParams = {
-                    TableName: 'PremiseBridgeCustomer',
-                    Item: {
-                        "id": { "S": command.id },
-                        "host": { "S": command.host },
-                        "port": { "S": command.port },
-                        "app_path": { "S": command.app_path },
-                        "access_token": { "S": command.access_token }
-                    }
-                };
-                dynamo.putItem(putParams, done);
-            }
-            else {
-                done(new Error(`Unsupported db function "${event.body.Function}"`));
-            }
+    switch (command.function) {
+        case 'updateItem': 
+            var updateParams = {
+                TableName: 'PremiseBridgeCustomer',
+                Key: {
+                    "id": { "S": command.id }
+                },
+                UpdateExpression: "SET host=:h, port=:p, app_path=:a, access_token=:t",
+                "ExpressionAttributeValues": {
+                    ":h": { "S": command.host },
+                    ":p": { "S": command.port },
+                    ":a": { "S": command.app_path },
+                    ":t": { "S": command.access_token }
+                },
+                ReturnValues: "UPDATED_NEW"
+            };
+            dynamo.updateItem(updateParams, done);
             break;
-        default:
-            done(new Error(`Unsupported http method "${event.httpMethod}"`));
+                
+        case 'deleteItem': 
+            var deleteParams = {
+                TableName: 'PremiseBridgeCustomer',
+                Key: {
+                    "id": { "S": command.id }
+                }
+            };
+            dynamo.deleteItem(deleteParams, done);
+            break;
+                
+        case 'getItem': 
+            var getParams = {
+                TableName: 'PremiseBridgeCustomer',
+                Key: {
+                    "id": { "S": command.id }
+                }
+            };
+            dynamo.getItem(getParams, done);
+            break;
+                
+        case 'putItem': 
+            var putParams = {
+                TableName: 'PremiseBridgeCustomer',
+                Item: {
+                    "id": { "S": command.id },
+                    "host": { "S": command.host },
+                    "port": { "S": command.port },
+                    "app_path": { "S": command.app_path },
+                    "access_token": { "S": command.access_token }
+                }
+            };
+            dynamo.putItem(putParams, done);
+            break;
+
+        default: 
+            done(new Error(`Unsupported db function "${event.body.Function}"`));
+            break;
     }
 };
+
+function log(title, msg) {
+    console.log(':' + title + ':');
+    console.log(msg);
+}
