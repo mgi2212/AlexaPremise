@@ -19,9 +19,6 @@ namespace PremiseAlexaBridgeService
         internal string PremiseUserPassword;
         internal string PremiseHomeObject;
 
-        //internal IPremiseObject RootObject;
-        //internal IPremiseObject HomeObject;
-
         private PremiseServer()
         {
             this.PremiseServerAddress = ConfigurationManager.AppSettings["premiseServer"];
@@ -53,17 +50,11 @@ namespace PremiseAlexaBridgeService
 
         public IPremiseObject ConnectToServer(SYSClient client)
         {
-            //this.HomeObject = 
-
             return client.Connect(this.PremiseServerAddress).GetAwaiter().GetResult(); // TODO: , _premiseUser, _premisePassword);
-
-            //this.RootObject = this.HomeObject.GetRoot().GetAwaiter().GetResult();
         }
 
         public void DisconnectServer(SYSClient client)
         {
-            //this.HomeObject = null;
-            //this.RootObject = null;
             client.Disconnect();
         }
 
@@ -71,6 +62,5 @@ namespace PremiseAlexaBridgeService
         {
             get { return instance; }
         }
-
     }
 }

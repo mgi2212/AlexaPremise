@@ -117,19 +117,19 @@ namespace Alexa.SmartHome
     [DataContract(Name = "color", Namespace = "Alexa.ConnectedHome.Control")]
     public class ApplianceColorValue
     {
-        [DataMember(Name = "hue", EmitDefaultValue = false)]
-        public ApplianceValue hue;
-        [DataMember(Name = "saturation", EmitDefaultValue = false)]
-        public ApplianceValue saturation;
-        [DataMember(Name = "brightness", EmitDefaultValue = false)]
-        public ApplianceValue brightness;
+        [DataMember(Name = "hue", EmitDefaultValue = false, Order = 1)]
+        public double hue;
+        [DataMember(Name = "saturation", EmitDefaultValue = false, Order = 2)]
+        public double saturation;
+        [DataMember(Name = "brightness", EmitDefaultValue = false, Order = 3)]
+        public double brightness;
     }
 
     [DataContract(Name = "colorTemperature", Namespace = "Alexa.ConnectedHome.Control")]
     public class ApplianceColorTemperatureValue
     {
         [DataMember(Name = "value", EmitDefaultValue = false)]
-        public ApplianceValue value;
+        public int value;
     }
 
     [DataContract(Name = "payload", Namespace = "Alexa.ConnectedHome.Control")]
@@ -164,6 +164,17 @@ namespace Alexa.SmartHome
 
         [DataMember(Name = "colorTemperature", EmitDefaultValue = false)]
         public ApplianceColorTemperatureValue colorTemperature;
+
+    }
+
+    [DataContract(Name = "achievedState", Namespace = "Alexa.ConnectedHome.Control")]
+    public class AchievedState
+    {
+        [DataMember(Name = "color", EmitDefaultValue = false)]
+        public ApplianceColorValue color;
+
+        [DataMember(Name = "colorTemperature", EmitDefaultValue = false)]
+        public ApplianceColorTemperatureValue colorTemperature;
     }
 
     [DataContract(Name = "payload", Namespace = "Alexa.ConnectedHome.Control")]
@@ -181,6 +192,10 @@ namespace Alexa.SmartHome
 
         [DataMember(Name = "exception", EmitDefaultValue = false, Order = 2)]
         public ExceptionResponsePayload exception { get; set; }
+
+        [DataMember(Name = "achievedState", EmitDefaultValue = false, Order = 3)]
+        public AchievedState achievedState{ get; set; }
+
     }
 
     #endregion
@@ -270,11 +285,15 @@ namespace Alexa.SmartHome
         [DataMember(Name = "roomStatus", EmitDefaultValue = false)]
         public ApplianceRoomStatus applianceRoomStatus;
 
+        [DataMember(Name = "uri", EmitDefaultValue = false)]
+        public ApplianceValue uri;
+
         [DataMember(Name = "applianceResponseTimestamp", EmitDefaultValue = false, Order = 7)]
         public string applianceResponseTimestamp;
 
         [DataMember(Name = "exception", EmitDefaultValue = false, Order = 8)]
         public ExceptionResponsePayload exception { get; set; }
+
     }
 
     #endregion
