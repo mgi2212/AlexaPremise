@@ -299,10 +299,15 @@ namespace PremiseAlexaBridgeService
                 bool hasTemperature = (sysAppliance.Temperature != null); // note a color light will have a temperature property
                 bool hasDimmer = (sysAppliance.Brightness != null);
                 bool hasColor = (sysAppliance.Hue != null);
+                string typeName = sysAppliance.OTYPENAME;
+                bool isScene = typeName.StartsWith("AlexaVirtual");
+
                 if (hasColor)
                 {
                     hasTemperature = false;
                 }
+
+                //appliance.friendlyDescription = "";
 
                 // Deal with empty FriendlyDescription
                 if (string.IsNullOrEmpty(appliance.friendlyDescription))
@@ -317,11 +322,13 @@ namespace PremiseAlexaBridgeService
                         parentName = (await parent.GetName()).Trim();
                     }
                     // results in something like = "A Sconce in the Entry."
-                    appliance.friendlyDescription = string.Format("Premise {0} in the {1}", sysAppliance.OTYPENAME, parentName).Trim();
+                    if (isScene)
+                        appliance.friendlyDescription = "Scene connected via Premise";
+                    else
+                        appliance.friendlyDescription = string.Format("Premise {0} in the {1}", sysAppliance.OTYPENAME, parentName).Trim();
                     // set the value in the premise dom
                     await premiseObject.SetValue("FriendlyDescription", appliance.friendlyDescription);
                 }
-
 
                 appliance.additionalApplianceDetails = new AdditionalApplianceDetails()
                 {
