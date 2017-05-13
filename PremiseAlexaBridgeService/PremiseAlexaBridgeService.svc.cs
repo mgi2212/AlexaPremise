@@ -229,7 +229,7 @@ namespace PremiseAlexaBridgeService
         {
             List<Appliance> appliances = new List<Appliance>();
 
-            var returnClause = new string[] { "Name", "DisplayName", "FriendlyName", "FriendlyDescription", "IsReachable", "IsDiscoverable", "PowerState", "Brightness", "Temperature", "TemperatureMode", "Host", "Port", "Path", "Hue", "OID", "OPATH", "OTYPENAME", "Type" };
+            var returnClause = new string[] { "Name", "DisplayName", "FriendlyName", "FriendlyDescription", "IsReachable", "IsDiscoverable", "PowerState", "Brightness", "Temperature", "TemperatureMode", "Host", "Port", "Path", "Hue", "OID", "OPATH", "OTYPENAME", "Type", "ApplianceType" };
             dynamic whereClause = new System.Dynamic.ExpandoObject();
             whereClause.TypeOf = this.ServiceInstance.AlexaApplianceClassPath;
 
@@ -253,7 +253,9 @@ namespace PremiseAlexaBridgeService
                     isReachable = sysAppliance.IsReachable,
                     modelName = sysAppliance.OTYPENAME,
                     friendlyName = ((string)sysAppliance.FriendlyName).Trim(),
-                    friendlyDescription = "" // Generate a new description each time ((string)sysAppliance.FriendlyDescription).Trim()
+                    friendlyDescription = ((string)sysAppliance.FriendlyDescription).Trim(), // Dan: Premise should be source of truth
+                    applianceTypes = new List<string>()
+              
                 };
 
                 // the FriendlyName is what Alexa tries to match when finding devices, so we need one
@@ -302,6 +304,11 @@ namespace PremiseAlexaBridgeService
                 string typeName = sysAppliance.OTYPENAME;
                 bool isScene = typeName.StartsWith("AlexaVirtual");
 
+                // If ApplianceType is provided on the premise object, ensure it's the first entry in applianceTypes[]
+                // This way you can over-ride the logic below in Premise
+                if (!string.IsNullOrEmpty((string)sysAppliance.ApplianceType))
+                    appliance.applianceTypes.Add(((string)sysAppliance.ApplianceType).Trim());
+
                 if (hasColor)
                 {
                     hasTemperature = false;
@@ -339,6 +346,7 @@ namespace PremiseAlexaBridgeService
                 if (hasHost)
                 {
                     appliance.actions.Add("retrieveCameraStreamUri");
+                    appliance.applianceTypes.Add("CAMERA"); 
                 }
                 if (hasPowerState)
                 {
@@ -352,6 +360,7 @@ namespace PremiseAlexaBridgeService
                     appliance.actions.Add("incrementPercentage");
                     appliance.actions.Add("decrementPercentage");
                     appliance.additionalApplianceDetails.purpose = "DimmableLight";
+                    appliance.applianceTypes.Add("LIGHT");
                 }
                 if (hasColor)
                 {
@@ -360,6 +369,7 @@ namespace PremiseAlexaBridgeService
                     appliance.actions.Add("incrementColorTemperature");
                     appliance.actions.Add("decrementColorTemperature");
                     appliance.additionalApplianceDetails.purpose = "ColorLight";
+                    appliance.applianceTypes.Add("LIGHT");
                 }
                 if (hasTemperature)
                 {
@@ -369,6 +379,7 @@ namespace PremiseAlexaBridgeService
                     appliance.actions.Add("getTemperatureReading");
                     appliance.actions.Add("getTargetTemperature");
                     appliance.additionalApplianceDetails.purpose = "Thermostat";
+                    appliance.applianceTypes.Add("THERMOSTAT");
                 }
 
                 appliances.Add(appliance);

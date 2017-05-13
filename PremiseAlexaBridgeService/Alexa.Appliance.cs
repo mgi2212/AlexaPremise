@@ -95,6 +95,17 @@ namespace Alexa.SmartHome
             set { _version = value != null && value.Length > 128 ? value.Substring(0, 128) : value; }
         }
 
+        [DataMember(Name = "applianceTypes", EmitDefaultValue = false, Order = 10)]
+        public List<string> applianceTypes { get; set; }
+
+        // If present in on the Premise object, will end up as the first entry in appliancetypes[]
+        [DataMember(Name = "applianceType", EmitDefaultValue = false, Order = 11)]
+        private string _applianceType;
+        public string applianceType {
+            get { return _applianceType; }
+            set { _applianceType = value != null && value.Length > 128 ? value.Substring(0, 128) : value; }
+        }
+
         public static int CompareByFriendlyName(Appliance appliance1, Appliance appliance2)
         {
             return String.Compare(appliance1.friendlyName, appliance2.friendlyName, StringComparison.InvariantCultureIgnoreCase);

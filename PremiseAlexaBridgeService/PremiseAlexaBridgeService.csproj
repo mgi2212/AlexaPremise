@@ -133,6 +133,7 @@
     <Content Include="packages.config" />
     <Content Include="App_Data\Alexa.xdo" />
     <None Include="Properties\PublishProfiles\AD2.pubxml" />
+    <None Include="Properties\PublishProfiles\cek.pubxml" />
     <None Include="Properties\PublishProfiles\Kindel.pubxml" />
     <None Include="Properties\PublishProfiles\PremiseTest.pubxml" />
     <None Include="Web.Debug.config">
@@ -141,6 +142,7 @@
     <None Include="Web.Release.config">
       <DependentUpon>Web.config</DependentUpon>
     </None>
+    <Content Include="webAppSettings.config" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\SYSWebSockClient\SYSWebSockClient.csproj">
