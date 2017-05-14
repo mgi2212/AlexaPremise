@@ -51,72 +51,70 @@ namespace Alexa.SmartHome
     [DataContract(Namespace = "Alexa.ConnectedHome.Discovery")]
     public class Appliance
     {
-
-        [DataMember(Name = "actions", EmitDefaultValue = false, Order = 1)]
-        public List<string> actions { get; set; }
-
-        [DataMember(Name = "additionalApplianceDetails", EmitDefaultValue = false, Order = 2)]
-        public AdditionalApplianceDetails additionalApplianceDetails { get; set; }
-
-        [DataMember(Name = "applianceId", Order = 3)]
-        private string _applianceId;
-        public string applianceId
-        {
-            get { return _applianceId; }
-            set { _applianceId = value != null && value.Length > 256 ? value.Substring(0, 256) : value;}
+        [DataMember(Name = "friendlyName", EmitDefaultValue = false, Order = 1)]
+        private string _friendlyName;
+        public string friendlyName {
+            get { return _friendlyName; }
+            set { _friendlyName = value != null && value.Length > 128 ? value.Substring(0, 128) : value; }
         }
 
-        [DataMember(Name = "friendlyDescription", EmitDefaultValue = false, Order = 4)]
+        [DataMember(Name = "friendlyDescription", EmitDefaultValue = false, Order = 2)]
         private string _friendlyDescription;
         public string friendlyDescription {
             get { return _friendlyDescription; }
             set { _friendlyDescription = value != null && value.Length > 128 ? value.Substring(0, 128) : value; }
         }
 
-        [DataMember(Name = "friendlyName", EmitDefaultValue = false, Order = 5)]
-        private string _friendlyName; 
-        public string friendlyName {
-            get { return _friendlyName; }
-            set { _friendlyName = value != null && value.Length > 128 ? value.Substring(0, 128) : value; }
-        }
-
-        [DataMember(Name = "isReachable", EmitDefaultValue = true, Order = 6)]
-        public bool isReachable { get; set; }
-
-        [DataMember(Name = "manufacturerName", EmitDefaultValue = false, Order = 7)]
+                [DataMember(Name = "manufacturerName", EmitDefaultValue = false, Order = 3)]
         private string _manufacturerName;
         public string manufacturerName {
             get { return _manufacturerName; }
             set { _manufacturerName = value != null && value.Length > 128 ? value.Substring(0, 128) : value; }
         }
 
-        [DataMember(Name = "modelName", EmitDefaultValue = false, Order = 8)]
+        [DataMember(Name = "modelName", EmitDefaultValue = false, Order = 4)]
         private string _modelName;
         public string modelName {
             get { return _modelName; }
             set { _modelName = value != null && value.Length > 128 ? value.Substring(0, 128) : value; }
         }
 
-        [DataMember(Name = "version", EmitDefaultValue = false, Order = 9)]
-        private string _version;
-        public string version {
-            get { return _version; }
-            set { _version = value != null && value.Length > 128 ? value.Substring(0, 128) : value; }
+        [DataMember(Name = "applianceId", Order = 5)]
+        private string _applianceId;
+        public string applianceId {
+
+            get { return _applianceId; }
+            set { _applianceId = value != null && value.Length > 256 ? value.Substring(0, 256) : value; }
         }
 
-        [DataMember(Name = "applianceTypes", EmitDefaultValue = false, Order = 10)]
+        [DataMember(Name = "applianceTypes", EmitDefaultValue = false, Order = 6)]
         public List<string> applianceTypes { get; set; }
 
         // If present in on the Premise object, will end up as the first entry in appliancetypes[]
-        [DataMember(Name = "applianceType", EmitDefaultValue = false, Order = 11)]
+        [DataMember(Name = "applianceType", EmitDefaultValue = false, Order = 7)]
         private string _applianceType;
         public string applianceType {
             get { return _applianceType; }
             set { _applianceType = value != null && value.Length > 128 ? value.Substring(0, 128) : value; }
         }
 
-        public static int CompareByFriendlyName(Appliance appliance1, Appliance appliance2)
-        {
+        [DataMember(Name = "actions", EmitDefaultValue = false, Order = 8)]
+        public List<string> actions { get; set; }
+
+        [DataMember(Name = "additionalApplianceDetails", EmitDefaultValue = false, Order = 9)]
+        public AdditionalApplianceDetails additionalApplianceDetails { get; set; }
+
+        [DataMember(Name = "isReachable", EmitDefaultValue = true, Order = 10)]
+        public bool isReachable { get; set; }
+
+        [DataMember(Name = "version", EmitDefaultValue = false, Order = 11)]
+        private string _version;
+        public string version {
+            get { return _version; }
+            set { _version = value != null && value.Length > 128 ? value.Substring(0, 128) : value; }
+        }
+
+        public static int CompareByFriendlyName(Appliance appliance1, Appliance appliance2) {
             return String.Compare(appliance1.friendlyName, appliance2.friendlyName, StringComparison.InvariantCultureIgnoreCase);
         }
     }
