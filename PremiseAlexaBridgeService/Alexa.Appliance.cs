@@ -26,6 +26,15 @@ namespace Alexa.SmartHome
 
     #region Discovery
 
+    public enum AlexaApplianceTypes
+    {
+        UNKNOWN,
+        LIGHT,
+        THERMOSTAT,
+        SCENE,
+        CAMERA
+    }
+
     [DataContract(Namespace = "Alexa.ConnectedHome.Discovery")]
     public class AdditionalApplianceDetails
     {

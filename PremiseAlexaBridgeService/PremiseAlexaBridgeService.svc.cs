@@ -214,11 +214,13 @@ namespace PremiseAlexaBridgeService
 
                 #endregion
             }
-            catch (Exception)
+            catch (Exception ex)
             {
                 response.header.@namespace = Faults.Namespace;
                 response.header.name = Faults.DriverInternalError;
                 response.payload.exception = new ExceptionResponsePayload();
+                response.payload.exception.errorInfo = new ErrorInfo();
+                response.payload.exception.errorInfo.description = ex.Message.ToString();
             }
 
             ServiceInstance.DisconnectServer(client);
@@ -244,6 +246,7 @@ namespace PremiseAlexaBridgeService
                     continue;
 
                 var objectId = (string)sysAppliance.OID;
+
                 var appliance = new Appliance()
                 {
                     actions = new List<string>(),
@@ -258,12 +261,13 @@ namespace PremiseAlexaBridgeService
               
                 };
 
+                var premiseObject = await homeObject.GetObject(objectId);
+
                 // the FriendlyName is what Alexa tries to match when finding devices, so we need one
                 // if no FriendlyName value then try to invent one and set it so we dont have to do this again!
                 if (string.IsNullOrEmpty(appliance.friendlyName))
                 {
                     generatedNameCount++;
-                    var premiseObject = await homeObject.GetObject(objectId);
 
                     // parent should be a container - so get that 
                     var parent = await premiseObject.GetParent();
@@ -295,33 +299,14 @@ namespace PremiseAlexaBridgeService
                     await premiseObject.SetValue("FriendlyName", appliance.friendlyName);
                 }
 
-                // construct the additional details
-                bool hasHost = (sysAppliance.Host != null);
-                bool hasPowerState = (sysAppliance.PowerState != null);
-                bool hasTemperature = (sysAppliance.Temperature != null); // note a color light will have a temperature property
-                bool hasDimmer = (sysAppliance.Brightness != null);
-                bool hasColor = (sysAppliance.Hue != null);
                 string typeName = sysAppliance.OTYPENAME;
-                bool isScene = typeName.StartsWith("AlexaVirtual");
-
-                // If ApplianceType is provided on the premise object, ensure it's the first entry in applianceTypes[]
-                // This way you can over-ride the logic below in Premise
-                if (!string.IsNullOrEmpty((string)sysAppliance.ApplianceType))
-                    appliance.applianceTypes.Add(((string)sysAppliance.ApplianceType).Trim());
-
-                if (hasColor)
-                {
-                    hasTemperature = false;
-                }
-
-                //appliance.friendlyDescription = "";
+                bool isScene = typeName.StartsWith("AlexaVirtual"); 
 
                 // Deal with empty FriendlyDescription
                 if (string.IsNullOrEmpty(appliance.friendlyDescription))
                 {
                     generatedDescriptionCount++;
                     // parent should be a container - so get that name
-                    var premiseObject = await homeObject.GetObject(objectId);
                     var parent = await premiseObject.GetParent();
                     string parentName = (await parent.GetDescription()).Trim();
                     if (parentName.Length == 0)
@@ -337,56 +322,120 @@ namespace PremiseAlexaBridgeService
                     await premiseObject.SetValue("FriendlyDescription", appliance.friendlyDescription);
                 }
 
+                // determine device types
+
+                AlexaApplianceTypes applianceType = AlexaApplianceTypes.UNKNOWN;
+                bool hasDimmer = false;
+                bool hasColor = false;
+                if (!isScene)
+                {
+                    bool isLight = await premiseObject.IsOfType("{0B1DA7E1-1731-49AC-9814-47470E78EFAB}");  // lighting
+                    if (isLight)
+                    {
+                        applianceType = AlexaApplianceTypes.LIGHT;
+                        hasDimmer = await premiseObject.IsOfType("{DEB24C93-9143-4030-86FF-29C7626BC9E3}");  // dimmer
+                        hasColor = (sysAppliance.Hue != null);  // note change this to isOfType   // color
+                    } else
+                    {
+                        if (await premiseObject.IsOfType("{35ED9728-21C0-4868-BEFE-BCBA38D4C4B3}"))  // thermostat
+                        {
+                            applianceType = AlexaApplianceTypes.THERMOSTAT;
+                        } else if (await premiseObject.IsOfType("{68BF174A-8984-4214-AC09-2975A4CEBEAA}")) // camera
+                        {
+                            applianceType = AlexaApplianceTypes.CAMERA;
+
+                        }
+                    }
+                } else
+                {
+                    applianceType = AlexaApplianceTypes.SCENE;
+                }
+
+                // If ApplianceType is provided on the premise object, ensure it's the first entry in applianceTypes[]
+                // This way you can over-ride the logic below in Premise
+                if (!string.IsNullOrEmpty((string)sysAppliance.ApplianceType))
+                    appliance.applianceTypes.Add(((string)sysAppliance.ApplianceType).Trim());
+
+
                 appliance.additionalApplianceDetails = new AdditionalApplianceDetails()
                 {
                     dimmable = hasDimmer.ToString(),
                     path = sysAppliance.OPATH
                 };
 
-                if (hasHost)
+                switch (applianceType)
                 {
-                    appliance.actions.Add("retrieveCameraStreamUri");
-                    appliance.applianceTypes.Add("CAMERA"); 
-                }
-                if (hasPowerState)
-                {
-                    appliance.actions.Add("turnOn");
-                    appliance.actions.Add("turnOff");
-                    appliance.additionalApplianceDetails.purpose = "Unknown";
-                }
-                if (hasDimmer)
-                {
-                    appliance.actions.Add("setPercentage");
-                    appliance.actions.Add("incrementPercentage");
-                    appliance.actions.Add("decrementPercentage");
-                    appliance.additionalApplianceDetails.purpose = "DimmableLight";
-                    appliance.applianceTypes.Add("LIGHT");
-                }
-                if (hasColor)
-                {
-                    appliance.actions.Add("setColor");
-                    appliance.actions.Add("setColorTemperature");
-                    appliance.actions.Add("incrementColorTemperature");
-                    appliance.actions.Add("decrementColorTemperature");
-                    appliance.additionalApplianceDetails.purpose = "ColorLight";
-                    appliance.applianceTypes.Add("LIGHT");
-                }
-                if (hasTemperature)
-                {
-                    appliance.actions.Add("setTargetTemperature");
-                    appliance.actions.Add("incrementTargetTemperature");
-                    appliance.actions.Add("decrementTargetTemperature");
-                    appliance.actions.Add("getTemperatureReading");
-                    appliance.actions.Add("getTargetTemperature");
-                    appliance.additionalApplianceDetails.purpose = "Thermostat";
-                    appliance.applianceTypes.Add("THERMOSTAT");
+                    case AlexaApplianceTypes.LIGHT:
+                        {
+                            appliance.actions.Add("turnOn");
+                            appliance.actions.Add("turnOff");
+                            if (hasDimmer)
+                            {
+                                appliance.actions.Add("setPercentage");
+                                appliance.actions.Add("incrementPercentage");
+                                appliance.actions.Add("decrementPercentage");
+                                appliance.additionalApplianceDetails.purpose = "DimmableLight";
+                            }
+                            if (hasColor)
+                            {
+                                appliance.actions.Add("setColor");
+                                appliance.actions.Add("setColorTemperature");
+                                appliance.actions.Add("incrementColorTemperature");
+                                appliance.actions.Add("decrementColorTemperature");
+                                appliance.additionalApplianceDetails.purpose = "ColorLight";
+                            }
+                            appliance.applianceTypes.Add("LIGHT");
+                        }
+                        break;
+                    case AlexaApplianceTypes.SCENE:
+                        {
+                            appliance.actions.Add("turnOn");
+                            appliance.actions.Add("turnOff");
+                            appliance.additionalApplianceDetails.purpose = "Scene";
+                            appliance.applianceTypes.Add("SCENE");
+                        }
+                        break;
+
+                    case AlexaApplianceTypes.THERMOSTAT:
+                        {
+                            appliance.actions.Add("setTargetTemperature");
+                            appliance.actions.Add("incrementTargetTemperature");
+                            appliance.actions.Add("decrementTargetTemperature");
+                            appliance.actions.Add("getTemperatureReading");
+                            appliance.actions.Add("getTargetTemperature");
+                            appliance.additionalApplianceDetails.purpose = "Thermostat";
+                            appliance.applianceTypes.Add("THERMOSTAT");
+                        }
+                        break;
+
+                    case AlexaApplianceTypes.CAMERA:
+                        {
+                            appliance.actions.Add("retrieveCameraStreamUri");
+                            appliance.applianceTypes.Add("CAMERA");
+                        }
+                        break;
+
+                    default: // UNKNOWN
+                        {
+                            if (await premiseObject.IsOfType("{9C3E5340-EAB7-402D-979A-93B5135264AA}")) // powerstate 
+                            {
+                                appliance.actions.Add("turnOn");
+                                appliance.actions.Add("turnOff");
+                            }
+                            appliance.additionalApplianceDetails.purpose = "Unknown";
+                            if (appliance.applianceTypes.Count == 0) // catches the case of a type override by Premise.
+                            {
+                                appliance.applianceTypes.Add("UNKNOWN");
+                            }
+                        }
+                        break;
                 }
 
                 appliances.Add(appliance);
                 if (++count >= this.ServiceInstance.AlexaDeviceLimit)
                     break;
             }
-
+            
             await homeObject.SetValue("LastRefreshed", DateTime.Now.ToString());
             await homeObject.SetValue("HealthDescription", string.Format("Reported={0},Names Generated={1}, Descriptions Generated={2}", count, generatedNameCount, generatedDescriptionCount));
             await homeObject.SetValue("Health", "True");
