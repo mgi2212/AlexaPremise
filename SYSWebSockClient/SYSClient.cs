@@ -251,6 +251,7 @@
 
         public Task<IPremiseObject> Connect(string uri)
         {
+
             this.ConnectFuture = new Future();
 
             return Task.Run(

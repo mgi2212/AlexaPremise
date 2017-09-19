@@ -12,7 +12,11 @@ namespace PremiseAlexaBridgeService
         internal bool AlexaCheckStateBeforeSetValue;
         internal string AlexaStatusClassPath;
         internal string AlexaApplianceClassPath;
+        internal string AlexaEndpointClassPath;
         internal string AlexaLocationClassPath;
+        internal string AlexaPowerStateClassPath;
+        internal string AlexaDimmerStateClassPath;
+
 
         internal string PremiseServerAddress;
         internal string PremiseUserName;
@@ -28,7 +32,9 @@ namespace PremiseAlexaBridgeService
             this.AlexaStatusClassPath = ConfigurationManager.AppSettings["premiseAlexaStatusClassPath"];
             this.AlexaApplianceClassPath = ConfigurationManager.AppSettings["premiseAlexaApplianceClassPath"];
             this.AlexaLocationClassPath = ConfigurationManager.AppSettings["premiseAlexaLocationClassPath"];
-
+            this.AlexaEndpointClassPath = ConfigurationManager.AppSettings["premiseAlexaEndpointClassPath"];
+            this.AlexaPowerStateClassPath = ConfigurationManager.AppSettings["premisePowerStateClassPath"];
+            this.AlexaDimmerStateClassPath = ConfigurationManager.AppSettings["premiseDimmerClassPath"];
             try
             {
                 this.AlexaDeviceLimit = int.Parse(ConfigurationManager.AppSettings["premiseAlexaDeviceLimit"]);

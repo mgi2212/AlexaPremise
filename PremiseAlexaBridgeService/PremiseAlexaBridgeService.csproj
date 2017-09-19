@@ -22,6 +22,7 @@
     <IISExpressWindowsAuthentication />
     <IISExpressUseClassicPipelineMode />
     <UseGlobalApplicationHostFile />
+    <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -71,12 +72,12 @@
     <Reference Include="Newtonsoft.Json, Version=8.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
       <HintPath>..\packages\Newtonsoft.Json.8.0.2\lib\net45\Newtonsoft.Json.dll</HintPath>
     </Reference>
+    <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="System.Web.DynamicData" />
     <Reference Include="System.Web.Entity" />
     <Reference Include="System.Web.ApplicationServices" />
     <Reference Include="System" />
     <Reference Include="System.Configuration" />
-    <Reference Include="System.Core" />
     <Reference Include="System.Data" />
     <Reference Include="System.Drawing" />
     <Reference Include="System.EnterpriseServices" />
@@ -118,16 +119,30 @@
     <Content Include="App_Data\Micro Service for DB Lambda.js" />
     <Content Include="App_Data\Custom Skill Lambda.js" />
     <Content Include="App_Data\Smart Home Lambda.js" />
+    <Content Include="PremiseAlexaBridgeService.Custom.svc" />
     <Content Include="PremiseAlexaBridgeService.svc" />
+    <Content Include="PremiseAlexaBridgeService.V3.svc" />
+    <Content Include="PremiseAlexaBridgeService.V2.svc" />
     <Content Include="Web.config" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Alexa.Appliance.cs" />
-    <Compile Include="Alexa.ConnectedHome.cs" />
+    <Compile Include="Alexa.SmartHome.V3.cs" />
+    <Compile Include="Alexa.SmartHome.V2.cs" />
+    <Compile Include="Alexa.Premise.Custom.cs" />
+    <Compile Include="Alexa.ConnectedHome.V3.cs" />
+    <Compile Include="Alexa.ConnectedHome.V2.cs" />
+    <Compile Include="PremiseAlexaBridgeService.Custom.svc.cs">
+      <DependentUpon>PremiseAlexaBridgeService.Custom.svc</DependentUpon>
+    </Compile>
     <Compile Include="PremiseAlexaBridgeService.svc.cs">
       <DependentUpon>PremiseAlexaBridgeService.svc</DependentUpon>
     </Compile>
-    <Compile Include="IPremiseAlexaBridgeService.cs" />
+    <Compile Include="PremiseAlexaBridgeService.V3.svc.cs">
+      <DependentUpon>PremiseAlexaBridgeService.V3.svc</DependentUpon>
+    </Compile>
+    <Compile Include="PremiseAlexaBridgeService.V2.svc.cs">
+      <DependentUpon>PremiseAlexaBridgeService.V2.svc</DependentUpon>
+    </Compile>
     <Compile Include="PremiseServer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="UtilityClasses.cs" />

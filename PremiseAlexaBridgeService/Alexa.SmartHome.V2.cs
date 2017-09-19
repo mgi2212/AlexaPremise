@@ -1,12 +1,11 @@
 ﻿using System;
-using System.Runtime.Serialization;
 using System.Collections.Generic;
-using SYSWebSockClient;
+using System.Runtime.Serialization;
 
-namespace Alexa.SmartHome
+namespace Alexa.SmartHome.V2
 {
 
-    [DataContract(Namespace = "")]
+    [DataContract(Namespace = "Alexa.ConnectedHome.Discovery")]
     public class ApplianceIdPayload
     {
 
@@ -17,13 +16,7 @@ namespace Alexa.SmartHome
         public AdditionalApplianceDetails additionalApplianceDetails { get; set; }
     }
 
-    [DataContract(Namespace = "")]
-    public class SpacePayload
-    {
-        [DataMember(Name = "name", Order = 1)]
-        public string name { get; set; }
-    }
-
+    
     #region Discovery
 
     public enum AlexaApplianceTypes
@@ -31,18 +24,20 @@ namespace Alexa.SmartHome
         UNKNOWN,
         LIGHT,
         THERMOSTAT,
-        SCENE,
-        CAMERA
+        SCENE_TRIGGER,
+        CAMERA,
+        SMARTLOCK,
+        SMARTPLUG,
+        SWITCH,
+        ACTIVITY_TRIGGER,
+        BLIND,
+        DOOR,
+        FAN
     }
 
     [DataContract(Namespace = "Alexa.ConnectedHome.Discovery")]
     public class AdditionalApplianceDetails
     {
-        [DataMember(Name = "purpose", Order = 1)]
-        public string purpose { get; set; }
-
-        [DataMember(Name = "dimmable", Order = 2)]
-        public string dimmable { get; set; }
 
         [DataMember(Name = "path", Order = 3)]
         public string path { get; set; }
@@ -222,34 +217,6 @@ namespace Alexa.SmartHome
 
     #region Query
 
-    [DataContract(Name = "roomStatus", Namespace = "Alexa.ConnectedHome.Query")]
-    public class ApplianceRoomStatus
-    {
-        [DataMember(Name = "friendlyName", EmitDefaultValue = false)]
-        public string friendlyName;
-
-        [DataMember(Name = "occupied", EmitDefaultValue = false)]
-        public string occupied;
-
-        [DataMember(Name = "occupancyCount", EmitDefaultValue = false)]
-        public string occupancyCount;
-
-        [DataMember(Name = "lastOccupied", EmitDefaultValue = false)]
-        public string lastOccupied;
-
-        [DataMember(Name = "currentScene", EmitDefaultValue = false)]
-        public string currentScene;
-
-        [DataMember(Name = "deviceCount", EmitDefaultValue = false)]
-        public string deviceCount;
-
-        [DataMember(Name = "currentTemperature", EmitDefaultValue = false)]
-        public string currentTemperature;
-
-        [DataMember(Name = "lightsOnCount", EmitDefaultValue = false)]
-        public string lightsOnCount;
-
-    }
 
     [DataContract(Name = "temperatureReading", Namespace = "Alexa.ConnectedHome.Query")]
     public class ApplianceTemperatureReading
@@ -278,9 +245,6 @@ namespace Alexa.SmartHome
         [DataMember(Name = "appliance", Order = 2)]
         public ApplianceIdPayload appliance;
 
-        [DataMember(Name = "space", EmitDefaultValue = false)]
-        public SpacePayload space;
-
     }
 
     [DataContract(Name = "payload", Namespace = "Alexa.ConnectedHome.Query")]
@@ -301,9 +265,6 @@ namespace Alexa.SmartHome
 
         [DataMember(Name = "temperatureMode", EmitDefaultValue = false)]
         public ApplianceTemperatureMode temperatureMode;
-
-        [DataMember(Name = "roomStatus", EmitDefaultValue = false)]
-        public ApplianceRoomStatus applianceRoomStatus;
 
         [DataMember(Name = "uri", EmitDefaultValue = false)]
         public ApplianceValue uri;
