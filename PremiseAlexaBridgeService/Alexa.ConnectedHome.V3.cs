@@ -607,6 +607,62 @@ namespace Alexa.SmartHome.V3
         }
     }
 
+    [DataContract]
+    public class ChangeReportCause
+    {
+        [DataMember(Name = "type")]
+        public string type;
+    }
+
+    [DataContract]
+    public class ChangeReportPayload
+    {
+        [DataMember(Name = "cause")]
+        public ChangeReportCause cause;
+        [DataMember(Name = "properties")]
+        public List<AlexaProperty> properties;
+
+        public ChangeReportPayload()
+        {
+            properties = new List<AlexaProperty>();
+            cause = new ChangeReportCause();
+        }
+            
+    }
+
+    [DataContract]
+    public class AlexaChangeReportEvent
+    {
+        [DataMember(Name = "header", EmitDefaultValue = false)]
+        public Header header;
+        [DataMember(Name = "endpoint", EmitDefaultValue = false)]
+        public DirectiveEndpoint endpoint;
+        [DataMember(Name = "payload", EmitDefaultValue = false)]
+        public ChangeReportPayload payload;
+
+        public AlexaChangeReportEvent()
+        {
+            header = new Header();
+            endpoint = new DirectiveEndpoint();
+            payload = new ChangeReportPayload();
+        }
+    }
+
+    [DataContract]
+    public class AlexaChangeReport
+    {
+        [DataMember(Name = "context", EmitDefaultValue = false)]
+        public Context context;
+        [DataMember(Name = "event", EmitDefaultValue = false)]
+        public AlexaChangeReportEvent @event;
+
+        public AlexaChangeReport()
+        {
+            context = new Context();
+            @event = new AlexaChangeReportEvent();
+        }
+    }
+
     #endregion
 
     #region Authorization

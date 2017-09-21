@@ -38,7 +38,6 @@
         protected async void Connect(string uri)
         {
             this.WebSocket = new ClientWebSocket();
-            ClientWebSocketOptions options = this.WebSocket.Options;
             this.WebSocket.Options.KeepAliveInterval = new TimeSpan(0, 0, 10);
             await this.WebSocket.ConnectAsync(new Uri(uri), CancellationToken.None).ContinueWith(
                 (task) =>

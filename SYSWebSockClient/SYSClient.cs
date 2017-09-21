@@ -9,10 +9,18 @@
     using System.Threading.Tasks;
     using IPremiseObjectCollection = System.Collections.Generic.ICollection<IPremiseObject>;
 
+    public class Subscription
+    {
+        public string sysObjectId;
+        public string propertyName;
+        public Action<dynamic> callback;
+        public dynamic @params;
+    }
+
     public class SYSClient : JsonWebSocket
     {
         private ConcurrentDictionary<long, JsonRPCFuture> Futures;
-        private ConcurrentDictionary<string, Action<dynamic>> Subscriptions;
+        private ConcurrentDictionary<string, Subscription> Subscriptions;
 
         // ToDo: CHRISBE: Let's make this use the Root by default at some point
         private static string HomeObjectId = "{4F846CA8-6603-4675-AC66-05A0AF6A8ACD}";
@@ -23,7 +31,7 @@
         public SYSClient()
         {
             this.Futures = new ConcurrentDictionary<long, JsonRPCFuture>();
-            this.Subscriptions = new ConcurrentDictionary<string, Action<dynamic>>();
+            this.Subscriptions = new ConcurrentDictionary<string, Subscription>();
         }
 
         protected override void OnError(Exception error)
@@ -94,18 +102,23 @@
 
                 // look up the callback function
                 var method = methodObj.ToString();
-                Action<dynamic> callback;
-                this.Subscriptions.TryGetValue(method, out callback);
 
-                if (callback == null)
+                Subscription subscription;
+                //Action<dynamic> callback;
+                this.Subscriptions.TryGetValue(method, out subscription);
+
+                if (subscription.callback == null)
                 {
                     Console.WriteLine("JSON RPC 2.0 notification received with no registered handler");
                     return;
                 }
 
-                dynamic @params = json.@params;
+                //dynamic @params = json.@params;
 
-                callback(@params);
+                subscription.@params = json.@params;
+                dynamic @params = subscription;
+
+                subscription.callback(@params);
 
                 return;
             }
@@ -329,9 +342,9 @@
             base.Disconnect();
         }
 
-        internal void AddSubscription(string clientSideSubscriptionId, Action<dynamic> callback)
+        internal void AddSubscription(string clientSideSubscriptionId, Subscription subscription)
         {
-            this.Subscriptions.TryAdd(clientSideSubscriptionId, callback);
+            this.Subscriptions.TryAdd(clientSideSubscriptionId, subscription);
         }
     }
 }

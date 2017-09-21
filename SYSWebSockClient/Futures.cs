@@ -371,18 +371,21 @@
         public SubscribeFuture(string objectId, string propertyName, string callbackMethod)
             : base(objectId, "subscribeToProperty")
         {
-            this.@params = new Params(propertyName, callbackMethod);
+            this.@params = new Params(objectId, propertyName, callbackMethod);
         }
 
         internal class Params
         {
+            public string objectId;
             public string propertyName;
             public string callbackMethod;
 
             public Params(
+                string objectId,
                 string propertyName,
                 string callbackMethod)
             {
+                this.objectId = objectId;
                 this.propertyName = propertyName;
                 this.callbackMethod = callbackMethod;
             }

@@ -12,7 +12,7 @@ namespace SYSWebSockClient
         Task Unsubscribe();
     }
 
-    class PremiseSubscription : IPremiseSubscription
+    public class PremiseSubscription : IPremiseSubscription
     {
         private SYSClient SysClient;
         private string ObjectId; 

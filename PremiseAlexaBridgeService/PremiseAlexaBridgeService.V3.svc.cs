@@ -38,29 +38,6 @@ namespace PremiseAlexaBridgeService
     public class PremiseAlexaV3Service : PremiseAlexaBase, IPremiseAlexaV3Service
     {
 
-        DiscoveryEndpoint GetDiscoveryEndpoint(IPremiseObject endpoint)
-        {
-
-            DiscoveryEndpoint discoveryEndpoint;
-
-            try
-            {
-                string json = endpoint.GetValue("discoveryJson").GetAwaiter().GetResult();
-                discoveryEndpoint = JsonConvert.DeserializeObject<DiscoveryEndpoint>(json, new JsonSerializerSettings()
-                {
-                    NullValueHandling = NullValueHandling.Ignore
-                });
-
-            }
-            catch
-            {
-                discoveryEndpoint = null;
-            }
-
-            return discoveryEndpoint;
-        }
-
-
         #region System
 
         /// <summary>
@@ -137,7 +114,6 @@ namespace PremiseAlexaBridgeService
         {
 
             DiscoveryDirective directive = request.directive;
-
             var response = new DiscoveryResponse(directive);
 
             #region Validate Request
@@ -203,7 +179,20 @@ namespace PremiseAlexaBridgeService
                 #region Perform Discovery
 
                 InformLastContact(PremiseServer.SysHomeObject, directive.header.name).GetAwaiter().GetResult();
-                response.@event.payload.endpoints = GetEndpoints(PremiseServer.SysHomeObject).GetAwaiter().GetResult();
+                response.@event.payload.endpoints = PremiseServer.GetEndpoints().GetAwaiter().GetResult();
+
+                PremiseServer.SysHomeObject.SetValue("LastRefreshed", DateTime.Now.ToString());
+                int count = response.@event.payload.endpoints.Count;
+
+                if (count >= PremiseServer.AlexaDeviceLimit)
+                {
+                    PremiseServer.SysHomeObject.SetValue("HealthDescription", string.Format("Alexa device discovery limit reached or exceeded! Reported {0} endpoints.", count)).GetAwaiter().GetResult() ;
+                }
+                else
+                {
+                    PremiseServer.SysHomeObject.SetValue("HealthDescription", string.Format("Alexa discovery reported {0} endpoints.", count)).GetAwaiter().GetResult();
+                }
+                PremiseServer.SysHomeObject.SetValue("Health", "True").GetAwaiter().GetResult();
 
                 #endregion
 
@@ -229,64 +218,6 @@ namespace PremiseAlexaBridgeService
             return response;
         }
 
-        #region Perform Discovery
-        private async Task<List<DiscoveryEndpoint>> GetEndpoints(IPremiseObject homeObject)
-        {
-            List<DiscoveryEndpoint> endpoints = new List<DiscoveryEndpoint>();
-
-            // discovery json is now generated in Premise script to vastly improve discovery event response time
-            var returnClause = new string[] { "discoveryJson", "IsDiscoverable" };
-            dynamic whereClause = new System.Dynamic.ExpandoObject();
-            whereClause.TypeOf = PremiseServer.AlexaApplianceClassPath;
-            int count = 0;
-
-            using (var devices = await homeObject.Select(returnClause, whereClause))
-            { 
-
-                foreach (var device in devices)
-                {
-                    if (device.IsDiscoverable == false)
-                        continue;
-
-                    DiscoveryEndpoint endpoint = new DiscoveryEndpoint();
-                        try
-                        {
-                            string json = device.discoveryJson.ToString();
-                            endpoint = JsonConvert.DeserializeObject<DiscoveryEndpoint>(json, new JsonSerializerSettings()
-                            {
-                                NullValueHandling = NullValueHandling.Ignore
-                            });
-
-                        }
-                        catch
-                        {
-                            continue;
-                        }
-
-                    if (endpoint != null)
-                    {
-                        endpoints.Add(endpoint);
-                        if (++count >= PremiseServer.AlexaDeviceLimit)
-                        {
-                            break;
-                        }
-                    }
-                }
-            }
-            await homeObject.SetValue("LastRefreshed", DateTime.Now.ToString());
-            if (count >= PremiseServer.AlexaDeviceLimit)
-            {
-                await homeObject.SetValue("HealthDescription", string.Format("Alexa device discovery limit reached or exceeded! Reported {0} endpoints.", count));
-            }
-            else
-            {
-                await homeObject.SetValue("HealthDescription", string.Format("Alexa discovery reported {0} endpoints.", count));
-            }
-            await homeObject.SetValue("Health", "True");
-            return endpoints;
-        }
-
-        #endregion
 
         #endregion
 
@@ -307,8 +238,6 @@ namespace PremiseAlexaBridgeService
         public ControlResponse Control(ControlRequest request)
         {
 
-            //IPremiseObject rootObject;
-
             AlexaDirective directive = request.directive;
 
             var response = new ControlResponse(directive);
@@ -323,8 +252,6 @@ namespace PremiseAlexaBridgeService
             }
 
             #endregion
-
-            //SYSClient client = new SYSClient();
 
             #region Connect To Premise Server
 
@@ -377,7 +304,7 @@ namespace PremiseAlexaBridgeService
             #endregion
 
             #region Get Premise Object
-            // get the object
+
             IPremiseObject endpoint = null;
             try
             {
@@ -438,7 +365,7 @@ namespace PremiseAlexaBridgeService
 
         #region PowerController
 
-        AlexaProperty GetPowerStateProperty(IPremiseObject endpoint)
+        public static AlexaProperty GetPowerStateProperty(IPremiseObject endpoint)
         {
             bool powerState = endpoint.GetValue("PowerState").GetAwaiter().GetResult();
             AlexaProperty property = new AlexaProperty();
@@ -476,7 +403,7 @@ namespace PremiseAlexaBridgeService
             }
 
             // grab walk through remaining supported controllers and report state
-            DiscoveryEndpoint discoveryEndpoint = GetDiscoveryEndpoint(endpoint);
+            DiscoveryEndpoint discoveryEndpoint = PremiseServer.GetDiscoveryEndpoint(endpoint).GetAwaiter().GetResult();
             if (discoveryEndpoint != null)
             {
                 foreach (Capability capability in discoveryEndpoint.capabilities)
@@ -510,7 +437,7 @@ namespace PremiseAlexaBridgeService
 
         #region BrightnessController
 
-        AlexaProperty GetBrightnessProperty(IPremiseObject endpoint)
+        public static AlexaProperty GetBrightnessProperty(IPremiseObject endpoint)
         {
             double brightness = endpoint.GetValue("Brightness").GetAwaiter().GetResult();
             AlexaProperty property = new AlexaProperty();
@@ -630,7 +557,7 @@ namespace PremiseAlexaBridgeService
 
             #endregion
 
-            DiscoveryEndpoint discoveryEndpoint = GetDiscoveryEndpoint(endpoint);
+            DiscoveryEndpoint discoveryEndpoint = PremiseServer.GetDiscoveryEndpoint(endpoint).GetAwaiter().GetResult();
             if (discoveryEndpoint == null)
             {
                 response.context = null;

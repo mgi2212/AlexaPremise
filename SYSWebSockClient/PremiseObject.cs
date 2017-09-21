@@ -350,7 +350,14 @@
         {
             string clientSideSubscriptionId = FutureId.Next().ToString();
 
-            this.Client.AddSubscription(clientSideSubscriptionId, callback);
+            Subscription subscription = new Subscription()
+            {
+                sysObjectId = this.ObjectId,
+                propertyName = propertyName,
+                callback = callback
+            };
+
+            this.Client.AddSubscription(clientSideSubscriptionId, subscription);
 
             var future = new SubscribeFuture(this.ObjectId, propertyName, clientSideSubscriptionId);
 
