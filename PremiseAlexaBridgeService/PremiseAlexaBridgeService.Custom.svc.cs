@@ -65,7 +65,7 @@ namespace PremiseAlexaBridgeService
 
             try
             {
-                homeObject = ServiceInstance.ConnectToServer(client);
+                homeObject = PremiseServer.ConnectToServer(client);
                 rootObject = homeObject.GetRoot().GetAwaiter().GetResult();
             }
             catch (Exception)
@@ -90,7 +90,7 @@ namespace PremiseAlexaBridgeService
                     response.header.@namespace = Faults.QueryNamespace;
                     response.header.name = Faults.InvalidAccessTokenError;
                     response.payload.exception = new ExceptionResponsePayload();
-                    ServiceInstance.DisconnectServer(client);
+                    PremiseServer.DisconnectServer(client);
                     return response;
                 }
 
@@ -125,7 +125,7 @@ namespace PremiseAlexaBridgeService
                 response.payload.exception.errorInfo.description = e.Message;
             }
 
-            ServiceInstance.DisconnectServer(client);
+            PremiseServer.DisconnectServer(client);
             return response;
             #endregion
         }
@@ -142,7 +142,7 @@ namespace PremiseAlexaBridgeService
 
             var returnClause = new string[] { "Name", "DisplayName", "Description", "OID" };
             dynamic whereClause = new System.Dynamic.ExpandoObject();
-            whereClause.TypeOf = this.ServiceInstance.AlexaLocationClassPath; ;
+            whereClause.TypeOf = PremiseServer.AlexaLocationClassPath; ;
             var availableLocations = homeObject.Select(returnClause, whereClause).GetAwaiter().GetResult();
 
             response.payload.spacesStatus = new SpacesOperationStatus();
@@ -160,7 +160,7 @@ namespace PremiseAlexaBridgeService
 
                 returnClause = new string[] { "Name", "DisplayName", "Description", "DeviceID", "OID" };
                 whereClause = new System.Dynamic.ExpandoObject();
-                whereClause.TypeOf = this.ServiceInstance.AlexaEndpointClassPath;
+                whereClause.TypeOf = PremiseServer.AlexaEndpointClassPath;
                 var currentAlexaEndpoints = premiseObject.Select(returnClause, whereClause).GetAwaiter().GetResult();
                 foreach (var endpoint in currentAlexaEndpoints)
                 {
@@ -190,7 +190,7 @@ namespace PremiseAlexaBridgeService
 
                 if (isAddOperation(spaceOperation))
                 {
-                    var createdObject = premiseObject.CreateObject(this.ServiceInstance.AlexaEndpointClassPath, spaceName + " AlexaEndpoint").GetAwaiter().GetResult();
+                    var createdObject = premiseObject.CreateObject(PremiseServer.AlexaEndpointClassPath, spaceName + " AlexaEndpoint").GetAwaiter().GetResult();
                     createdObject.SetValue("DeviceID", deviceId).GetAwaiter().GetResult();
                     response.payload.spacesStatus.friendlyResponse = "CREATED";
                     InformLastContact(homeObject, "Endpoint Assignment Request").GetAwaiter().GetResult();
@@ -212,7 +212,7 @@ namespace PremiseAlexaBridgeService
 
             var returnClause = new string[] { "Name", "DisplayName", "Description", "DeviceID", "OID" };
             dynamic whereClause = new System.Dynamic.ExpandoObject();
-            whereClause.TypeOf = this.ServiceInstance.AlexaEndpointClassPath; ;
+            whereClause.TypeOf = PremiseServer.AlexaEndpointClassPath; ;
             var alexaEndpoints = homeObject.Select(returnClause, whereClause).GetAwaiter().GetResult();
 
             int opCount = 0;
@@ -279,7 +279,7 @@ namespace PremiseAlexaBridgeService
                 toMatch = toMatch.Trim();
                 var returnClause = new string[] { "Name", "DisplayName", "Description", "CurrentScene", "Occupancy", "LastOccupied", "OccupancyCount", "OID", "OPATH", "OTYPENAME", "Type" };
                 dynamic whereClause = new System.Dynamic.ExpandoObject();
-                whereClause.TypeOf = this.ServiceInstance.AlexaLocationClassPath;
+                whereClause.TypeOf = PremiseServer.AlexaLocationClassPath;
                 var sysRooms = homeObject.Select(returnClause, whereClause).GetAwaiter().GetResult();
 
                 foreach (var room in sysRooms)

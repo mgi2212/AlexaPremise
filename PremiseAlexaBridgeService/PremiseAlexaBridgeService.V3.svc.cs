@@ -82,7 +82,7 @@ namespace PremiseAlexaBridgeService
 
             try
             {
-                homeObject = ServiceInstance.ConnectToServer(client);
+                homeObject = PremiseServer.ConnectToServer(client);
             }
             catch (Exception)
             {
@@ -109,7 +109,7 @@ namespace PremiseAlexaBridgeService
                     response.payload.exception = new ExceptionResponsePayload();
                     break;
             }
-            ServiceInstance.DisconnectServer(client);
+            //PremiseServer.DisconnectServer(client);
             return response;
         }
 
@@ -136,8 +136,6 @@ namespace PremiseAlexaBridgeService
         public DiscoveryResponse Discovery(DiscoveryRequest request)
         {
 
-            IPremiseObject homeObject, rootObject;
-
             DiscoveryDirective directive = request.directive;
 
             var response = new DiscoveryResponse(directive);
@@ -163,24 +161,24 @@ namespace PremiseAlexaBridgeService
 
             if ((directive.header.name != "Discover") || (directive.header.@namespace != "Alexa.Discovery"))
             {
-                // return empty discovery
+                // return empty discovery per spec
                 return response;
             }
 
             #endregion
 
-            SYSClient client = new SYSClient();
-
             #region Connect To Premise Server
 
-            try
-            {
-                homeObject = ServiceInstance.ConnectToServer(client);
-                rootObject = homeObject.GetRoot().GetAwaiter().GetResult();
+            try { 
+                if (PremiseServer.SysRootObject == null)
+                {
+                    // return empty discovery per spec
+                    return response;
+                }
             }
             catch (Exception)
             {
-                // return empty discovery
+                // return empty discovery per spec
                 return response;
             }
 
@@ -196,7 +194,7 @@ namespace PremiseAlexaBridgeService
                     return response;
                 }
 
-                if (!CheckAccessToken(homeObject, directive.payload.scope.token).GetAwaiter().GetResult())
+                if (!CheckAccessToken(PremiseServer.SysHomeObject, directive.payload.scope.token).GetAwaiter().GetResult())
                 {
                     // return empty discovery per spec (todo: this is not helpful discovering what went wrong and pushes any investigation to 3P logs)
                     return response;
@@ -204,8 +202,8 @@ namespace PremiseAlexaBridgeService
 
                 #region Perform Discovery
 
-                InformLastContact(homeObject, directive.header.name).GetAwaiter().GetResult();
-                response.@event.payload.endpoints = GetEndpoints(homeObject).GetAwaiter().GetResult();
+                InformLastContact(PremiseServer.SysHomeObject, directive.header.name).GetAwaiter().GetResult();
+                response.@event.payload.endpoints = GetEndpoints(PremiseServer.SysHomeObject).GetAwaiter().GetResult();
 
                 #endregion
 
@@ -217,7 +215,7 @@ namespace PremiseAlexaBridgeService
 
             #endregion
 
-            ServiceInstance.DisconnectServer(client);
+            //ServiceInstance.DisconnectServer(client);
 
             // uncomment below to find serialization errors
             //MemoryStream ms = new MemoryStream();
@@ -239,43 +237,44 @@ namespace PremiseAlexaBridgeService
             // discovery json is now generated in Premise script to vastly improve discovery event response time
             var returnClause = new string[] { "discoveryJson", "IsDiscoverable" };
             dynamic whereClause = new System.Dynamic.ExpandoObject();
-            whereClause.TypeOf = ServiceInstance.AlexaApplianceClassPath;
-
-            var sysAppliances = await homeObject.Select(returnClause, whereClause);
+            whereClause.TypeOf = PremiseServer.AlexaApplianceClassPath;
             int count = 0;
 
-            foreach (var sysAppliance in sysAppliances)
-            {
-                if (sysAppliance.IsDiscoverable == false)
-                    continue;
+            using (var devices = await homeObject.Select(returnClause, whereClause))
+            { 
 
-                DiscoveryEndpoint endpoint = new DiscoveryEndpoint();
-                try
+                foreach (var device in devices)
                 {
-                    string json = sysAppliance.discoveryJson.ToString();
-                    endpoint = JsonConvert.DeserializeObject<DiscoveryEndpoint>(json, new JsonSerializerSettings()
+                    if (device.IsDiscoverable == false)
+                        continue;
+
+                    DiscoveryEndpoint endpoint = new DiscoveryEndpoint();
+                        try
+                        {
+                            string json = device.discoveryJson.ToString();
+                            endpoint = JsonConvert.DeserializeObject<DiscoveryEndpoint>(json, new JsonSerializerSettings()
+                            {
+                                NullValueHandling = NullValueHandling.Ignore
+                            });
+
+                        }
+                        catch
+                        {
+                            continue;
+                        }
+
+                    if (endpoint != null)
                     {
-                        NullValueHandling = NullValueHandling.Ignore
-                    });
-
-                }
-                catch
-                {
-                    continue;
-                }
-
-                if (endpoint != null)
-                {
-                    endpoints.Add(endpoint);
-                    if (++count >= ServiceInstance.AlexaDeviceLimit)
-                    {
-                        break;
+                        endpoints.Add(endpoint);
+                        if (++count >= PremiseServer.AlexaDeviceLimit)
+                        {
+                            break;
+                        }
                     }
                 }
             }
-
             await homeObject.SetValue("LastRefreshed", DateTime.Now.ToString());
-            if (count >= ServiceInstance.AlexaDeviceLimit)
+            if (count >= PremiseServer.AlexaDeviceLimit)
             {
                 await homeObject.SetValue("HealthDescription", string.Format("Alexa device discovery limit reached or exceeded! Reported {0} endpoints.", count));
             }
@@ -308,7 +307,7 @@ namespace PremiseAlexaBridgeService
         public ControlResponse Control(ControlRequest request)
         {
 
-            IPremiseObject homeObject, rootObject;
+            //IPremiseObject rootObject;
 
             AlexaDirective directive = request.directive;
 
@@ -319,25 +318,29 @@ namespace PremiseAlexaBridgeService
             if (directive.header.payloadVersion != "3")
             {
                 response.context = null;
-                response.@event.payload = new AlexaErrorResponsePayload(DiscoveryUtilities.AlexaErrorTypes.INVALID_DIRECTIVE, "Invalid payload version.");
+                response.@event.payload = new AlexaErrorResponsePayload(AlexaErrorTypes.INVALID_DIRECTIVE, "Invalid payload version.");
                 return response;
             }
 
             #endregion
 
-            SYSClient client = new SYSClient();
+            //SYSClient client = new SYSClient();
 
             #region Connect To Premise Server
 
             try
             {
-                homeObject = ServiceInstance.ConnectToServer(client);
-                rootObject = homeObject.GetRoot().GetAwaiter().GetResult();
+                if (PremiseServer.SysRootObject == null)
+                {
+                    response.context = null;
+                    response.@event.payload = new AlexaErrorResponsePayload(AlexaErrorTypes.ENDPOINT_UNREACHABLE, "Premise Server.");
+                    return response;
+                }
             }
             catch (Exception)
             {
                 response.context = null;
-                response.@event.payload = new AlexaErrorResponsePayload(DiscoveryUtilities.AlexaErrorTypes.INTERNAL_ERROR, "Cannot connect to local Premise server.");
+                response.@event.payload = new AlexaErrorResponsePayload(AlexaErrorTypes.ENDPOINT_UNREACHABLE, "Premise Server.");
                 return response;
             }
 
@@ -352,14 +355,14 @@ namespace PremiseAlexaBridgeService
                 if ((directive.endpoint.scope == null) || (directive.endpoint.scope.type != "BearerToken"))
                 {
                     response.context = null;
-                    response.@event.payload = new AlexaErrorResponsePayload(DiscoveryUtilities.AlexaErrorTypes.INVALID_DIRECTIVE, "Invalid bearer token.");
+                    response.@event.payload = new AlexaErrorResponsePayload(AlexaErrorTypes.INVALID_DIRECTIVE, "Invalid bearer token.");
                     return response;
                 }
 
-                if (!CheckAccessToken(homeObject, directive.endpoint.scope.token).GetAwaiter().GetResult())
+                if (!CheckAccessToken(PremiseServer.SysHomeObject, directive.endpoint.scope.token).GetAwaiter().GetResult())
                 {
                     response.context = null;
-                    response.@event.payload = new AlexaErrorResponsePayload(DiscoveryUtilities.AlexaErrorTypes.INVALID_AUTHORIZATION_CREDENTIAL, "Not authorized on local premise server.");
+                    response.@event.payload = new AlexaErrorResponsePayload(AlexaErrorTypes.INVALID_AUTHORIZATION_CREDENTIAL, "Not authorized on local premise server.");
                     return response;
                 }
 
@@ -367,7 +370,7 @@ namespace PremiseAlexaBridgeService
             catch
             {
                 response.context = null;
-                response.@event.payload = new AlexaErrorResponsePayload(DiscoveryUtilities.AlexaErrorTypes.INTERNAL_ERROR, "Cannot find Alexa home object on local Premise server.");
+                response.@event.payload = new AlexaErrorResponsePayload(AlexaErrorTypes.INTERNAL_ERROR, "Cannot find Alexa home object on local Premise server.");
                 return response;
             }
 
@@ -379,7 +382,7 @@ namespace PremiseAlexaBridgeService
             try
             {
                 Guid premiseId = new Guid(directive.endpoint.endpointId);
-                endpoint = rootObject.GetObject(premiseId.ToString("B")).GetAwaiter().GetResult();
+                endpoint = PremiseServer.SysRootObject.GetObject(premiseId.ToString("B")).GetAwaiter().GetResult();
                 if (endpoint == null)
                 {
                     throw new Exception();
@@ -388,28 +391,38 @@ namespace PremiseAlexaBridgeService
             catch
             {
                 response.context = null;
-                response.@event.payload = new AlexaErrorResponsePayload(DiscoveryUtilities.AlexaErrorTypes.INTERNAL_ERROR, string.Format("Cannot find device {0} on server.", directive.endpoint.endpointId));
+                response.@event.payload = new AlexaErrorResponsePayload(AlexaErrorTypes.INTERNAL_ERROR, string.Format("Cannot find device {0} on server.", directive.endpoint.endpointId));
                 return response;
             }
 
             #endregion
 
             #region Process Controller Directives
-
-            switch (directive.header.@namespace)
+            try
             {
-                case "Alexa.PowerController":
-                    ProcessPowerControllerDirective(endpoint, directive, response);
-                    break;
 
-                default:
-                    break;
+                switch (directive.header.@namespace)
+                {
+                    case "Alexa.PowerController":
+                        ProcessPowerControllerDirective(endpoint, directive, response);
+                        break;
 
+                    default:
+                        break;
+
+                }
+
+            }
+            catch (Exception ex)
+            {
+                response.context = null;
+                response.@event.payload = new AlexaErrorResponsePayload(AlexaErrorTypes.INTERNAL_ERROR, ex.Message);
+                return response;
             }
 
             #endregion
 
-            ServiceInstance.DisconnectServer(client);
+            //PremiseServer.DisconnectServer(client);
 
             // Serialization Check
             //MemoryStream ms = new MemoryStream();
@@ -446,20 +459,21 @@ namespace PremiseAlexaBridgeService
                 endpoint.SetValue("PowerState", "False").GetAwaiter().GetResult();
                 property.timeOfSample = DateTime.UtcNow.ToUniversalTime().ToString("yyyy-MM-dd'T'HH:mm:ss.ffZ");
                 property.value = "OFF";
+                response.context.properties.Add(property);
             }
             else if (directive.header.name == "TurnOn")
             {
                 endpoint.SetValue("PowerState", "True").GetAwaiter().GetResult();
                 property.timeOfSample = DateTime.UtcNow.ToUniversalTime().ToString("yyyy-MM-dd'T'HH:mm:ss.ffZ");
                 property.value = "ON";
+                response.context.properties.Add(property);
             }
             else
             {
                 response.context = null;
-                response.@event.payload = new AlexaErrorResponsePayload(DiscoveryUtilities.AlexaErrorTypes.INVALID_DIRECTIVE, "Invalid payload version.");
+                response.@event.payload = new AlexaErrorResponsePayload(AlexaErrorTypes.INVALID_DIRECTIVE, "Invalid payload version.");
+                return;
             }
-
-            response.context.properties.Add(property);
 
             // grab walk through remaining supported controllers and report state
             DiscoveryEndpoint discoveryEndpoint = GetDiscoveryEndpoint(endpoint);
@@ -522,7 +536,7 @@ namespace PremiseAlexaBridgeService
         public ReportStateResponse ReportState(ReportStateRequest request)
         {
 
-            IPremiseObject homeObject, rootObject;
+            //IPremiseObject rootObject;
 
             AlexaDirective directive = request.directive;
 
@@ -533,25 +547,28 @@ namespace PremiseAlexaBridgeService
             if (directive.header.payloadVersion != "3")
             {
                 response.context = null;
-                response.@event.payload = new AlexaErrorResponsePayload(DiscoveryUtilities.AlexaErrorTypes.INVALID_DIRECTIVE, "Invalid payload version.");
+                response.@event.payload = new AlexaErrorResponsePayload(AlexaErrorTypes.INVALID_DIRECTIVE, "Invalid payload version.");
                 return response;
             }
 
             #endregion
 
-            SYSClient client = new SYSClient();
 
             #region Connect To Premise Server
 
             try
             {
-                homeObject = ServiceInstance.ConnectToServer(client);
-                rootObject = homeObject.GetRoot().GetAwaiter().GetResult();
+                if (PremiseServer.SysRootObject == null)
+                {
+                    response.context = null;
+                    response.@event.payload = new AlexaErrorResponsePayload(AlexaErrorTypes.ENDPOINT_UNREACHABLE, "Premise Server.");
+                    return response;
+                }
             }
             catch (Exception)
             {
                 response.context = null;
-                response.@event.payload = new AlexaErrorResponsePayload(DiscoveryUtilities.AlexaErrorTypes.INTERNAL_ERROR, "Cannot connect to local Premise server.");
+                response.@event.payload = new AlexaErrorResponsePayload(AlexaErrorTypes.ENDPOINT_UNREACHABLE, "Premise Server.");
                 return response;
             }
 
@@ -561,19 +578,17 @@ namespace PremiseAlexaBridgeService
 
             try
             {
-
-
                 if ((directive.endpoint.scope == null) || (directive.endpoint.scope.type != "BearerToken"))
                 {
                     response.context = null;
-                    response.@event.payload = new AlexaErrorResponsePayload(DiscoveryUtilities.AlexaErrorTypes.INVALID_DIRECTIVE, "Invalid bearer token.");
+                    response.@event.payload = new AlexaErrorResponsePayload(AlexaErrorTypes.INVALID_DIRECTIVE, "Invalid bearer token.");
                     return response;
                 }
 
-                if (!CheckAccessToken(homeObject, directive.endpoint.scope.token).GetAwaiter().GetResult())
+                if (!CheckAccessToken(PremiseServer.SysHomeObject, directive.endpoint.scope.token).GetAwaiter().GetResult())
                 {
                     response.context = null;
-                    response.@event.payload = new AlexaErrorResponsePayload(DiscoveryUtilities.AlexaErrorTypes.INVALID_AUTHORIZATION_CREDENTIAL, "Not authorized on local premise server.");
+                    response.@event.payload = new AlexaErrorResponsePayload(AlexaErrorTypes.INVALID_AUTHORIZATION_CREDENTIAL, "Not authorized on local premise server.");
                     return response;
                 }
 
@@ -581,7 +596,7 @@ namespace PremiseAlexaBridgeService
             catch
             {
                 response.context = null;
-                response.@event.payload = new AlexaErrorResponsePayload(DiscoveryUtilities.AlexaErrorTypes.INTERNAL_ERROR, "Cannot find Alexa home object on local Premise server.");
+                response.@event.payload = new AlexaErrorResponsePayload(AlexaErrorTypes.INTERNAL_ERROR, "Cannot find Alexa home object on local Premise server.");
                 return response;
             }
 
@@ -593,7 +608,7 @@ namespace PremiseAlexaBridgeService
             try
             {
                 Guid premiseId = new Guid(directive.endpoint.endpointId);
-                endpoint = rootObject.GetObject(premiseId.ToString("B")).GetAwaiter().GetResult();
+                endpoint = PremiseServer.SysRootObject.GetObject(premiseId.ToString("B")).GetAwaiter().GetResult();
                 if (endpoint == null)
                 {
                     throw new Exception();
@@ -602,14 +617,14 @@ namespace PremiseAlexaBridgeService
             catch
             {
                 response.context = null;
-                response.@event.payload = new AlexaErrorResponsePayload(DiscoveryUtilities.AlexaErrorTypes.INTERNAL_ERROR, string.Format("Cannot find device {0} on server.", directive.endpoint.endpointId));
+                response.@event.payload = new AlexaErrorResponsePayload(AlexaErrorTypes.INTERNAL_ERROR, string.Format("Cannot find device {0} on server.", directive.endpoint.endpointId));
                 return response;
             }
 
             if (directive.header.name != "ReportState")
             {
                 response.context = null;
-                response.@event.payload = new AlexaErrorResponsePayload(DiscoveryUtilities.AlexaErrorTypes.INVALID_DIRECTIVE, "Invalid Directive");
+                response.@event.payload = new AlexaErrorResponsePayload(AlexaErrorTypes.INVALID_DIRECTIVE, "Invalid Directive");
                 return response;
             }
 
@@ -619,31 +634,49 @@ namespace PremiseAlexaBridgeService
             if (discoveryEndpoint == null)
             {
                 response.context = null;
-                response.@event.payload = new AlexaErrorResponsePayload(DiscoveryUtilities.AlexaErrorTypes.INTERNAL_ERROR, string.Format("Cannot find or invalid discoveryJson for {0} on server.", directive.endpoint.endpointId));
+                response.@event.payload = new AlexaErrorResponsePayload(AlexaErrorTypes.INTERNAL_ERROR, string.Format("Cannot find or invalid discoveryJson for {0} on server.", directive.endpoint.endpointId));
                 return response;
             }
             response.@event.endpoint.cookie = discoveryEndpoint.cookie;
 
-            foreach (Capability capability in discoveryEndpoint.capabilities)
+            try
             {
-                switch (capability.@interface)
+
+                foreach (Capability capability in discoveryEndpoint.capabilities)
                 {
-                    case "Alexa.PowerController":
+                    switch (capability.@interface)
+                    {
+                        case "Alexa.PowerController":
 
-                        AlexaProperty powerState = GetPowerStateProperty(endpoint);
-                        response.context.properties.Add(powerState);
+                            AlexaProperty powerState = GetPowerStateProperty(endpoint);
+                            response.context.properties.Add(powerState);
 
-                        break;
-                    case "Alexa.BrightnessController":
+                            break;
+                        case "Alexa.BrightnessController":
 
-                        AlexaProperty brightness = GetBrightnessProperty(endpoint);
-                        response.context.properties.Add(brightness);
-                        break;
+                            AlexaProperty brightness = GetBrightnessProperty(endpoint);
+                            response.context.properties.Add(brightness);
+                            break;
 
-                    default:
-                        break;
+                        case "Alexa.ColorController":
+                            break;
+
+                        case "Alexa.ColorTemperatureController":
+                            break;
+
+                        default:
+                            break;
+                    }
                 }
+
             }
+            catch (Exception ex)
+            {
+                response.context = null;
+                response.@event.payload = new AlexaErrorResponsePayload(AlexaErrorTypes.INTERNAL_ERROR, ex.Message);
+                return response;
+            }
+
 
             // Serialization Check
             //MemoryStream ms = new MemoryStream();
@@ -658,7 +691,7 @@ namespace PremiseAlexaBridgeService
         }
         #endregion
 
-        #region Report State
+        #region Authorization
 
         /// <summary>
         /// Query Requests are processed here
@@ -669,8 +702,6 @@ namespace PremiseAlexaBridgeService
         public AuthorizationResponse Authorization(AuthorizationRequest request)
         {
 
-            IPremiseObject homeObject, rootObject;
-
             AuthorizationDirective directive = request.directive;
 
             var response = new AuthorizationResponse(directive);
@@ -679,26 +710,7 @@ namespace PremiseAlexaBridgeService
 
             if (directive.header.payloadVersion != "3")
             {
-                //response.context = null;
-                response.@event.payload = new AlexaErrorResponsePayload(DiscoveryUtilities.AlexaErrorTypes.INVALID_DIRECTIVE, "Invalid payload version.");
-                return response;
-            }
-
-            #endregion
-
-            SYSClient client = new SYSClient();
-
-            #region Connect To Premise Server
-
-            try
-            {
-                homeObject = ServiceInstance.ConnectToServer(client);
-                rootObject = homeObject.GetRoot().GetAwaiter().GetResult();
-            }
-            catch (Exception)
-            {
-                //response.context = null;
-                response.@event.payload = new AlexaErrorResponsePayload(DiscoveryUtilities.AlexaErrorTypes.INTERNAL_ERROR, "Cannot connect to local Premise server.");
+                response.@event.payload = new AlexaErrorResponsePayload(AlexaErrorTypes.INVALID_DIRECTIVE, "Invalid payload version.");
                 return response;
             }
 
@@ -708,19 +720,41 @@ namespace PremiseAlexaBridgeService
 
             if ((directive.payload.grantee == null) || (directive.payload.grantee.type != "BearerToken"))
             {
-                response.@event.payload = new AlexaErrorResponsePayload(DiscoveryUtilities.AlexaErrorTypes.INVALID_DIRECTIVE, "Invalid bearer token.");
+                response.@event.payload = new AlexaErrorResponsePayload(AlexaErrorTypes.INVALID_DIRECTIVE, "Invalid bearer token.");
                 return response;
             }
 
-            if (!CheckAccessToken(homeObject, directive.payload.grantee.token).GetAwaiter().GetResult())
+            try
             {
-                response.@event.payload = new AlexaErrorResponsePayload(DiscoveryUtilities.AlexaErrorTypes.INVALID_AUTHORIZATION_CREDENTIAL, "Not authorized on local premise server.");
+                if (!CheckAccessToken(PremiseServer.SysHomeObject, directive.payload.grantee.token).GetAwaiter().GetResult())
+                {
+                    response.@event.payload = new AlexaErrorResponsePayload(AlexaErrorTypes.INVALID_AUTHORIZATION_CREDENTIAL, "Not authorized on local premise server.");
+                    return response;
+                }
+            }
+            catch (Exception ex)
+            {
+                response.@event.payload = new AlexaErrorResponsePayload(AlexaErrorTypes.INTERNAL_ERROR, ex.Message);
                 return response;
             }
 
             #endregion
 
-            homeObject.SetValue("AlexaAsyncAuthorizationCode", directive.payload.grant.code).GetAwaiter().GetResult();
+            try
+            {
+                if (PremiseServer.SysHomeObject == null)
+                {
+                    response.@event.payload = new AlexaErrorResponsePayload(AlexaErrorTypes.ENDPOINT_UNREACHABLE, "Premise Server.");
+                    return response;
+                }
+
+                PremiseServer.SysHomeObject.SetValue("AlexaAsyncAuthorizationCode", directive.payload.grant.code).GetAwaiter().GetResult();
+            }
+            catch (Exception ex)
+            {
+                response.@event.payload = new AlexaErrorResponsePayload(AlexaErrorTypes.INTERNAL_ERROR, ex.Message);
+                return response;
+            }
 
             return response;
         }

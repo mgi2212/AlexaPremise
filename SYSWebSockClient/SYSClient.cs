@@ -158,8 +158,14 @@
                 {
                     string strMessage = JsonConvert.SerializeObject(future);
                     base.Send(strMessage);
-
-                    future.Await();
+                    try
+                    {
+                        future.Await();
+                    }
+                    catch (Exception ex)
+                    {
+                        this.OnError(ex);
+                    }
                 });
         }
 
@@ -173,7 +179,17 @@
                     string strMessage = JsonConvert.SerializeObject(future);
                     base.Send(strMessage);
 
-                    dynamic result = future.Await();
+                    dynamic result;
+                    try
+                    {
+                        result = future.Await();
+                    }
+                    catch (Exception ex)
+                    {
+                        this.OnError(ex);
+                        return null;
+                    }
+
                     var premiseObject = new PremiseObject(this, (string) result);
                     return premiseObject as IPremiseObject;
                 });
@@ -189,7 +205,16 @@
                     string strMessage = JsonConvert.SerializeObject(future);
                     base.Send(strMessage);
 
-                    dynamic result = future.Await();
+                    dynamic result;
+                    try
+                    {
+                        result = future.Await();
+                    }
+                    catch (Exception ex)
+                    {
+                        this.OnError(ex);
+                        return null;
+                    }
                     var premiseObject = new PremiseSubscription(this, SYSClient.HomeObjectId, (long)result);
                     return premiseObject as IPremiseSubscription;
                 });
@@ -205,15 +230,22 @@
                     string strMessage = JsonConvert.SerializeObject(future);
                     base.Send(strMessage);
 
-                    JArray result = future.Await() as JArray;
+                    JArray result;
+                    try
+                    {
+                        result = future.Await() as JArray;
+                    }
+                    catch (Exception ex)
+                    {
+                        this.OnError(ex);
+                        return null;
+                    }
                     var premiseObjects = new List<IPremiseObject>();
-
                     foreach (var item in result)
                     {
                         var premiseObject = new PremiseObject(this, (string)item);
                         premiseObjects.Add(premiseObject);
                     }
-
                     var collection = premiseObjects as IPremiseObjectCollection;
                     return collection;
                 });
@@ -229,7 +261,17 @@
                     string strMessage = JsonConvert.SerializeObject(future);
                     base.Send(strMessage);
 
-                    dynamic result = future.Await();
+                    dynamic result;
+
+                    try
+                    {
+                        result = future.Await();
+                    }
+                    catch (Exception ex)
+                    {
+                        this.OnError(ex);
+                        return null;
+                    }
                     return result;
                 });
         }
@@ -244,12 +286,14 @@
                     string strMessage = JsonConvert.SerializeObject(future);
                     base.Send(strMessage);
 
-                    dynamic result = future.Await();
-                    return (T) result;
+                    dynamic result;
+                    // todo: figure out how to wrap this in a try-catch
+                    result = future.Await();
+                    return (T)result;
                 });
         }
 
-        public Task<IPremiseObject> Connect(string uri)
+        public new Task<IPremiseObject> Connect(string uri)
         {
 
             this.ConnectFuture = new Future();
@@ -257,10 +301,26 @@
             return Task.Run(
                 () =>
                 {
-                    base.Connect(uri);
-                    this.ConnectFuture.Await();
+                    try
+                    {
+                        base.Connect(uri);
+                        this.ConnectFuture.Await();
+                    }
+                    catch (Exception ex)
+                    {
+                        this.OnError(ex);
+                        return null;
+                    }
                     return new PremiseObject(this, SYSClient.HomeObjectId) as IPremiseObject;
                 });
+        }
+
+        public new System.Net.WebSockets.WebSocketState ConnectionState
+        {
+            get
+            {
+                return base.ConnectionState;
+            }
         }
 
         public void Disconnect(Action<Exception, string> callback)

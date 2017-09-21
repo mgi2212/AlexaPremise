@@ -51,7 +51,7 @@ namespace PremiseAlexaBridgeService
 
             try
             {
-                homeObject = ServiceInstance.ConnectToServer(client);
+                homeObject = PremiseServer.ConnectToServer(client);
             }
             catch (Exception)
             {
@@ -78,7 +78,7 @@ namespace PremiseAlexaBridgeService
                     response.payload.exception = new ExceptionResponsePayload();
                     break;
             }
-            ServiceInstance.DisconnectServer(client);
+            PremiseServer.DisconnectServer(client);
             return response;
         }
 
@@ -181,7 +181,7 @@ namespace PremiseAlexaBridgeService
 
             try
             {
-                homeObject = ServiceInstance.ConnectToServer(client);
+                homeObject = PremiseServer.ConnectToServer(client);
                 rootObject = homeObject.GetRoot().GetAwaiter().GetResult();
             }
             catch (Exception)
@@ -206,7 +206,7 @@ namespace PremiseAlexaBridgeService
                 {
                     response.header.@namespace = Faults.Namespace;
                     response.header.name = Faults.InvalidAccessTokenError;
-                    ServiceInstance.DisconnectServer(client);
+                    PremiseServer.DisconnectServer(client);
                     return response;
                 }
 
@@ -230,7 +230,7 @@ namespace PremiseAlexaBridgeService
                 response.payload.exception.errorInfo.description = ex.Message.ToString();
             }
 
-            ServiceInstance.DisconnectServer(client);
+            PremiseServer.DisconnectServer(client);
             return response;
         }
 
@@ -240,7 +240,7 @@ namespace PremiseAlexaBridgeService
 
             var returnClause = new string[] { "Name", "DisplayName", "FriendlyName", "FriendlyDescription", "IsReachable", "IsDiscoverable", "PowerState", "Brightness", "Temperature", "TemperatureMode", "Host", "Port", "Path", "Hue", "OID", "OPATH", "OTYPENAME", "Type", "ApplianceType" };
             dynamic whereClause = new System.Dynamic.ExpandoObject();
-            whereClause.TypeOf = this.ServiceInstance.AlexaApplianceClassPath;
+            whereClause.TypeOf = PremiseServer.AlexaApplianceClassPath;
 
             var sysAppliances = await homeObject.Select(returnClause, whereClause);
             int count = 0;
@@ -443,7 +443,7 @@ namespace PremiseAlexaBridgeService
                 }
 
                 appliances.Add(appliance);
-                if (++count >= this.ServiceInstance.AlexaDeviceLimit)
+                if (++count >= PremiseServer.AlexaDeviceLimit)
                     break;
             }
             
@@ -519,7 +519,7 @@ namespace PremiseAlexaBridgeService
 
             try
             {
-                homeObject = ServiceInstance.ConnectToServer(client);
+                homeObject = PremiseServer.ConnectToServer(client);
                 rootObject = homeObject.GetRoot().GetAwaiter().GetResult();
             }
             catch (Exception)
@@ -542,7 +542,7 @@ namespace PremiseAlexaBridgeService
                     response.header.@namespace = Faults.Namespace;
                     response.header.name = Faults.InvalidAccessTokenError;
                     response.payload.exception = new ExceptionResponsePayload();
-                    ServiceInstance.DisconnectServer(client);
+                    PremiseServer.DisconnectServer(client);
                     return response;
                 }
 
@@ -608,7 +608,7 @@ namespace PremiseAlexaBridgeService
                         response.header.@namespace = Faults.Namespace;
                         response.header.name = Faults.UnsupportedOperationError;
                         response.payload.exception = new ExceptionResponsePayload();
-                        ServiceInstance.DisconnectServer(client);
+                        PremiseServer.DisconnectServer(client);
                         return response;
                 }
 
@@ -628,7 +628,7 @@ namespace PremiseAlexaBridgeService
                     response.header.@namespace = Faults.Namespace;
                     response.header.name = Faults.NoSuchTargetError;
                     response.payload.exception = new ExceptionResponsePayload();
-                    ServiceInstance.DisconnectServer(client);
+                    PremiseServer.DisconnectServer(client);
                     return response;
                 }
 
@@ -817,7 +817,7 @@ namespace PremiseAlexaBridgeService
                 response.payload.exception = new ExceptionResponsePayload();
             }
 
-            ServiceInstance.DisconnectServer(client);
+            PremiseServer.DisconnectServer(client);
             return response;
         }
 
@@ -877,7 +877,7 @@ namespace PremiseAlexaBridgeService
 
             try
             {
-                homeObject = ServiceInstance.ConnectToServer(client);
+                homeObject = PremiseServer.ConnectToServer(client);
                 rootObject = homeObject.GetRoot().GetAwaiter().GetResult();
             }
             catch (Exception)
@@ -902,7 +902,7 @@ namespace PremiseAlexaBridgeService
                     response.header.@namespace = Faults.QueryNamespace;
                     response.header.name = Faults.InvalidAccessTokenError;
                     response.payload.exception = new ExceptionResponsePayload();
-                    ServiceInstance.DisconnectServer(client);
+                    PremiseServer.DisconnectServer(client);
                     return response;
                 }
 
@@ -936,7 +936,7 @@ namespace PremiseAlexaBridgeService
                 response.payload.exception.errorInfo.description = e.Message;
             }
 
-            ServiceInstance.DisconnectServer(client);
+            PremiseServer.DisconnectServer(client);
             return response;
             #endregion
         }

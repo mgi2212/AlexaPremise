@@ -4,28 +4,6 @@ using System.Runtime.Serialization;
 namespace Alexa.SmartHome.V3
 {
 
-    #region Event
-
-    [DataContract(Name = "event")]
-    public class AlexaEvent
-    {
-        [DataMember(Name = "header", IsRequired = true, Order = 1)]
-        public Header header { get; set; }
-        [DataMember(Name = "endpoint", IsRequired = false, Order = 2)]
-        public DiscoveryEndpoint endpoint { get; set; }
-        [DataMember(Name = "payload", IsRequired = true, Order = 3)]
-        public EventPayload payload { get; set; }
-        [DataMember(Name = "context", IsRequired = false, Order = 4)]
-        public Context context { get; set; }
-
-        public AlexaEvent()
-        {
-            header = new Header();
-            payload = new EventPayload();
-        }
-    }
-    #endregion
-
     #region Directive
 
     [DataContract(Name = "directive")]
@@ -39,6 +17,12 @@ namespace Alexa.SmartHome.V3
 
         [DataMember(Name = "payload")]
         public object payload;
+
+        public AlexaDirective()
+        {
+            header = new Header();
+            endpoint = new DirectiveEndpoint();
+        }
     }
 
     #endregion
@@ -100,8 +84,13 @@ namespace Alexa.SmartHome.V3
         public Scope scope { get; set; }
         [DataMember(Name = "endpointId", IsRequired = true, Order = 2)]
         public string endpointId { get; set; }
-        [DataMember(Name = "cookie", IsRequired = false, Order = 3)]
+        [DataMember(Name = "cookie", EmitDefaultValue = false, IsRequired = false, Order = 3)]
         public EndpointCookie cookie { get; set; }
+        public DirectiveEndpoint()
+        {
+            scope = new Scope();
+            cookie = new EndpointCookie();
+        }
     }
 
     public class EndpointCookie
@@ -109,17 +98,6 @@ namespace Alexa.SmartHome.V3
         [DataMember(Name = "path", EmitDefaultValue = false)]
         public string path;
     }
-    #endregion
-
-    #region Payload
-
-    public class EventPayload
-    {
-        [DataMember(Name = "endpoints", EmitDefaultValue = false)]
-        public List<DiscoveryEndpoint> endpoints;
-    }
-
-
     #endregion
 
     #region Scope 
@@ -148,6 +126,7 @@ namespace Alexa.SmartHome.V3
         }
     }
 
+    #endregion
 
     #region Context
 
@@ -161,34 +140,6 @@ namespace Alexa.SmartHome.V3
             properties = new List<AlexaProperty>();
         }
     }
-
-    #region Value
-
-    public class Value
-    {
-        [DataMember(Name = "value", EmitDefaultValue = false)]
-        public object value { get; set; }
-        [DataMember(Name = "scale", EmitDefaultValue = false)]
-        public string scale { get; set; }
-    }
-
-    #endregion
-
-    //public class Property
-    //{
-    //    [DataMember(Name = "namespace", EmitDefaultValue = false)]
-    //    public string @namespace { get; set; }
-    //    [DataMember(Name = "name", EmitDefaultValue = false)]
-    //    public string name { get; set; }
-    //    [DataMember(Name = "value", EmitDefaultValue = false)]
-    //    public Value value { get; set; }
-    //    [DataMember(Name = "timeOfSample", EmitDefaultValue = false)]
-    //    public string timeOfSample { get; set; }
-    //    [DataMember(Name = "uncertaintyInMilliseconds", EmitDefaultValue = false)]
-    //    public string uncertaintyInMilliseconds { get; set; }
-    //}
-
-    #endregion
 
     #endregion
 
@@ -208,7 +159,7 @@ namespace Alexa.SmartHome.V3
 
         public Properties()
         {
-
+            supported = new List<SupportedProperty>();
         }
 
         public Properties(bool asyncSupported, bool querySupported)
@@ -236,7 +187,7 @@ namespace Alexa.SmartHome.V3
         {
 
         }
-        
+
         public Capability(string interfaceName, bool asyncSupported, bool querySupported)
         {
             this.type = "Alexa.Interface";
@@ -251,13 +202,16 @@ namespace Alexa.SmartHome.V3
 
     #region Discovery
 
-    #region Discovery.Request
-
     [DataContract]
     public class DiscoveryRequest
     {
         [DataMember(Name = "directive")]
         public DiscoveryDirective directive;
+
+        public DiscoveryRequest()
+        {
+            directive = new DiscoveryDirective();
+        }
     }
 
     [DataContract]
@@ -265,6 +219,11 @@ namespace Alexa.SmartHome.V3
     {
         [DataMember(Name = "scope", EmitDefaultValue = false)]
         public Scope scope { get; set; }
+
+        public DiscoveryDirectivePayload()
+        {
+            scope = new Scope();
+        }
     }
 
     [DataContract]
@@ -274,18 +233,19 @@ namespace Alexa.SmartHome.V3
         public Header header { get; set; }
         [DataMember(Name = "payload", IsRequired = true, Order = 3)]
         public DiscoveryDirectivePayload payload { get; set; }
+
+        public DiscoveryDirective()
+        {
+            header = new Header();
+            payload = new DiscoveryDirectivePayload();
+        }
     }
-
-    #endregion
-
-    #region Discovery.Response
 
     [DataContract]
     public class DiscoveryResponse
     {
         [DataMember(Name = "event", IsRequired = true, Order = 1)]
         public DiscoveryResponseEvent @event { get; set; }
-
         public DiscoveryResponse(DiscoveryDirective directive)
         {
             this.@event = new DiscoveryResponseEvent(directive);
@@ -298,30 +258,32 @@ namespace Alexa.SmartHome.V3
         [DataMember(Name = "header", IsRequired = true, Order = 1)]
         public Header header { get; set; }
         [DataMember(Name = "payload", IsRequired = true, Order = 2)]
-        public DiscoverResponseEventPayload payload { get; set; }
-
+        public DiscoveryResponsePayload payload { get; set; }
         public DiscoveryResponseEvent(DiscoveryDirective discoveryDirective)
         {
 
             this.header = new Header()
             {
-                // correlationToken = discoveryDirective?.header?.correlationToken,  // new ? is Null-condition operator does null test on member
-                messageID = discoveryDirective?.header?.messageID,                // and returns null if member is null
+                correlationToken = discoveryDirective?.header?.correlationToken,     // new ? is Null-condition operator does null test on member
+                messageID = discoveryDirective?.header?.messageID,                   // and returns null if member is null
                 name = "Discover.Response",
                 @namespace = "Alexa.Discovery"
             };
 
-            this.payload = new DiscoverResponseEventPayload();
+            this.payload = new DiscoveryResponsePayload();
         }
     }
 
-    [DataContract(Namespace = "Alexa.Discovery")]
-    public class DiscoverResponseEventPayload
+    [DataContract]
+    public class DiscoveryResponsePayload
     {
-        [DataMember(Name = "endpoints", EmitDefaultValue = false, IsRequired = true)]
+        [DataMember(Name = "endpoints", EmitDefaultValue = false, IsRequired = false)]
         public List<DiscoveryEndpoint> endpoints { get; set; }
 
-        public DiscoverResponseEventPayload()
+        [DataMember(Name = "exception", EmitDefaultValue = false, IsRequired = false)]
+        public ExceptionResponsePayload exception { get; set; }
+
+        public DiscoveryResponsePayload()
         {
             endpoints = new List<DiscoveryEndpoint>();
         }
@@ -329,11 +291,7 @@ namespace Alexa.SmartHome.V3
 
     #endregion
 
-    #endregion
-
     #region Exception
-
-
     public static class Faults
     {
         public const string Namespace = "Alexa.ConnectedHome.Control";
@@ -378,7 +336,7 @@ namespace Alexa.SmartHome.V3
         public string description { get; set; }
     }
 
-    [DataContract(Name = "payload", Namespace = "Alexa.ConnectedHome.System")]
+    [DataContract]
     public class ExceptionResponsePayload
     {
         [DataMember(Name = "errorInfo", EmitDefaultValue = false, Order = 1)]
@@ -402,7 +360,7 @@ namespace Alexa.SmartHome.V3
         [DataMember(Name = "faultingParameter", EmitDefaultValue = false, Order = 7)]
         public string faultingParameter { get; set; } // The property or field in the request message that was malformed or unexpected, and could not be handled by the skill adapter.
     }
-        
+
     #endregion
 
     #region System
@@ -469,7 +427,7 @@ namespace Alexa.SmartHome.V3
         public AlexaDirective directive;
     }
 
-   [DataContract]
+    [DataContract]
     public class ValidRangeInt
     {
         [DataMember(Name = "minimumValue")]
@@ -522,13 +480,13 @@ namespace Alexa.SmartHome.V3
 
         public AlexaProperty()
         {
-            uncertaintyInMilliseconds = 200;
+            uncertaintyInMilliseconds = 20;
         }
 
         public AlexaProperty(AlexaDirective directive)
         {
             @namespace = directive.header.@namespace;
-            uncertaintyInMilliseconds = 200;
+            uncertaintyInMilliseconds = 20;
         }
 
     }
@@ -561,7 +519,7 @@ namespace Alexa.SmartHome.V3
         [DataMember(Name = "message")]
         public string message { get; set; }
 
-        public AlexaErrorResponsePayload(DiscoveryUtilities.AlexaErrorTypes errType, string errMessage)
+        public AlexaErrorResponsePayload(AlexaErrorTypes errType, string errMessage)
         {
             type = errType.ToString();
             message = errMessage;
@@ -577,8 +535,8 @@ namespace Alexa.SmartHome.V3
         [DataMember(Name = "endpointId")]
         public string endpointId { get; set; }
 
-        [DataMember(Name = "cookie")]
-        public EndpointCookie cookie { get; set;}
+        [DataMember(Name = "cookie", EmitDefaultValue = false)]
+        public EndpointCookie cookie { get; set; }
 
         public ResponseEndpoint(DirectiveEndpoint endpoint)
         {
@@ -636,7 +594,7 @@ namespace Alexa.SmartHome.V3
     [DataContract]
     public class ReportStateResponse
     {
-        [DataMember(Name = "context")]
+        [DataMember(Name = "context", EmitDefaultValue = false)]
         public Context context;
 
         [DataMember(Name = "event")]
@@ -672,7 +630,7 @@ namespace Alexa.SmartHome.V3
         [DataMember(Name = "token")]
         public string token;
     }
-    
+
     [DataContract]
     public class AuthorizationRequestPayload
     {
