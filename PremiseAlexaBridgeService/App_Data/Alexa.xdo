@@ -22,7 +22,7 @@
             <Object ID="{2EE46B9B-C1FB-40D9-9B19-F9A1B43C3073}" Name="LastHeardFromAlexa" Flags="0x900" Class="sys://Schema/System/DateTime" DefaultValue="12/26/2015 5:46:59 PM" />
             <Object ID="{6ECA1B44-E52A-4BD4-A23F-CCCBCE659E2C}" Name="LastHeardCommand" Flags="0x900" Class="sys://Schema/System/Text" />
             <Object ID="{919F21F9-CB23-47D2-9D40-465D8FAA99F3}" Class="sys://Schema/System/SubClass" LinkObject="{A4D2A312-9702-4549-AF69-84B816A65C78}" />
-            <Object ID="{6EAEAB32-D7CD-460A-8EBA-64DA1DE2F028}" Name="GenerateDiscoveryJson" Flags="0x900" Class="sys://Schema/System/Boolean" Momentary="0" />
+            <Object ID="{6EAEAB32-D7CD-460A-8EBA-64DA1DE2F028}" Name="GenerateDiscoveryJson" Flags="0x900" Class="sys://Schema/System/Boolean" />
             <Object ID="{2396A320-9A5B-4BA8-94C4-517C2C2E35B8}" Name="OnChangeGenerateDiscoveryJson" Class="sys://Schema/Scripting/ClassProperty" Property="{6EAEAB32-D7CD-460A-8EBA-64DA1DE2F028}" >
               <![CDATA[
 Script=
@@ -33,6 +33,7 @@ end if
 
 ]]>
             </Object>
+            <Object ID="{862433D1-658F-4E05-9C91-A5232EFD096B}" Name="SendAsyncEventsToAlexa" Flags="0x900" Class="sys://Schema/System/Boolean" />
           </Object>
           <Object ID="{3C3B4F0D-9DC5-42EA-9CE3-2150D2AD58CB}" Name="AlexaAppliance" Class="sys://Schema/System/Class" Virtual="-1" >
             <Object ID="{AC71ED16-5354-46C1-A4BC-64E4CF8F8606}" Name="FriendlyDescription" Flags="0x900" Class="sys://Schema/System/Text" Mergeable="0" DisplayName="Human Readable Description" Description="Human Readable Description" />
