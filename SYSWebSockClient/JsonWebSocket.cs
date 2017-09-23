@@ -5,7 +5,9 @@
     using System.Net.WebSockets;
     using System.Text;
     using System.Threading;
+    using System.Diagnostics;
     using System.Threading.Tasks;
+    using Alexa.RegisteredTasks;
     public class JsonWebSocket
     {
         private object AccumulatorLock = new object();
@@ -50,10 +52,19 @@
 
                     this.OnConnect();
 
-                    Task.Factory.StartNew(this.StartSending);
-                    Task.Factory.StartNew(this.StartReceiving);
-                }
-                );
+                    BackgroundTaskManager.Run(() =>
+                    {
+                        this.StartSending();
+                    });
+
+                    BackgroundTaskManager.Run(() =>
+                    {
+                        this.StartReceiving();
+                    });
+
+                    //Task.Factory.StartNew(this.StartSending);
+                    //Task.Factory.StartNew(this.StartReceiving);
+                });
         }
 
         protected virtual void OnConnect()
@@ -121,6 +132,7 @@
 
             try
             {
+                //Debug.WriteLine(message);
                 this.OnMessage(message);
             }
             catch

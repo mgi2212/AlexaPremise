@@ -1,20 +1,25 @@
 ﻿using Alexa.SmartHome.V3;
+using Alexa.RegisteredTasks;
 using System;
 using System.Configuration;
 using SYSWebSockClient;
 using System.Diagnostics;
+using System.Net.WebSockets;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
-using System.Net.NetworkInformation;
 using System.Threading;
+using System.Collections;
+using System.Net;
+using System.Text;
+using Nito.AsyncEx;
+using System.IO;
 
 namespace PremiseAlexaBridgeService
 {
     public sealed class PremiseServer
     {
         private static readonly PremiseServer instance = new PremiseServer();
-
         private static string HomeObjectId = "{4F846CA8-6603-4675-AC66-05A0AF6A8ACD}";
 
         internal static int AlexaDeviceLimit;
@@ -29,6 +34,21 @@ namespace PremiseAlexaBridgeService
         internal static string PremiseUserName;
         internal static string PremiseUserPassword;
         internal static string PremiseHomeObject;
+        internal static string AlexaEventEndpoint;
+
+        private static IPremiseObject _homeObject;
+        private static IPremiseObject _rootObject;
+        private static SYSClient _sysClient;
+        private static IPremiseSubscription _asyncEventSubscription;
+        private static List<IPremiseSubscription> subscriptions;
+        private static List<DiscoveryEndpoint> endpoints;
+        private static bool enableAsyncEvents;
+        private static AlexaBlockingQueue<PostToAlexa> stateReportQueue;
+
+        private static readonly AsyncLock homeObjectSubscriptionLock = new AsyncLock();
+        private static readonly AsyncLock subscriptionsLock = new AsyncLock();
+        private static readonly AsyncLock endpointsLock = new AsyncLock();
+
 
         private PremiseServer()
         {
@@ -42,6 +62,7 @@ namespace PremiseAlexaBridgeService
             AlexaEndpointClassPath = ConfigurationManager.AppSettings["premiseAlexaEndpointClassPath"];
             AlexaPowerStateClassPath = ConfigurationManager.AppSettings["premisePowerStateClassPath"];
             AlexaDimmerStateClassPath = ConfigurationManager.AppSettings["premiseDimmerClassPath"];
+            AlexaEventEndpoint = ConfigurationManager.AppSettings["alexaEventEndpoint"];
             try
             {
                 AlexaDeviceLimit = int.Parse(ConfigurationManager.AppSettings["premiseAlexaDeviceLimit"]);
@@ -60,58 +81,124 @@ namespace PremiseAlexaBridgeService
                 AlexaCheckStateBeforeSetValue = true;
             }
 
+            subscriptions = new List<IPremiseSubscription>();
+            endpoints = new List<DiscoveryEndpoint>();
+            enableAsyncEvents = false;
+            stateReportQueue = new AlexaBlockingQueue<PostToAlexa>();
             _sysClient = new SYSClient();
             _asyncEventSubscription = null;
-            CheckStatus();
+
+            Task.Run(() =>
+            {
+                BackgroundTaskManager.Run(() =>
+                {
+                    this.SendChangeReportsToAlexa();
+                });
+            });
+            //CheckStatus();
         }
 
         ~PremiseServer()
         {
-            if (_homeObject != null)
+            if (_homeObject == null)
             {
-                _homeObject = null;
-                _rootObject = null;
-                _sysClient.Disconnect();
+                return;
             }
+            if (subscriptions != null)
+            {
+                UnsubscribeAll().GetAwaiter().GetResult();
+            }
+            subscriptions = null;
+
+            _asyncEventSubscription.Unsubscribe().GetAwaiter().GetResult();
+            _asyncEventSubscription = null;
+
+            if (endpoints != null)
+            {
+                using (endpointsLock.Lock())
+                {
+                    endpoints.Clear();
+                }
+            }
+            endpoints = null;
+
+            _sysClient.Disconnect();
+            _homeObject = null;
+            _rootObject = null;
         }
 
-        private static IPremiseObject _homeObject;
-        private static IPremiseObject _rootObject;
-        private static SYSClient _sysClient;
-        private static IPremiseSubscription _asyncEventSubscription;
-        private static List<IPremiseSubscription> subscriptions = new List<IPremiseSubscription>();
-        private static List<DiscoveryEndpoint> endpoints = new List<DiscoveryEndpoint>();
-        private static Throttler throttler = new Throttler(1, new TimeSpan(0, 0, 0, 0, 100));
-
-        public static void CheckStatus()
+        public static bool CheckStatus()
         {
             try
             {
+                if (isClientConnected())
+                {
+                    return true;
+                }
 
-                if ((_homeObject == null) && (!isClientConnected()))
+                if (_homeObject == null)
                 {
                     _homeObject = _sysClient.Connect(PremiseServerAddress).GetAwaiter().GetResult();
                     _rootObject = _homeObject.GetRoot().GetAwaiter().GetResult();
+                    enableAsyncEvents = _homeObject.GetValue("SendAsyncEventsToAlexa").GetAwaiter().GetResult();
+                    if (enableAsyncEvents)
+                    {
+                        Task t = Task.Run(() => SubscribeAll());
+                    }
                 }
-                else if ((_homeObject != null) && (!isClientConnected()))
+                else if (_homeObject != null)
                 {
                     _homeObject = null;
                     _rootObject = null;
-                    _asyncEventSubscription.Unsubscribe().GetAwaiter().GetResult();
-                    _asyncEventSubscription = null;
+                    using (homeObjectSubscriptionLock.Lock())
+                    {
+                        _asyncEventSubscription = null;
+                    }
+                    if (enableAsyncEvents)
+                    {
+                        using (subscriptionsLock.Lock())
+                        {
+                            subscriptions.Clear();
+                        }
+                    }
+                    using (endpointsLock.Lock())
+                    {
+                        endpoints.Clear();
+                    }
                     _homeObject = _sysClient.Connect(PremiseServerAddress).GetAwaiter().GetResult();
                     _rootObject = _homeObject.GetRoot().GetAwaiter().GetResult();
+                    enableAsyncEvents = _rootObject.GetValue("SendAsyncEventsToAlexa").GetAwaiter().GetResult();
+                    if (enableAsyncEvents)
+                    {
+                        Task t = Task.Run(() => SubscribeAll());
+                    }
+
                 }
-                if (_asyncEventSubscription == null)
-                {
-                    _asyncEventSubscription = _homeObject.Subscribe("SendAsyncEventsToAlexa", new Action<dynamic>(EnableAsyncPropertyChanged)).GetAwaiter().GetResult();
-                }
+                SubScribeToHomeObjectEvents();
+                return true;
             }
             catch (Exception ex)
             {
                 _homeObject = null;
                 _rootObject = null;
+                if (enableAsyncEvents)
+                {
+                    subscriptions.Clear();
+                }
+                endpoints.Clear();
                 Debug.WriteLine(ex.Message);
+                return false;
+            }
+        }
+
+        public static void SubScribeToHomeObjectEvents()
+        {
+            using (homeObjectSubscriptionLock.Lock())
+            {
+                if (_asyncEventSubscription == null)
+                {
+                    _asyncEventSubscription = _homeObject.Subscribe("SendAsyncEventsToAlexa", new Action<dynamic>(EnableAsyncPropertyChanged)).GetAwaiter().GetResult();
+                }
             }
         }
 
@@ -138,69 +225,89 @@ namespace PremiseAlexaBridgeService
             Subscription sub = (Subscription)@params;
 
             // dont block the event reporting thread.
-            Task t = Task.Run(() =>
-            {
-                if ((sub.sysObjectId == HomeObjectId) && (sub.propertyName == "SendAsyncEventsToAlexa"))
-                {
-                    bool enableAsyncEvents = false;
-                    string value = sub.@params;
-                    try
-                    {
-                        enableAsyncEvents = bool.Parse(value);
-                    }
-                    catch
-                    {
-                        enableAsyncEvents = false;
-                    }
-                    if (enableAsyncEvents)
-                    {
-                        if (endpoints.Count == 0)
-                        {
-                            GetEndpoints().GetAwaiter().GetResult();
-                        }
-                        foreach (DiscoveryEndpoint endpoint in endpoints)
-                        {
-                            foreach (Capability capability in endpoint.capabilities)
-                            {
-                                if (capability.properties.proactivelyReported)
-                                {
-                                    Guid premiseId = new Guid(endpoint.endpointId);
-                                    IPremiseObject sysObject = _rootObject.GetObject(premiseId.ToString("B")).GetAwaiter().GetResult();
-                                    IPremiseSubscription subscription = null;
+            Task t = Task.Run(async () =>
+           {
+               if ((sub.sysObjectId == HomeObjectId) && (sub.propertyName == "SendAsyncEventsToAlexa"))
+               {
+                   string value = sub.@params;
+                   try
+                   {
+                       enableAsyncEvents = bool.Parse(value);
+                   }
+                   catch
+                   {
+                       enableAsyncEvents = false;
+                   }
+                   if (enableAsyncEvents)
+                   {
+                       await SubscribeAll();
+                   }
+                   else
+                   {
+                       await UnsubscribeAll();
+                   }
+               }
+           });
 
-                                    switch (capability.@interface)
-                                    {
-                                        case "Alexa.BrightnessController":
-                                            subscription = sysObject.Subscribe("Brightness", new Action<dynamic>(AlexaPropertyChanged)).GetAwaiter().GetResult();
-                                            break;
-                                        case "Alexa.PowerController":
-                                            subscription = sysObject.Subscribe("PowerState", new Action<dynamic>(AlexaPropertyChanged)).GetAwaiter().GetResult();
-                                            break;
-                                        default:
-                                            break;
-                                    }
-                                    if (subscription != null)
-                                    {
-                                        subscriptions.Add(subscription);
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    else
+        }
+
+        public static async Task SubscribeAll()
+        {
+            using (subscriptionsLock.Lock())
+            {
+                if (endpoints.Count == 0)
+                {
+                    GetEndpoints().GetAwaiter().GetResult();
+                }
+                if (subscriptions.Count != 0)
+                {
+                    UnsubscribeAll().GetAwaiter().GetResult();
+                }
+                foreach (DiscoveryEndpoint endpoint in endpoints)
+                {
+                    foreach (Capability capability in endpoint.capabilities)
                     {
-                        if (subscriptions != null)
+                        if (capability.properties.proactivelyReported)
                         {
-                            foreach (IPremiseSubscription subscription in subscriptions)
+                            Guid premiseId = new Guid(endpoint.endpointId);
+                            IPremiseObject sysObject = await _rootObject.GetObject(premiseId.ToString("B"));
+                            IPremiseSubscription subscription = null;
+
+                            switch (capability.@interface)
                             {
-                                subscription.Unsubscribe().GetAwaiter().GetResult();
+                                case "Alexa.BrightnessController":
+                                    subscription = await sysObject.Subscribe("Brightness", new Action<dynamic>(AlexaPropertyChanged));
+                                    break;
+                                case "Alexa.PowerController":
+                                    subscription = await sysObject.Subscribe("PowerState", new Action<dynamic>(AlexaPropertyChanged));
+                                    break;
+                                default:
+                                    break;
                             }
-                            subscriptions.Clear();
+                            if (subscription != null)
+                            {
+                                subscriptions.Add(subscription);
+                            }
                         }
                     }
                 }
-            });
+            }
+        }
 
+        public static async Task UnsubscribeAll()
+        {
+            using (subscriptionsLock.Lock())
+            {
+                if (subscriptions != null)
+                {
+                    foreach (IPremiseSubscription subscription in subscriptions)
+                    {
+                        await subscription.Unsubscribe();
+                    }
+
+                    subscriptions.Clear();
+                }
+            }
         }
 
         public static void AlexaPropertyChanged(dynamic @params)
@@ -212,6 +319,7 @@ namespace PremiseAlexaBridgeService
                 Guid premiseId = new Guid(sub.sysObjectId);
                 IPremiseObject sysObject = _rootObject.GetObject(premiseId.ToString("B")).GetAwaiter().GetResult();
                 DiscoveryEndpoint endpoint = GetDiscoveryEndpoint(sysObject).GetAwaiter().GetResult();
+                string authCode = (string)_homeObject.GetValue("AlexaAsyncAuthorizationCode").GetAwaiter().GetResult();
 
                 AlexaChangeReport changeReport = new AlexaChangeReport();
                 changeReport.@event.header.messageID = Guid.NewGuid().ToString("D");
@@ -219,8 +327,9 @@ namespace PremiseAlexaBridgeService
                 changeReport.@event.header.name = "ChangeReport";
                 changeReport.@event.header.payloadVersion = "3";
                 changeReport.@event.endpoint.scope.type = "BearerToken";
-                changeReport.@event.endpoint.scope.token = "Alexa-access-token"; //todo get real value
-                changeReport.@event.endpoint.endpointId = sub.sysObjectId;
+                changeReport.@event.endpoint.scope.token = authCode;
+                changeReport.@event.endpoint.endpointId = premiseId.ToString("B");
+                changeReport.@event.endpoint.cookie = endpoint.cookie;
                 changeReport.@event.payload.cause.type = "PHYSICAL_INTERACTION";
                 AlexaProperty changedProperty = null;
                 switch (sub.propertyName)
@@ -235,9 +344,10 @@ namespace PremiseAlexaBridgeService
                         break;
                 }
                 changeReport.context.properties.Add(changedProperty);
-                string json = JsonConvert.SerializeObject(changeReport);
-                //throttler.Enqueue();
-                Debug.WriteLine(json);
+
+                PostToAlexa item = new PostToAlexa();
+                item.json = JsonConvert.SerializeObject(changeReport);
+                stateReportQueue.Enqueue(item);
             });
         }
 
@@ -260,7 +370,7 @@ namespace PremiseAlexaBridgeService
 
         private static bool isClientConnected()
         {
-            return (_sysClient.ConnectionState == System.Net.WebSockets.WebSocketState.Open);
+            return (_sysClient.ConnectionState == WebSocketState.Open);
         }
 
         public static async Task<DiscoveryEndpoint> GetDiscoveryEndpoint(IPremiseObject endpoint)
@@ -287,119 +397,146 @@ namespace PremiseAlexaBridgeService
 
         public static async Task<List<DiscoveryEndpoint>> GetEndpoints()
         {
-            endpoints.Clear();
-
-            // discovery json is now generated in Premise script to vastly improve discovery event response time
-            var returnClause = new string[] { "discoveryJson", "IsDiscoverable" };
-            dynamic whereClause = new System.Dynamic.ExpandoObject();
-            whereClause.TypeOf = PremiseServer.AlexaApplianceClassPath;
-            int count = 0;
-
-            var devices = await _homeObject.Select(returnClause, whereClause);
-
-            foreach (var device in devices)
+            using (endpointsLock.Lock())
             {
-                if (device.IsDiscoverable == false)
-                    continue;
-
-                DiscoveryEndpoint endpoint = new DiscoveryEndpoint();
-                try
+                if (endpoints.Count != 0)
                 {
-                    string json = device.discoveryJson.ToString();
-                    endpoint = JsonConvert.DeserializeObject<DiscoveryEndpoint>(json, new JsonSerializerSettings()
-                    {
-                        NullValueHandling = NullValueHandling.Ignore
-                    });
+                    endpoints.Clear();
                 }
-                catch
-                {
-                    continue;
-                }
+                // discovery json is now generated in Premise script to vastly improve discovery event response time
+                var returnClause = new string[] { "discoveryJson", "IsDiscoverable" };
+                dynamic whereClause = new System.Dynamic.ExpandoObject();
+                whereClause.TypeOf = PremiseServer.AlexaApplianceClassPath;
+                int count = 0;
+                var devices = await _homeObject.Select(returnClause, whereClause);
 
-                if (endpoint != null)
+                foreach (var device in devices)
                 {
-                    endpoints.Add(endpoint);
-                    if (++count >= PremiseServer.AlexaDeviceLimit)
+                    if (device.IsDiscoverable == false)
+                        continue;
+
+                    DiscoveryEndpoint endpoint = new DiscoveryEndpoint();
+                    try
                     {
-                        break;
+                        string json = device.discoveryJson.ToString();
+                        endpoint = JsonConvert.DeserializeObject<DiscoveryEndpoint>(json, new JsonSerializerSettings()
+                        {
+                            NullValueHandling = NullValueHandling.Ignore
+                        });
+                    }
+                    catch
+                    {
+                        continue;
+                    }
+
+                    if (endpoint != null)
+                    {
+                        endpoints.Add(endpoint);
+                        if (++count >= PremiseServer.AlexaDeviceLimit)
+                        {
+                            break;
+                        }
                     }
                 }
+                return endpoints;
             }
-            return endpoints;
+        }
+
+        public static void Resubscribe()
+        {
+            if (enableAsyncEvents)
+            {
+                UnsubscribeAll().GetAwaiter().GetResult();
+                SubscribeAll().GetAwaiter().GetResult();
+            }
+        }
+
+        public static bool areAsyncEventsEnabled
+        {
+            get { return enableAsyncEvents; }
+        }
+
+        private void SendChangeReportsToAlexa()
+        {
+            //blocks in the enumerator
+            foreach (PostToAlexa item in stateReportQueue)
+            {
+                try
+                {
+                    // post to Alexa
+                    WebRequest request = WebRequest.Create(item.uri);
+                    request.Method = WebRequestMethods.Http.Post;
+                    request.ContentType = @"application/json";
+                    request.ContentLength = item.json.Length;
+
+                    Stream stream = request.GetRequestStream();
+                    stream.Write(item.Bytes, 0, item.json.Length);
+                    stream.Close();
+                    WebResponse response = request.GetResponse();
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine(ex.Message);
+                }
+                Debug.WriteLine(item.json);
+                Thread.Sleep(100);
+            }
         }
     }
 
-    public class Throttler : IDisposable
+    internal class PostToAlexa
     {
-        private readonly TimeSpan _maxPeriod;
-        private readonly SemaphoreSlim _throttleActions, _throttlePeriods;
-
-        public Throttler(int maxActions, TimeSpan maxPeriod)
+        public string json { get; set; }
+        public byte[] Bytes
         {
-            _throttleActions = new SemaphoreSlim(maxActions, maxActions);
-            _throttlePeriods = new SemaphoreSlim(maxActions, maxActions);
-            _maxPeriod = maxPeriod;
-        }
-
-        public Task<T> Enqueue<T>(Func<T> action, System.Threading.CancellationToken cancel)
-        {
-            return _throttleActions.WaitAsync(cancel).ContinueWith<T>(t =>
+            get
             {
-                try
-                {
-                    _throttlePeriods.Wait(cancel);
-
-                    // Release after period
-                    // - Allow bursts up to maxActions requests at once
-                    // - Do not allow more than maxActions requests per period
-                    Task.Delay(_maxPeriod).ContinueWith((tt) =>
-                    {
-                        _throttlePeriods.Release(1);
-                    });
-
-                    return action();
-                }
-                finally
-                {
-                    _throttleActions.Release(1);
-                }
-            });
+                return Encoding.UTF8.GetBytes(json);
+            }
         }
+        public readonly string uri;
 
-        #region IDisposable Support
-        private bool disposedValue = false; // To detect redundant calls
-
-        protected virtual void Dispose(bool disposing)
+        public PostToAlexa()
         {
-            if (!disposedValue)
+            uri = PremiseServer.AlexaEventEndpoint;
+        }
+    }
+
+    internal class AlexaBlockingQueue<T> : IEnumerable<T>
+    {
+        private int _count = 0;
+        private Queue<T> _queue = new Queue<T>();
+
+        public T Dequeue()
+        {
+            lock (_queue)
             {
-                if (disposing)
-                {
-                    _throttleActions.Dispose();
-                    _throttlePeriods.Dispose();
-                }
-
-                // TODO: free unmanaged resources (unmanaged objects) and override a finalizer below.
-                // TODO: set large fields to null.
-
-                disposedValue = true;
+                while (_count <= 0) Monitor.Wait(_queue);
+                _count--;
+                return _queue.Dequeue();
             }
         }
 
-        // TODO: override a finalizer only if Dispose(bool disposing) above has code to free unmanaged resources.
-        ~Throttler() {
-            // Do not change this code. Put cleanup code in Dispose(bool disposing) above.
-            Dispose(false);
+        public void Enqueue(T data)
+        {
+            if (data == null) throw new ArgumentNullException("data");
+
+            lock (_queue)
+            {
+                _queue.Enqueue(data);
+                _count++;
+                Monitor.Pulse(_queue);
+            }
         }
 
-        // This code added to correctly implement the disposable pattern.
-        public void Dispose()
+        IEnumerator<T> IEnumerable<T>.GetEnumerator()
         {
-            // Do not change this code. Put cleanup code in Dispose(bool disposing) above.
-            Dispose(true);
-            // TODO: uncomment the following line if the finalizer is overridden above.
-            // GC.SuppressFinalize(this);
+            while (true) yield return Dequeue();
         }
-        #endregion
+
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return ((IEnumerable<T>)this).GetEnumerator();
+        }
     }
 }

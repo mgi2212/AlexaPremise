@@ -181,6 +181,15 @@ namespace PremiseAlexaBridgeService
                 InformLastContact(PremiseServer.SysHomeObject, directive.header.name).GetAwaiter().GetResult();
                 response.@event.payload.endpoints = PremiseServer.GetEndpoints().GetAwaiter().GetResult();
 
+                if (PremiseServer.areAsyncEventsEnabled)
+                {
+                    Task t = Task.Run(() =>
+                    {
+                        PremiseServer.Resubscribe();
+                    });
+                }
+
+
                 PremiseServer.SysHomeObject.SetValue("LastRefreshed", DateTime.Now.ToString());
                 int count = response.@event.payload.endpoints.Count;
 

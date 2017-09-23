@@ -153,7 +153,7 @@
         Task<dynamic> IPremiseObject.GetValue(string name)
         {
             var future = new GetValueFuture(this.ObjectId, name);
-
+            // TODO - DANQ: find out why this will not return when a property is not found and fix 
             Task<dynamic> task;
             this.Client.Send(future, out task);
             return task;
@@ -345,6 +345,17 @@
             this.Client.Send(future, out task);
             return task;
         }
+
+        Task<IPremiseSubscription> IPremiseObject.UnSubscribeAll()
+        {
+            string clientSideSubscriptionId = FutureId.Next().ToString();
+            var future = new SubscribeFuture(this.ObjectId, null, clientSideSubscriptionId);
+
+            Task<IPremiseSubscription> task;
+            this.Client.Send(future, out task);
+            return task;
+        }
+
 
         Task<IPremiseSubscription> IPremiseObject.Subscribe(string propertyName, Action<dynamic> callback)
         {
