@@ -9,21 +9,43 @@
     using System.Threading.Tasks;
     using IPremiseObjectCollection = System.Collections.Generic.ICollection<IPremiseObject>;
 
+    public class Subscription
+    {
+        public string sysObjectId;
+        public string clientSideSubscriptionId;
+        public string propertyName;
+        public Action<dynamic> callback;
+        public dynamic @params;
+
+        public Subscription(string clientSideId)
+        {
+            clientSideSubscriptionId = clientSideId;
+        }
+    }
+
     public class SYSClient : JsonWebSocket
     {
-        private ConcurrentDictionary<long, JsonRPCFuture> Futures;
-        private ConcurrentDictionary<string, Action<dynamic>> Subscriptions;
+        private ConcurrentDictionary<long, JsonRPCFuture> _futures;
+        private ConcurrentDictionary<string, Subscription> _subscriptions;
 
         // ToDo: CHRISBE: Let's make this use the Root by default at some point
-        private static string HomeObjectId = "{4F846CA8-6603-4675-AC66-05A0AF6A8ACD}";
+        public static string HomeObjectId = "{4F846CA8-6603-4675-AC66-05A0AF6A8ACD}";
 
         private Future ConnectFuture;
         private Action<Exception, string> disconnectCallback;
 
         public SYSClient()
         {
-            this.Futures = new ConcurrentDictionary<long, JsonRPCFuture>();
-            this.Subscriptions = new ConcurrentDictionary<string, Action<dynamic>>();
+            this._futures = new ConcurrentDictionary<long, JsonRPCFuture>();
+            this._subscriptions = new ConcurrentDictionary<string, Subscription>();
+        }
+
+        public ConcurrentDictionary<string, Subscription> Subscriptions
+        {
+            get
+            {
+                return this._subscriptions;
+            }
         }
 
         protected override void OnError(Exception error)
@@ -78,15 +100,13 @@
                 return;
             }
 
-            JToken idObj;
 
-            if (!(json as JObject).TryGetValue("id", out idObj))
+            if (!(json as JObject).TryGetValue("id", out JToken idObj))
             {
                 // this is a notification from the server
                 // extract the method to call
 
-                JToken methodObj;
-                if (!(json as JObject).TryGetValue("method", out methodObj))
+                if (!(json as JObject).TryGetValue("method", out JToken methodObj))
                 {
                     Console.WriteLine("JSON RPC 2.0 notification received with no method specified");
                     return;
@@ -94,32 +114,34 @@
 
                 // look up the callback function
                 var method = methodObj.ToString();
-                Action<dynamic> callback;
-                this.Subscriptions.TryGetValue(method, out callback);
 
-                if (callback == null)
+                //Action<dynamic> callback;
+                this._subscriptions.TryGetValue(method, out Subscription subscription);
+
+                if (subscription.callback == null)
                 {
                     Console.WriteLine("JSON RPC 2.0 notification received with no registered handler");
                     return;
                 }
 
-                dynamic @params = json.@params;
+                //dynamic @params = json.@params;
 
-                callback(@params);
+                subscription.@params = json.@params;
+                dynamic @params = subscription;
+
+                subscription.callback(@params);
 
                 return;
             }
 
-            long id;
-            bool idExists = long.TryParse(idObj.ToString(), out id);
+            bool idExists = long.TryParse(idObj.ToString(), out long id);
             if (!idExists)
             {
                 Console.WriteLine("ID set but is not long");
                 return;
             }
 
-            JsonRPCFuture future = null;
-            this.Futures.TryRemove(id, out future);
+            this._futures.TryRemove(id, out JsonRPCFuture future);
 
             if (future == null)
             {
@@ -151,21 +173,27 @@
 
         internal void Send(JsonRPCFuture future, out Task task)
         {
-            this.Futures[future.id] = future;
+            this._futures[future.id] = future;
 
             task = Task.Run(
                 () =>
                 {
                     string strMessage = JsonConvert.SerializeObject(future);
                     base.Send(strMessage);
-
-                    future.Await();
+                    try
+                    {
+                        future.Await();
+                    }
+                    catch (Exception ex)
+                    {
+                        this.OnError(ex);
+                    }
                 });
         }
 
         internal void Send(JsonRPCFuture future, out Task<IPremiseObject> task)
         {
-            this.Futures[future.id] = future;
+            this._futures[future.id] = future;
 
             task = Task.Run(
                 () =>
@@ -173,15 +201,25 @@
                     string strMessage = JsonConvert.SerializeObject(future);
                     base.Send(strMessage);
 
-                    dynamic result = future.Await();
+                    dynamic result;
+                    try
+                    {
+                        result = future.Await();
+                    }
+                    catch (Exception ex)
+                    {
+                        this.OnError(ex);
+                        return null;
+                    }
+
                     var premiseObject = new PremiseObject(this, (string) result);
                     return premiseObject as IPremiseObject;
                 });
         }
 
-        internal void Send(JsonRPCFuture future, out Task<IPremiseSubscription> task)
+        internal void Send(JsonRPCFuture future, string clientSideSubscriptionId, out Task<IPremiseSubscription> task)
         {
-            this.Futures[future.id] = future;
+            this._futures[future.id] = future;
 
             task = Task.Run(
                 () =>
@@ -189,15 +227,24 @@
                     string strMessage = JsonConvert.SerializeObject(future);
                     base.Send(strMessage);
 
-                    dynamic result = future.Await();
-                    var premiseObject = new PremiseSubscription(this, SYSClient.HomeObjectId, (long)result);
+                    dynamic result;
+                    try
+                    {
+                        result = future.Await();
+                    }
+                    catch (Exception ex)
+                    {
+                        this.OnError(ex);
+                        return null;
+                    }
+                    var premiseObject = new PremiseSubscription(this, HomeObjectId, (long)result, clientSideSubscriptionId);
                     return premiseObject as IPremiseSubscription;
                 });
         }
 
         internal void Send(JsonRPCFuture future, out Task<IPremiseObjectCollection> task)
         {
-            this.Futures[future.id] = future;
+            this._futures[future.id] = future;
 
             task = Task.Run(
                 () =>
@@ -205,15 +252,22 @@
                     string strMessage = JsonConvert.SerializeObject(future);
                     base.Send(strMessage);
 
-                    JArray result = future.Await() as JArray;
+                    JArray result;
+                    try
+                    {
+                        result = future.Await() as JArray;
+                    }
+                    catch (Exception ex)
+                    {
+                        this.OnError(ex);
+                        return null;
+                    }
                     var premiseObjects = new List<IPremiseObject>();
-
                     foreach (var item in result)
                     {
                         var premiseObject = new PremiseObject(this, (string)item);
                         premiseObjects.Add(premiseObject);
                     }
-
                     var collection = premiseObjects as IPremiseObjectCollection;
                     return collection;
                 });
@@ -221,7 +275,7 @@
 
         internal void Send(JsonRPCFuture future, out Task<dynamic> task)
         {
-            this.Futures[future.id] = future;
+            this._futures[future.id] = future;
 
             task = Task.Run(
                 () =>
@@ -229,14 +283,24 @@
                     string strMessage = JsonConvert.SerializeObject(future);
                     base.Send(strMessage);
 
-                    dynamic result = future.Await();
+                    dynamic result;
+
+                    try
+                    {
+                        result = future.Await();
+                    }
+                    catch (Exception ex)
+                    {
+                        this.OnError(ex);
+                        return null;
+                    }
                     return result;
                 });
         }
 
         internal void Send<T>(JsonRPCFuture future, out Task<T> task)
         {
-            this.Futures[future.id] = future;
+            this._futures[future.id] = future;
 
             task = Task.Run(
                 () =>
@@ -244,22 +308,41 @@
                     string strMessage = JsonConvert.SerializeObject(future);
                     base.Send(strMessage);
 
-                    dynamic result = future.Await();
-                    return (T) result;
+                    dynamic result;
+                    // todo: figure out how to wrap this in a try-catch
+                    result = future.Await();
+                    return (T)result;
                 });
         }
 
-        public Task<IPremiseObject> Connect(string uri)
+        public new Task<IPremiseObject> Connect(string uri)
         {
+
             this.ConnectFuture = new Future();
 
             return Task.Run(
                 () =>
                 {
-                    base.Connect(uri);
-                    this.ConnectFuture.Await();
-                    return new PremiseObject(this, SYSClient.HomeObjectId) as IPremiseObject;
+                    try
+                    {
+                        base.Connect(uri);
+                        this.ConnectFuture.Await();
+                    }
+                    catch (Exception ex)
+                    {
+                        this.OnError(ex);
+                        return null;
+                    }
+                    return new PremiseObject(this, HomeObjectId) as IPremiseObject;
                 });
+        }
+
+        public new System.Net.WebSockets.WebSocketState ConnectionState
+        {
+            get
+            {
+                return base.ConnectionState;
+            }
         }
 
         public void Disconnect(Action<Exception, string> callback)
@@ -268,9 +351,9 @@
             base.Disconnect();
         }
 
-        internal void AddSubscription(string clientSideSubscriptionId, Action<dynamic> callback)
+        internal void AddSubscription(string clientSideSubscriptionId, Subscription subscription)
         {
-            this.Subscriptions.TryAdd(clientSideSubscriptionId, callback);
+            this._subscriptions.TryAdd(clientSideSubscriptionId, subscription);
         }
     }
 }

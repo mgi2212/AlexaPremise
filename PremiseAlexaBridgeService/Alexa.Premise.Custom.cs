@@ -1,12 +1,11 @@
 ﻿using System.Collections.Generic;
 using System.Runtime.Serialization;
 
-namespace Alexa.SmartHome
+namespace Alexa.Premise.Custom
 {
 
     #region Header
 
-    [DataContract(Namespace = "Alexa.ConnectedHome")]
     public class Header
     {
         [DataMember(Name = "messageId", IsRequired = true, Order = 1)]
@@ -28,7 +27,7 @@ namespace Alexa.SmartHome
 
     #region Exception
 
-    
+
     public static class Faults
     {
         public const string Namespace = "Alexa.ConnectedHome.Control";
@@ -100,227 +99,134 @@ namespace Alexa.SmartHome
 
     #endregion
 
-    #region System
+    #region Custom Skill
 
-    public enum SystemRequestType
+    [DataContract(Name = "roomStatus", Namespace = "Alexa.Premise.Custom")]
+    public class RoomStatus
     {
-        Unknown,
-        HealthCheck,
+        [DataMember(Name = "friendlyName", EmitDefaultValue = false)]
+        public string friendlyName;
+
+        [DataMember(Name = "occupied", EmitDefaultValue = false)]
+        public string occupied;
+
+        [DataMember(Name = "occupancyCount", EmitDefaultValue = false)]
+        public string occupancyCount;
+
+        [DataMember(Name = "lastOccupied", EmitDefaultValue = false)]
+        public string lastOccupied;
+
+        [DataMember(Name = "currentScene", EmitDefaultValue = false)]
+        public string currentScene;
+
+        [DataMember(Name = "deviceCount", EmitDefaultValue = false)]
+        public string deviceCount;
+
+        [DataMember(Name = "currentTemperature", EmitDefaultValue = false)]
+        public string currentTemperature;
+
+        [DataMember(Name = "lightsOnCount", EmitDefaultValue = false)]
+        public string lightsOnCount;
+
     }
 
-    [DataContract(Namespace = "Alexa.ConnectedHome.System")]
-    public class SystemRequest
+    [DataContract(Name = "spacesStatus", Namespace = "Alexa.Premise.Custom")]
+    public class SpacesOperationStatus
     {
-        [DataMember(Name = "header", Order = 1)]
-        public Header header;
+        [DataMember(Name = "friendlyResponse", EmitDefaultValue = false)]
+        public string friendlyResponse;
 
-        [DataMember(Name = "payload", EmitDefaultValue = false, Order = 2)]
-        public HealthCheckRequestPayload payload;
+        [DataMember(Name = "count", EmitDefaultValue = false)]
+        public string count;
+
+        [DataMember(Name = "assignedSpacesCount", EmitDefaultValue = false)]
+        public string assignedSpacesCount;
     }
 
-    [DataContract(Namespace = "Alexa.ConnectedHome.System")]
-    public class SystemResponse
+
+    [DataContract(Namespace = "Alexa.Premise.Custom")]
+    public class CustomRequest
     {
         [DataMember(Name = "header")]
         public Header header;
 
-        [DataMember(Name = "payload", EmitDefaultValue = false, IsRequired = true)]
-        public SystemResponsePayload payload;
+        [DataMember(Name = "payload")]
+        public CustomRequestPayload payload;
+    }
+
+    [DataContract(Namespace = "Alexa.Premise.Custom")]
+    public class CustomResponse
+    {
+        [DataMember(Name = "header")]
+        public Header header;
+
+        [DataMember(Name = "payload")]
+        public CustomResponsePayload payload;
+
+        public CustomResponse()
+        {
+            header = new Header();
+            header.messageId = "0"; // default
+            payload = new CustomResponsePayload();
+        }
+    }
+
+    [DataContract(Namespace = "Alexa.Premise.Custom")]
+    public class DevicePayload
+    {
+        [DataMember(Name = "type", Order = 1)]
+        public string type { get; set; }
+
+        [DataMember(Name = "operation", Order = 2)]
+        public string operation { get; set; }
+
+        [DataMember(Name = "name", Order = 3)]
+        public string name { get; set; }
 
     }
 
-    [DataContract(Name = "payload", Namespace = "Alexa.ConnectedHome.System")]
-    public class SystemResponsePayload
+    [DataContract(Namespace = "Alexa.Premise.Custom")]
+    public class SpacePayload
     {
-        [DataMember(Name = "isHealthy", EmitDefaultValue = false, Order = 1)]
-        public bool isHealthy { get; set; }
-        [DataMember(Name = "description", EmitDefaultValue = false, Order = 2)]
-        public string description { get; set; }
-        [DataMember(Name = "exception", EmitDefaultValue = false)]
+        [DataMember(Name = "name", Order = 1)]
+        public string name { get; set; }
+
+        [DataMember(Name = "deviceId", EmitDefaultValue = false, Order = 1)]
+        public string deviceId { get; set; }
+
+        [DataMember(Name = "userId", EmitDefaultValue = false, Order = 1)]
+        public string userId { get; set; }
+
+    }
+
+    [DataContract(Name = "payload", Namespace = "Alexa.Premise.Custom")]
+    public class CustomRequestPayload
+    {
+        [DataMember(Name = "accessToken", Order = 1)]
+        public string accessToken { get; set; }
+
+        [DataMember(Name = "space", EmitDefaultValue = false)]
+        public SpacePayload space;
+
+        [DataMember(Name = "device", EmitDefaultValue = false)]
+        public DevicePayload device;
+
+    }
+
+    [DataContract(Name = "payload", Namespace = "Alexa.Premise.Custom")]
+    public class CustomResponsePayload
+    {
+
+        [DataMember(Name = "roomStatus", EmitDefaultValue = false)]
+        public RoomStatus applianceRoomStatus;
+
+        [DataMember(Name = "spacesStatus", EmitDefaultValue = false)]
+        public SpacesOperationStatus spacesStatus;
+
+        [DataMember(Name = "exception", EmitDefaultValue = false, Order = 8)]
         public ExceptionResponsePayload exception { get; set; }
 
     }
-
-    #region HealthCheck 
-
-    [DataContract(Name = "payload", Namespace = "Alexa.ConnectedHome.System")]
-    public class HealthCheckRequestPayload
-    {
-        [DataMember(Name = "accessToken", EmitDefaultValue = false, Order = 1)]
-        public string accessToken { get; set; }
-        [DataMember(Name = "initiationTimeStamp", Order = 2)]
-        public int initiationTimeStamp { get; set; }
-    }
-
-    #endregion
-
-    #endregion
-
-    #region Discovery
-
-    [DataContract(Namespace = "Alexa.ConnectedHome.Discovery")]
-    public class DiscoveryRequestPayload
-    {
-        [DataMember(Name = "accessToken")]
-        public string accessToken { get; set; }
-    }
-
-    [DataContract(Namespace = "Alexa.ConnectedHome.Discovery")]
-    public class DiscoveryRequest
-    {
-        [DataMember(Name = "header")]
-        public Header header;
-
-        [DataMember(Name = "payload")]
-        public DiscoveryRequestPayload payload;
-    }
-
-    [DataContract(Namespace = "Alexa.ConnectedHome.Discovery")]
-    public class DiscoveryResponse
-    {
-        [DataMember(Name = "header")]
-        public Header header;
-
-        [DataMember(Name = "payload")]
-        public DiscoveryResponsePayload payload;
-
-        public DiscoveryResponse ()
-        {
-            header = new Header();
-            header.messageId = "0"; // default
-            payload = new DiscoveryResponsePayload();
-        }
-    }
-
-    [DataContract(Namespace = "Alexa.ConnectedHome.Discovery")]
-    public class DiscoveryResponsePayload
-    {
-        [DataMember(Name = "discoveredAppliances", EmitDefaultValue = false)]
-        public List<Appliance> discoveredAppliances { get; set; }
-
-        [DataMember(Name = "exception", EmitDefaultValue = false)]
-        public ExceptionResponsePayload exception { get; set; }
-    }
-
-    #endregion
-
-    #region Control
-
-    public enum QueryRequestType
-    {
-        Unknown,
-        GetTemperatureReading,
-        GetTargetTemperature,
-        GetSpaceMode,
-        GetHouseStatus,
-        PowerState,
-        DimmerLevel,
-        Color,
-        ColorTemperature,
-        RetrieveCameraStreamUri
-    }
-
-
-    public enum ControlRequestType
-    {
-        Unknown,
-        HealthCheck,
-        TurnOnRequest,
-        TurnOffRequest,
-        SetTargetTemperature,
-        IncrementTargetTemperature,
-        DecrementTargetTemperature,
-        SetPercentage,
-        IncrementPercentage,
-        DecrementPercentage,
-        SetColorRequest,
-        SetColorTemperatureRequest,
-        IncrementColorTemperature,
-        DecrementColorTemperature
-    }
-
-    public enum DeviceType
-    {
-        Unknown,
-        OnOff,
-        Dimmer,
-        Thermostat,
-        ColorLight,
-        Space,
-        Camera,
-        Status
-    }
-
-    public class ApplianceValue
-    {
-        public string value;
-    }
-
-    public class ApplianceIntegerValue
-    {
-        public int value;
-    }
-
-
-    [DataContract(Namespace = "Alexa.ConnectedHome.Control")]
-    public class ControlRequest
-    {
-        [DataMember(Name = "header")]
-        public Header header;
-
-        [DataMember(Name = "payload")]
-        public ApplianceControlRequestPayload payload;
-    }
-
-    [DataContract(Namespace = "Alexa.ConnectedHome.Control")]
-    public class ControlResponse
-    {
-        [DataMember(Name = "header")]
-        public Header header;
-
-        [DataMember(Name = "payload")]
-        public ApplianceControlResponsePayload payload;
-
-        public ControlResponse()
-        {
-            header = new Header();
-            header.messageId = "0"; // default
-            payload = new ApplianceControlResponsePayload();
-        }
-
-    }
-
-    #endregion
-
-    #region Query
-
-    [DataContract(Namespace = "Alexa.ConnectedHome.Query")]
-    public class QueryRequest
-    {
-        [DataMember(Name = "header")]
-        public Header header;
-
-        [DataMember(Name = "payload")]
-        public ApplianceQueryRequestPayload payload;
-    }
-
-    [DataContract(Namespace = "Alexa.ConnectedHome.Query")]
-    public class QueryResponse
-    {
-        [DataMember(Name = "header")]
-        public Header header;
-
-        [DataMember(Name = "payload")]
-        public ApplianceQueryResponsePayload payload;
-
-        public QueryResponse()
-        {
-            header = new Header();
-            header.messageId = "0"; // default
-            payload = new ApplianceQueryResponsePayload();
-        }
-    }
-
 
 
     #endregion
