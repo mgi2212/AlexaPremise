@@ -114,7 +114,16 @@ namespace PremiseAlexaBridgeService
                 {
                     using (HomeObjectLock.Lock())
                     {
-                        _homeObject = _sysClient.Connect(PremiseServerAddress).GetAwaiter().GetResult();
+                        try
+                        {
+                            _homeObject = _sysClient.Connect(PremiseServerAddress)?.GetAwaiter().GetResult();
+                        }
+                        catch (Exception ex)
+                        {
+                            Debug.WriteLine(ex.Message);
+                            _homeObject = null;
+                            return false;
+                        }
                     }
                     using (RootObjectLock.Lock())
                     {
@@ -123,13 +132,17 @@ namespace PremiseAlexaBridgeService
                 }
                 else if (_homeObject != null)
                 {
+                    _sysClient.Disconnect();
+
                     using (homeObjectSubscriptionLock.Lock())
                     {
+                        //_asyncEventSubscription.Unsubscribe();
                         _asyncEventSubscription = null;
                     }
                     using (subscriptionsLock.Lock())
                     {
                         subscriptions.Clear();
+                        _sysClient.Subscriptions.Clear();
                     }
                     using (endpointsLock.Lock())
                     {
@@ -138,7 +151,15 @@ namespace PremiseAlexaBridgeService
                     using (HomeObjectLock.Lock())
                     {
                         _homeObject = null;
-                        _homeObject = _sysClient.Connect(PremiseServerAddress).GetAwaiter().GetResult();
+                        try
+                        {
+                            _homeObject = _sysClient.Connect(PremiseServerAddress).GetAwaiter().GetResult();
+                        }
+                        catch
+                        {
+                            _homeObject = null;
+                            return false;
+                        }
                     }
                     using (RootObjectLock.Lock())
                     {

@@ -13,7 +13,7 @@
         private object AccumulatorLock = new object();
         private byte[] Accumulator = ArrayUtils<byte>.Empty;
         private int AccumulatorLength;
-        private BlockingCollection<byte[]> SendQueue = new BlockingCollection<byte[]>();
+        private BlockingCollection<byte[]> SendQueue; 
 
         private ClientWebSocket WebSocket = null;
 
@@ -39,9 +39,22 @@
 
         protected async void Connect(string uri)
         {
+            if (this.WebSocket != null)
+            {
+                if (this?.WebSocket.State == WebSocketState.Open)
+                {
+                    this.Disconnect();
+                }
+                this.WebSocket = null;
+            }
+
             this.WebSocket = new ClientWebSocket();
             this.WebSocket.Options.KeepAliveInterval = new TimeSpan(0, 0, 10);
-            await this.WebSocket.ConnectAsync(new Uri(uri), CancellationToken.None).ContinueWith(
+
+            SendQueue = null;
+            SendQueue = new BlockingCollection<byte[]>();
+
+            await this.WebSocket.ConnectAsync(new Uri(uri), CancellationToken.None)?.ContinueWith(
                 (task) =>
                 {
                     if (this.WebSocket.State != WebSocketState.Open)
