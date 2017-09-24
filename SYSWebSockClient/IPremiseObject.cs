@@ -47,7 +47,6 @@
         Task<bool> IsOfType(IPremiseObject typeId);
         Task<dynamic> Select(ICollection<string> returnClause, dynamic whereClause);
         Task<IPremiseSubscription> Subscribe(string propertyName, Action<dynamic> callback);
-        Task<IPremiseSubscription> UnSubscribeAll();
 
 #if FOO
 		Task SetFlags();

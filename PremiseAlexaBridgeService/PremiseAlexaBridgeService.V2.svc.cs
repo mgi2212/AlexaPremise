@@ -45,16 +45,12 @@ namespace PremiseAlexaBridgeService
             response.header.@namespace = "System";
             response.payload = new SystemResponsePayload();
 
-            IPremiseObject homeObject;
+            //IPremiseObject PremiseServer.HomeObject;
 
-            SYSClient client = new SYSClient();
+            //SYSClient client = new SYSClient();
 
-            try
-            {
-                homeObject = PremiseServer.ConnectToServer(client);
-            }
-            catch (Exception)
-            {
+            if (PremiseServer.HomeObject == null)
+            { 
                 response.header.@namespace = Faults.Namespace;
                 response.header.name = Faults.DependentServiceUnavailableError;
                 response.payload.exception = new ExceptionResponsePayload()
@@ -67,9 +63,9 @@ namespace PremiseAlexaBridgeService
             switch (alexaRequest.header.name)
             {
                 case "HealthCheckRequest":
-                    InformLastContact(homeObject, "System:HealthCheckRequest").GetAwaiter().GetResult();
+                    InformLastContact("System:HealthCheckRequest").GetAwaiter().GetResult();
                     response.header.name = "HealthCheckResponse";
-                    response.payload = this.GetHealthCheckResponseV2(homeObject);
+                    response.payload = this.GetHealthCheckResponseV2();
                     break;
 
                 default:
@@ -78,17 +74,16 @@ namespace PremiseAlexaBridgeService
                     response.payload.exception = new ExceptionResponsePayload();
                     break;
             }
-            PremiseServer.DisconnectServer(client);
             return response;
         }
 
-        private SystemResponsePayload GetHealthCheckResponseV2(IPremiseObject homeObject)
+        private SystemResponsePayload GetHealthCheckResponseV2()
         {
             SystemResponsePayload payload = new SystemResponsePayload();
             var returnClause = new string[] { "Health", "HealthDescription" };
             dynamic whereClause = new System.Dynamic.ExpandoObject();
-            payload.isHealthy = homeObject.GetValue<bool>("Health").GetAwaiter().GetResult();
-            payload.description = homeObject.GetValue<string>("HealthDescription").GetAwaiter().GetResult();
+            payload.isHealthy = PremiseServer.HomeObject.GetValue<bool>("Health").GetAwaiter().GetResult();
+            payload.description = PremiseServer.HomeObject.GetValue<string>("HealthDescription").GetAwaiter().GetResult();
             return payload;
         }
 
@@ -105,7 +100,7 @@ namespace PremiseAlexaBridgeService
         public DiscoveryResponse Discovery(DiscoveryRequest alexaRequest)
         {
 
-            IPremiseObject homeObject, rootObject;
+            //IPremiseObject PremiseServer.HomeObject, rootObject;
             var response = new DiscoveryResponse();
 
             #region CheckRequest
@@ -175,17 +170,12 @@ namespace PremiseAlexaBridgeService
                 return response;
             }
 
-            SYSClient client = new SYSClient();
+            //SYSClient client = new SYSClient();
 
             #region ConnectToPremise
 
-            try
-            {
-                homeObject = PremiseServer.ConnectToServer(client);
-                rootObject = homeObject.GetRoot().GetAwaiter().GetResult();
-            }
-            catch (Exception)
-            {
+            if (PremiseServer.HomeObject == null)
+            { 
                 response.header.@namespace = Faults.Namespace;
                 response.header.name = Faults.DependentServiceUnavailableError;
                 response.payload.exception = new ExceptionResponsePayload()
@@ -202,11 +192,10 @@ namespace PremiseAlexaBridgeService
 
                 #region VerifyAccess
 
-                if (!CheckAccessToken(homeObject, alexaRequest.payload.accessToken).GetAwaiter().GetResult())
+                if (!CheckAccessToken(alexaRequest.payload.accessToken).GetAwaiter().GetResult())
                 {
                     response.header.@namespace = Faults.Namespace;
                     response.header.name = Faults.InvalidAccessTokenError;
-                    PremiseServer.DisconnectServer(client);
                     return response;
                 }
 
@@ -214,9 +203,9 @@ namespace PremiseAlexaBridgeService
 
                 #region Perform Discovery
 
-                InformLastContact(homeObject, alexaRequest.header.name).GetAwaiter().GetResult();
+                InformLastContact(alexaRequest.header.name).GetAwaiter().GetResult();
 
-                response.payload.discoveredAppliances = this.GetAppliances(homeObject).GetAwaiter().GetResult();
+                response.payload.discoveredAppliances = this.GetAppliances().GetAwaiter().GetResult();
                 response.payload.discoveredAppliances.Sort(Appliance.CompareByFriendlyName);
 
                 #endregion
@@ -230,11 +219,10 @@ namespace PremiseAlexaBridgeService
                 response.payload.exception.errorInfo.description = ex.Message.ToString();
             }
 
-            PremiseServer.DisconnectServer(client);
             return response;
         }
 
-        private async Task<List<Appliance>> GetAppliances(IPremiseObject homeObject)
+        private async Task<List<Appliance>> GetAppliances()
         {
             List<Appliance> appliances = new List<Appliance>();
 
@@ -242,7 +230,7 @@ namespace PremiseAlexaBridgeService
             dynamic whereClause = new System.Dynamic.ExpandoObject();
             whereClause.TypeOf = PremiseServer.AlexaApplianceClassPath;
 
-            var sysAppliances = await homeObject.Select(returnClause, whereClause);
+            var sysAppliances = await PremiseServer.HomeObject.Select(returnClause, whereClause);
             int count = 0;
             int generatedNameCount = 0;
             int generatedDescriptionCount = 0;
@@ -268,7 +256,7 @@ namespace PremiseAlexaBridgeService
               
                 };
 
-                var premiseObject = await homeObject.GetObject(objectId);
+                var premiseObject = await PremiseServer.HomeObject.GetObject(objectId);
 
                 // the FriendlyName is what Alexa tries to match when finding devices, so we need one
                 // if no FriendlyName value then try to invent one and set it so we dont have to do this again!
@@ -447,9 +435,9 @@ namespace PremiseAlexaBridgeService
                     break;
             }
             
-            await homeObject.SetValue("LastRefreshed", DateTime.Now.ToString());
-            await homeObject.SetValue("HealthDescription", string.Format("Reported={0},Names Generated={1}, Descriptions Generated={2}", count, generatedNameCount, generatedDescriptionCount));
-            await homeObject.SetValue("Health", "True");
+            await PremiseServer.HomeObject.SetValue("LastRefreshed", DateTime.Now.ToString());
+            await PremiseServer.HomeObject.SetValue("HealthDescription", string.Format("Reported={0},Names Generated={1}, Descriptions Generated={2}", count, generatedNameCount, generatedDescriptionCount));
+            await PremiseServer.HomeObject.SetValue("Health", "True");
             return appliances;
         }
 
@@ -473,7 +461,7 @@ namespace PremiseAlexaBridgeService
         public ControlResponse Control(ControlRequest alexaRequest)
         {
 
-            IPremiseObject homeObject, rootObject;
+            //IPremiseObject PremiseServer.HomeObject, rootObject;
             var response = new ControlResponse();
 
             #region CheckRequest
@@ -513,17 +501,12 @@ namespace PremiseAlexaBridgeService
 
             #endregion
 
-            SYSClient client = new SYSClient();
+            //SYSClient client = new SYSClient();
 
             #region ConnectToPremise
 
-            try
-            {
-                homeObject = PremiseServer.ConnectToServer(client);
-                rootObject = homeObject.GetRoot().GetAwaiter().GetResult();
-            }
-            catch (Exception)
-            {
+            if (PremiseServer.HomeObject == null)
+            { 
                 response.header.@namespace = Faults.Namespace;
                 response.header.name = Faults.DependentServiceUnavailableError;
                 response.payload.exception = new ExceptionResponsePayload()
@@ -537,16 +520,15 @@ namespace PremiseAlexaBridgeService
 
             try
             {
-                if (!CheckAccessToken(homeObject, alexaRequest.payload.accessToken).GetAwaiter().GetResult())
+                if (!CheckAccessToken(alexaRequest.payload.accessToken).GetAwaiter().GetResult())
                 {
                     response.header.@namespace = Faults.Namespace;
                     response.header.name = Faults.InvalidAccessTokenError;
                     response.payload.exception = new ExceptionResponsePayload();
-                    PremiseServer.DisconnectServer(client);
                     return response;
                 }
 
-                InformLastContact(homeObject, "ControlRequest:" + alexaRequest.payload.appliance.additionalApplianceDetails.path).GetAwaiter().GetResult();
+                InformLastContact("ControlRequest:" + alexaRequest.payload.appliance.additionalApplianceDetails.path).GetAwaiter().GetResult();
 
                 // check request types
                 ControlRequestType requestType = ControlRequestType.Unknown;
@@ -608,7 +590,6 @@ namespace PremiseAlexaBridgeService
                         response.header.@namespace = Faults.Namespace;
                         response.header.name = Faults.UnsupportedOperationError;
                         response.payload.exception = new ExceptionResponsePayload();
-                        PremiseServer.DisconnectServer(client);
                         return response;
                 }
 
@@ -617,7 +598,7 @@ namespace PremiseAlexaBridgeService
                 try
                 {
                     Guid premiseId = new Guid(alexaRequest.payload.appliance.applianceId);
-                    applianceToControl = rootObject.GetObject(premiseId.ToString("B")).GetAwaiter().GetResult();
+                    applianceToControl = PremiseServer.RootObject.GetObject(premiseId.ToString("B")).GetAwaiter().GetResult();
                     if (applianceToControl == null)
                     {
                         throw new Exception();
@@ -628,7 +609,6 @@ namespace PremiseAlexaBridgeService
                     response.header.@namespace = Faults.Namespace;
                     response.header.name = Faults.NoSuchTargetError;
                     response.payload.exception = new ExceptionResponsePayload();
-                    PremiseServer.DisconnectServer(client);
                     return response;
                 }
 
@@ -817,7 +797,6 @@ namespace PremiseAlexaBridgeService
                 response.payload.exception = new ExceptionResponsePayload();
             }
 
-            PremiseServer.DisconnectServer(client);
             return response;
         }
 
@@ -834,7 +813,7 @@ namespace PremiseAlexaBridgeService
         public QueryResponse Query(QueryRequest alexaRequest)
         {
             var response = new QueryResponse();
-            IPremiseObject homeObject, rootObject;
+            //IPremiseObject PremiseServer.HomeObject, rootObject;
 
             #region CheckRequest
 
@@ -871,16 +850,11 @@ namespace PremiseAlexaBridgeService
 
             #endregion
 
-            SYSClient client = new SYSClient();
+            //SYSClient client = new SYSClient();
 
             #region ConnectToPremise
 
-            try
-            {
-                homeObject = PremiseServer.ConnectToServer(client);
-                rootObject = homeObject.GetRoot().GetAwaiter().GetResult();
-            }
-            catch (Exception)
+            if (PremiseServer.HomeObject == null)
             {
                 response.header.@namespace = Faults.QueryNamespace;
                 response.header.name = Faults.DependentServiceUnavailableError;
@@ -897,12 +871,11 @@ namespace PremiseAlexaBridgeService
 
             try
             {
-                if (!CheckAccessToken(homeObject, alexaRequest.payload.accessToken).GetAwaiter().GetResult())
+                if (!CheckAccessToken(alexaRequest.payload.accessToken).GetAwaiter().GetResult())
                 {
                     response.header.@namespace = Faults.QueryNamespace;
                     response.header.name = Faults.InvalidAccessTokenError;
                     response.payload.exception = new ExceptionResponsePayload();
-                    PremiseServer.DisconnectServer(client);
                     return response;
                 }
 
@@ -910,13 +883,13 @@ namespace PremiseAlexaBridgeService
                 switch (command)
                 {
                     case "RETRIEVECAMERASTREAMURIREQUEST":
-                        ProcessDeviceStateQueryRequest(QueryRequestType.RetrieveCameraStreamUri, homeObject, rootObject, alexaRequest, response);
+                        ProcessDeviceStateQueryRequest(QueryRequestType.RetrieveCameraStreamUri, alexaRequest, response);
                         break;
                     case "GETTARGETTEMPERATUREREQUEST":
-                        ProcessDeviceStateQueryRequest(QueryRequestType.GetTargetTemperature, homeObject, rootObject, alexaRequest, response);
+                        ProcessDeviceStateQueryRequest(QueryRequestType.GetTargetTemperature, alexaRequest, response);
                         break;
                     case "GETTEMPERATUREREADINGREQUEST":
-                        ProcessDeviceStateQueryRequest(QueryRequestType.GetTemperatureReading, homeObject, rootObject, alexaRequest, response);
+                        ProcessDeviceStateQueryRequest(QueryRequestType.GetTemperatureReading, alexaRequest, response);
                         break;
                     default:
                         response.header.@namespace = Faults.QueryNamespace;
@@ -936,25 +909,24 @@ namespace PremiseAlexaBridgeService
                 response.payload.exception.errorInfo.description = e.Message;
             }
 
-            PremiseServer.DisconnectServer(client);
             return response;
             #endregion
         }
 
         #region Process Device State Query
 
-        private void ProcessDeviceStateQueryRequest(QueryRequestType requestType, IPremiseObject homeObject, IPremiseObject rootObject, QueryRequest alexaRequest, QueryResponse response)
+        private void ProcessDeviceStateQueryRequest(QueryRequestType requestType, QueryRequest alexaRequest, QueryResponse response)
         {
 
             IPremiseObject applianceToQuery;
 
-            InformLastContact(homeObject, "QueryRequest:" + alexaRequest.payload.appliance.additionalApplianceDetails.path).GetAwaiter().GetResult();
+            InformLastContact("QueryRequest:" + alexaRequest.payload.appliance.additionalApplianceDetails.path).GetAwaiter().GetResult();
 
             try
             {
                 // Find the object
                 Guid premiseId = new Guid(alexaRequest.payload.appliance.applianceId);
-                applianceToQuery = rootObject.GetObject(premiseId.ToString("B")).GetAwaiter().GetResult();
+                applianceToQuery = PremiseServer.RootObject.GetObject(premiseId.ToString("B")).GetAwaiter().GetResult();
                 if (applianceToQuery == null)
                 {
                     throw new Exception();

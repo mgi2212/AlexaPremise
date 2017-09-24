@@ -22,7 +22,7 @@ namespace PremiseAlexaBridgeService
         public CustomResponse ProcessRequest(CustomRequest alexaRequest)
         {
             var response = new CustomResponse();
-            IPremiseObject homeObject, rootObject;
+            //IPremiseObject PremiseServer.HomeObject, rootObject;
 
             #region CheckRequest
 
@@ -59,17 +59,12 @@ namespace PremiseAlexaBridgeService
 
             #endregion
 
-            SYSClient client = new SYSClient();
+            //SYSClient client = new SYSClient();
 
             #region ConnectToPremise
 
-            try
-            {
-                homeObject = PremiseServer.ConnectToServer(client);
-                rootObject = homeObject.GetRoot().GetAwaiter().GetResult();
-            }
-            catch (Exception)
-            {
+            if (PremiseServer.HomeObject == null)
+            { 
                 response.header.@namespace = Faults.QueryNamespace;
                 response.header.name = Faults.DependentServiceUnavailableError;
                 response.payload.exception = new ExceptionResponsePayload()
@@ -85,12 +80,11 @@ namespace PremiseAlexaBridgeService
 
             try
             {
-                if (!CheckAccessToken(homeObject, alexaRequest.payload.accessToken).GetAwaiter().GetResult())
+                if (!CheckAccessToken(alexaRequest.payload.accessToken).GetAwaiter().GetResult())
                 {
                     response.header.@namespace = Faults.QueryNamespace;
                     response.header.name = Faults.InvalidAccessTokenError;
                     response.payload.exception = new ExceptionResponsePayload();
-                    PremiseServer.DisconnectServer(client);
                     return response;
                 }
 
@@ -99,13 +93,13 @@ namespace PremiseAlexaBridgeService
                 {
                     //case "GETHOUSESTATUS":
                     case "ROOMASSIGNMENTREQUEST":
-                        ProcessRoomAssignmentRequest(homeObject, rootObject, alexaRequest, response);
+                        ProcessRoomAssignmentRequest(alexaRequest, response);
                         break;
                     case "ROOMCOMMANDREQUEST":
-                        ProcessRoomCommandRequest(homeObject, rootObject, alexaRequest, response);
+                        ProcessRoomCommandRequest(alexaRequest, response);
                         break;
                     case "GETSPACEMODEREQUEST":
-                        ProcessGetSpaceModeRequest(homeObject, rootObject, alexaRequest, response);
+                        ProcessGetSpaceModeRequest(alexaRequest, response);
                         break;
                     default:
                         response.header.@namespace = Faults.QueryNamespace;
@@ -125,14 +119,13 @@ namespace PremiseAlexaBridgeService
                 response.payload.exception.errorInfo.description = e.Message;
             }
 
-            PremiseServer.DisconnectServer(client);
             return response;
             #endregion
         }
 
         #region Process Room Assignment Request
 
-        private void ProcessRoomAssignmentRequest(IPremiseObject homeObject, IPremiseObject rootObject, CustomRequest alexaRequest, CustomResponse response)
+        private void ProcessRoomAssignmentRequest(CustomRequest alexaRequest, CustomResponse response)
         {
             string toMatch = alexaRequest.payload.space.name;
             string deviceId = alexaRequest.payload.space.deviceId;
@@ -143,7 +136,7 @@ namespace PremiseAlexaBridgeService
             var returnClause = new string[] { "Name", "DisplayName", "Description", "OID" };
             dynamic whereClause = new System.Dynamic.ExpandoObject();
             whereClause.TypeOf = PremiseServer.AlexaLocationClassPath; ;
-            var availableLocations = homeObject.Select(returnClause, whereClause).GetAwaiter().GetResult();
+            var availableLocations = PremiseServer.HomeObject.Select(returnClause, whereClause).GetAwaiter().GetResult();
 
             response.payload.spacesStatus = new SpacesOperationStatus();
 
@@ -156,7 +149,7 @@ namespace PremiseAlexaBridgeService
 
                 var objectId = (string)space.OID;
 
-                var premiseObject = homeObject.GetObject(objectId).GetAwaiter().GetResult();
+                var premiseObject = PremiseServer.HomeObject.GetObject(objectId).GetAwaiter().GetResult();
 
                 returnClause = new string[] { "Name", "DisplayName", "Description", "DeviceID", "OID" };
                 whereClause = new System.Dynamic.ExpandoObject();
@@ -169,21 +162,21 @@ namespace PremiseAlexaBridgeService
                         if (isAddOperation(spaceOperation))
                         {
                             response.payload.spacesStatus.friendlyResponse = "ALREADY EXISTS";
-                            InformLastContact(homeObject, "Endpoint Assignment Request (already exists)").GetAwaiter().GetResult();
+                            InformLastContact("Endpoint Assignment Request (already exists)").GetAwaiter().GetResult();
                             return;
                         }
                         if (isRemoveOperation(spaceOperation))
                         {
                             premiseObject.DeleteChildObject(endpoint.OID.ToString("B")).GetAwaiter().GetResult();
                             response.payload.spacesStatus.friendlyResponse = spaceOperation + "D";
-                            InformLastContact(homeObject, "Endpoint Removal Request").GetAwaiter().GetResult();
+                            InformLastContact("Endpoint Removal Request").GetAwaiter().GetResult();
                             return;
                         }
                     }
                 }
                 if (isRemoveOperation(spaceOperation))
                 {
-                    InformLastContact(homeObject, "Endpoint Removal Request (Failed - Not Found)").GetAwaiter().GetResult();
+                    InformLastContact("Endpoint Removal Request (Failed - Not Found)").GetAwaiter().GetResult();
                     response.payload.spacesStatus.friendlyResponse = "NOT FOUND";
                     return;
                 }
@@ -193,7 +186,7 @@ namespace PremiseAlexaBridgeService
                     var createdObject = premiseObject.CreateObject(PremiseServer.AlexaEndpointClassPath, spaceName + " AlexaEndpoint").GetAwaiter().GetResult();
                     createdObject.SetValue("DeviceID", deviceId).GetAwaiter().GetResult();
                     response.payload.spacesStatus.friendlyResponse = "CREATED";
-                    InformLastContact(homeObject, "Endpoint Assignment Request").GetAwaiter().GetResult();
+                    InformLastContact("Endpoint Assignment Request").GetAwaiter().GetResult();
                 }
             }
         }
@@ -202,7 +195,7 @@ namespace PremiseAlexaBridgeService
 
         #region Process Room Command Request
 
-        private void ProcessRoomCommandRequest(IPremiseObject homeObject, IPremiseObject rootObject, CustomRequest alexaRequest, CustomResponse response)
+        private void ProcessRoomCommandRequest(CustomRequest alexaRequest, CustomResponse response)
         {
             string toMatch = alexaRequest.payload.space.name;
             string deviceId = alexaRequest.payload.space.deviceId;
@@ -213,7 +206,7 @@ namespace PremiseAlexaBridgeService
             var returnClause = new string[] { "Name", "DisplayName", "Description", "DeviceID", "OID" };
             dynamic whereClause = new System.Dynamic.ExpandoObject();
             whereClause.TypeOf = PremiseServer.AlexaEndpointClassPath; ;
-            var alexaEndpoints = homeObject.Select(returnClause, whereClause).GetAwaiter().GetResult();
+            var alexaEndpoints = PremiseServer.HomeObject.Select(returnClause, whereClause).GetAwaiter().GetResult();
 
             int opCount = 0;
             int assignedSpaces = 0;
@@ -228,7 +221,7 @@ namespace PremiseAlexaBridgeService
 
                 var objectId = (string)endpoint.OID;
 
-                var premiseObject = homeObject.GetObject(objectId).GetAwaiter().GetResult();
+                var premiseObject = PremiseServer.HomeObject.GetObject(objectId).GetAwaiter().GetResult();
 
                 var this_space = premiseObject.GetParent().GetAwaiter().GetResult();
 
@@ -263,7 +256,7 @@ namespace PremiseAlexaBridgeService
             response.payload.spacesStatus.friendlyResponse = (assignedSpaces == 0) ? "FAILED_NO_ASSIGNED SPACES" : "SUCCESS";
             response.payload.spacesStatus.count = opCount.ToString();
             response.payload.spacesStatus.assignedSpacesCount = assignedSpaces.ToString();
-            InformLastContact(homeObject, "Implicit Control Request").GetAwaiter().GetResult();
+            InformLastContact("Implicit Control Request").GetAwaiter().GetResult();
         }
 
 
@@ -271,7 +264,7 @@ namespace PremiseAlexaBridgeService
 
         #region Process Space Mode Request
 
-        private void ProcessGetSpaceModeRequest(IPremiseObject homeObject, IPremiseObject rootObject, CustomRequest alexaRequest, CustomResponse response)
+        private void ProcessGetSpaceModeRequest(CustomRequest alexaRequest, CustomResponse response)
         {
             string toMatch = alexaRequest.payload.space.name;
             if (string.IsNullOrEmpty(toMatch) == false)
@@ -280,7 +273,7 @@ namespace PremiseAlexaBridgeService
                 var returnClause = new string[] { "Name", "DisplayName", "Description", "CurrentScene", "Occupancy", "LastOccupied", "OccupancyCount", "OID", "OPATH", "OTYPENAME", "Type" };
                 dynamic whereClause = new System.Dynamic.ExpandoObject();
                 whereClause.TypeOf = PremiseServer.AlexaLocationClassPath;
-                var sysRooms = homeObject.Select(returnClause, whereClause).GetAwaiter().GetResult();
+                var sysRooms = PremiseServer.HomeObject.Select(returnClause, whereClause).GetAwaiter().GetResult();
 
                 foreach (var room in sysRooms)
                 {
@@ -293,9 +286,9 @@ namespace PremiseAlexaBridgeService
 
                     if ((room_name.Trim().ToLower() == toMatch) || (room_description.Trim().ToLower() == toMatch))
                     {
-                        InformLastContact(homeObject, "Get Space Status (success): " + toMatch).GetAwaiter().GetResult();
+                        InformLastContact("Get Space Status (success): " + toMatch).GetAwaiter().GetResult();
 
-                        IPremiseObject this_room = rootObject.GetObject(room.OID.ToString("B")).GetAwaiter().GetResult();
+                        IPremiseObject this_room = PremiseServer.RootObject.GetObject(room.OID.ToString("B")).GetAwaiter().GetResult();
                         var devices = this_room.GetChildren().GetAwaiter().GetResult();
 
                         var count = 0;
@@ -340,11 +333,11 @@ namespace PremiseAlexaBridgeService
 
             if (string.IsNullOrEmpty(toMatch))
             {
-                InformLastContact(homeObject, "Get Space Status (space name missing in request)").GetAwaiter().GetResult();
+                InformLastContact("Get Space Status (space name missing in request)").GetAwaiter().GetResult();
             }
             else
             {
-                InformLastContact(homeObject, "Get Space Status (no such room): " + alexaRequest.payload.space.name.ToLower()).GetAwaiter().GetResult();
+                InformLastContact("Get Space Status (no such room): " + alexaRequest.payload.space.name.ToLower()).GetAwaiter().GetResult();
             }
             response.header.@namespace = Faults.QueryNamespace;
             response.header.name = Faults.NoSuchTargetError;

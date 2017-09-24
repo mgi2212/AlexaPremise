@@ -53,16 +53,8 @@ namespace PremiseAlexaBridgeService
             response.header.@namespace = "System";
             response.payload = new SystemResponsePayload();
 
-            IPremiseObject homeObject;
-
-            SYSClient client = new SYSClient();
-
-            try
-            {
-                homeObject = PremiseServer.ConnectToServer(client);
-            }
-            catch (Exception)
-            {
+            if (PremiseServer.HomeObject == null)
+            { 
                 response.header.@namespace = Faults.Namespace;
                 response.header.name = Faults.DependentServiceUnavailableError;
                 response.payload.exception = new ExceptionResponsePayload()
@@ -75,9 +67,9 @@ namespace PremiseAlexaBridgeService
             switch (alexaRequest.header.name)
             {
                 case "HealthCheckRequest":
-                    InformLastContact(homeObject, "System:HealthCheckRequest").GetAwaiter().GetResult();
+                    InformLastContact("System:HealthCheckRequest").GetAwaiter().GetResult();
                     response.header.name = "HealthCheckResponse";
-                    response.payload = this.GetHealthCheckResponseV3(homeObject);
+                    response.payload = this.GetHealthCheckResponseV3();
                     break;
 
                 default:
@@ -86,17 +78,16 @@ namespace PremiseAlexaBridgeService
                     response.payload.exception = new ExceptionResponsePayload();
                     break;
             }
-            //PremiseServer.DisconnectServer(client);
             return response;
         }
 
-        private SystemResponsePayload GetHealthCheckResponseV3(IPremiseObject homeObject)
+        private SystemResponsePayload GetHealthCheckResponseV3()
         {
             SystemResponsePayload payload = new SystemResponsePayload();
             var returnClause = new string[] { "Health", "HealthDescription" };
             dynamic whereClause = new System.Dynamic.ExpandoObject();
-            payload.isHealthy = homeObject.GetValue<bool>("Health").GetAwaiter().GetResult();
-            payload.description = homeObject.GetValue<string>("HealthDescription").GetAwaiter().GetResult();
+            payload.isHealthy = PremiseServer.HomeObject.GetValue<bool>("Health").GetAwaiter().GetResult();
+            payload.description = PremiseServer.HomeObject.GetValue<string>("HealthDescription").GetAwaiter().GetResult();
             return payload;
         }
 
@@ -145,14 +136,7 @@ namespace PremiseAlexaBridgeService
 
             #region Connect To Premise Server
 
-            try { 
-                if (PremiseServer.SysRootObject == null)
-                {
-                    // return empty discovery per spec
-                    return response;
-                }
-            }
-            catch (Exception)
+            if (PremiseServer.RootObject == null)
             {
                 // return empty discovery per spec
                 return response;
@@ -170,7 +154,7 @@ namespace PremiseAlexaBridgeService
                     return response;
                 }
 
-                if (!CheckAccessToken(PremiseServer.SysHomeObject, directive.payload.scope.token).GetAwaiter().GetResult())
+                if (!CheckAccessToken(directive.payload.scope.token).GetAwaiter().GetResult())
                 {
                     // return empty discovery per spec (todo: this is not helpful discovering what went wrong and pushes any investigation to 3P logs)
                     return response;
@@ -178,10 +162,10 @@ namespace PremiseAlexaBridgeService
 
                 #region Perform Discovery
 
-                InformLastContact(PremiseServer.SysHomeObject, directive.header.name).GetAwaiter().GetResult();
+                InformLastContact(directive.header.name).GetAwaiter().GetResult();
                 response.@event.payload.endpoints = PremiseServer.GetEndpoints().GetAwaiter().GetResult();
 
-                if (PremiseServer.areAsyncEventsEnabled)
+                if (PremiseServer.IsAsyncEventsEnabled)
                 {
                     Task t = Task.Run(() =>
                     {
@@ -190,18 +174,18 @@ namespace PremiseAlexaBridgeService
                 }
 
 
-                PremiseServer.SysHomeObject.SetValue("LastRefreshed", DateTime.Now.ToString());
+                PremiseServer.HomeObject.SetValue("LastRefreshed", DateTime.Now.ToString());
                 int count = response.@event.payload.endpoints.Count;
 
                 if (count >= PremiseServer.AlexaDeviceLimit)
                 {
-                    PremiseServer.SysHomeObject.SetValue("HealthDescription", string.Format("Alexa device discovery limit reached or exceeded! Reported {0} endpoints.", count)).GetAwaiter().GetResult() ;
+                    PremiseServer.HomeObject.SetValue("HealthDescription", string.Format("Alexa device discovery limit reached or exceeded! Reported {0} endpoints.", count)).GetAwaiter().GetResult() ;
                 }
                 else
                 {
-                    PremiseServer.SysHomeObject.SetValue("HealthDescription", string.Format("Alexa discovery reported {0} endpoints.", count)).GetAwaiter().GetResult();
+                    PremiseServer.HomeObject.SetValue("HealthDescription", string.Format("Alexa discovery reported {0} endpoints.", count)).GetAwaiter().GetResult();
                 }
-                PremiseServer.SysHomeObject.SetValue("Health", "True").GetAwaiter().GetResult();
+                PremiseServer.HomeObject.SetValue("Health", "True").GetAwaiter().GetResult();
 
                 #endregion
 
@@ -266,7 +250,7 @@ namespace PremiseAlexaBridgeService
 
             try
             {
-                if (PremiseServer.SysRootObject == null)
+                if (PremiseServer.RootObject == null)
                 {
                     response.context = null;
                     response.@event.payload = new AlexaErrorResponsePayload(AlexaErrorTypes.ENDPOINT_UNREACHABLE, "Premise Server.");
@@ -295,7 +279,7 @@ namespace PremiseAlexaBridgeService
                     return response;
                 }
 
-                if (!CheckAccessToken(PremiseServer.SysHomeObject, directive.endpoint.scope.token).GetAwaiter().GetResult())
+                if (!CheckAccessToken(directive.endpoint.scope.token).GetAwaiter().GetResult())
                 {
                     response.context = null;
                     response.@event.payload = new AlexaErrorResponsePayload(AlexaErrorTypes.INVALID_AUTHORIZATION_CREDENTIAL, "Not authorized on local premise server.");
@@ -318,7 +302,7 @@ namespace PremiseAlexaBridgeService
             try
             {
                 Guid premiseId = new Guid(directive.endpoint.endpointId);
-                endpoint = PremiseServer.SysRootObject.GetObject(premiseId.ToString("B")).GetAwaiter().GetResult();
+                endpoint = PremiseServer.RootObject.GetObject(premiseId.ToString("B")).GetAwaiter().GetResult();
                 if (endpoint == null)
                 {
                     throw new Exception();
@@ -494,7 +478,7 @@ namespace PremiseAlexaBridgeService
 
             try
             {
-                if (PremiseServer.SysRootObject == null)
+                if (PremiseServer.RootObject == null)
                 {
                     response.context = null;
                     response.@event.payload = new AlexaErrorResponsePayload(AlexaErrorTypes.ENDPOINT_UNREACHABLE, "Premise Server.");
@@ -521,7 +505,7 @@ namespace PremiseAlexaBridgeService
                     return response;
                 }
 
-                if (!CheckAccessToken(PremiseServer.SysHomeObject, directive.endpoint.scope.token).GetAwaiter().GetResult())
+                if (!CheckAccessToken(directive.endpoint.scope.token).GetAwaiter().GetResult())
                 {
                     response.context = null;
                     response.@event.payload = new AlexaErrorResponsePayload(AlexaErrorTypes.INVALID_AUTHORIZATION_CREDENTIAL, "Not authorized on local premise server.");
@@ -544,7 +528,7 @@ namespace PremiseAlexaBridgeService
             try
             {
                 Guid premiseId = new Guid(directive.endpoint.endpointId);
-                endpoint = PremiseServer.SysRootObject.GetObject(premiseId.ToString("B")).GetAwaiter().GetResult();
+                endpoint = PremiseServer.RootObject.GetObject(premiseId.ToString("B")).GetAwaiter().GetResult();
                 if (endpoint == null)
                 {
                     throw new Exception();
@@ -662,7 +646,7 @@ namespace PremiseAlexaBridgeService
 
             try
             {
-                if (!CheckAccessToken(PremiseServer.SysHomeObject, directive.payload.grantee.token).GetAwaiter().GetResult())
+                if (!CheckAccessToken(directive.payload.grantee.token).GetAwaiter().GetResult())
                 {
                     response.@event.payload = new AlexaErrorResponsePayload(AlexaErrorTypes.INVALID_AUTHORIZATION_CREDENTIAL, "Not authorized on local premise server.");
                     return response;
@@ -678,13 +662,13 @@ namespace PremiseAlexaBridgeService
 
             try
             {
-                if (PremiseServer.SysHomeObject == null)
+                if (PremiseServer.HomeObject == null)
                 {
                     response.@event.payload = new AlexaErrorResponsePayload(AlexaErrorTypes.ENDPOINT_UNREACHABLE, "Premise Server.");
                     return response;
                 }
 
-                PremiseServer.SysHomeObject.SetValue("AlexaAsyncAuthorizationCode", directive.payload.grant.code).GetAwaiter().GetResult();
+                PremiseServer.HomeObject.SetValue("AlexaAsyncAuthorizationCode", directive.payload.grant.code).GetAwaiter().GetResult();
             }
             catch (Exception ex)
             {
