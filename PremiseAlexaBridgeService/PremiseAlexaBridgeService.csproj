@@ -180,11 +180,22 @@
   <ItemGroup>
     <Content Include="packages.config" />
     <Content Include="App_Data\Alexa.xdo" />
+    <Content Include="Alexa.AV\readme.md" />
+    <Content Include="Alexa.Cameras\readme.md" />
+    <Content Include="Alexa.Custom\readme.md" />
+    <Content Include="Alexa.HVAC\readme.md" />
+    <Content Include="Alexa.Lighting\readme.md" />
+    <Content Include="Alexa.Power\readme.md" />
+    <Content Include="Alexa.Security\readme.md" />
+    <Content Include="Alexa.V2\readme.md" />
+    <Content Include="Alexa.V3\readme.md" />
+    <Content Include="BaseClasses\readme.md" />
     <None Include="Properties\PublishProfiles\AD2.pubxml" />
     <None Include="Properties\PublishProfiles\cek.pubxml" />
     <None Include="Properties\PublishProfiles\CustomProfile.pubxml" />
     <None Include="Properties\PublishProfiles\Kindel.pubxml" />
     <None Include="Properties\PublishProfiles\PremiseTest.pubxml" />
+    <Content Include="ServerService\readme.md" />
     <None Include="Web.Debug.config">
       <DependentUpon>Web.config</DependentUpon>
     </None>
@@ -199,12 +210,7 @@
       <Name>SYSWebSockClient</Name>
     </ProjectReference>
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Alexa.AV\" />
-    <Folder Include="Alexa.Cameras\" />
-    <Folder Include="Alexa.HVAC\" />
-    <Folder Include="Alexa.Security\" />
-  </ItemGroup>
+  <ItemGroup />
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>
     <VSToolsPath Condition="'$(VSToolsPath)' == ''">$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)</VSToolsPath>
