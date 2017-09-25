@@ -185,8 +185,10 @@ namespace Alexa.SmartHome.V2
 
         public DiscoveryResponse ()
         {
-            header = new Header();
-            header.messageId = "0"; // default
+            header = new Header
+            {
+                messageId = "0" // default
+            };
             payload = new DiscoveryResponsePayload();
         }
     }
@@ -282,8 +284,10 @@ namespace Alexa.SmartHome.V2
 
         public ControlResponse()
         {
-            header = new Header();
-            header.messageId = "0"; // default
+            header = new Header
+            {
+                messageId = "0" // default
+            };
             payload = new ApplianceControlResponsePayload();
         }
 
@@ -314,8 +318,10 @@ namespace Alexa.SmartHome.V2
 
         public QueryResponse()
         {
-            header = new Header();
-            header.messageId = "0"; // default
+            header = new Header
+            {
+                messageId = "0" // default
+            };
             payload = new ApplianceQueryResponsePayload();
         }
     }

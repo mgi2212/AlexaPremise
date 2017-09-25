@@ -10,13 +10,13 @@ namespace Alexa.SmartHome.V3
     public class AlexaDirective
     {
         [DataMember(Name = "header")]
-        public Header header;
+        public Header header { get; set; }
 
         [DataMember(Name = "endpoint")]
-        public DirectiveEndpoint endpoint;
+        public DirectiveEndpoint endpoint { get; set; }
 
         [DataMember(Name = "payload")]
-        public object payload;
+        public object payload { get; set; }
 
         public AlexaDirective()
         {
@@ -149,7 +149,7 @@ namespace Alexa.SmartHome.V3
     public class Properties
     {
         [DataMember(Name = "supported", EmitDefaultValue = false, IsRequired = false, Order = 1)]
-        public List<SupportedProperty> supported;
+        public List<SupportedProperty> supported { get; set; }
         [DataMember(Name = "proactivelyReported", EmitDefaultValue = false, IsRequired = false, Order = 2)]
         public bool proactivelyReported { get; set; }
         [DataMember(Name = "retrievable", EmitDefaultValue = false, IsRequired = false, Order = 3)]
@@ -206,7 +206,7 @@ namespace Alexa.SmartHome.V3
     public class DiscoveryRequest
     {
         [DataMember(Name = "directive")]
-        public DiscoveryDirective directive;
+        public DiscoveryDirective directive { get; set; }
 
         public DiscoveryRequest()
         {
@@ -375,20 +375,20 @@ namespace Alexa.SmartHome.V3
     public class SystemRequest
     {
         [DataMember(Name = "header", Order = 1)]
-        public Header header;
+        public Header header { get; set; }
 
         [DataMember(Name = "payload", EmitDefaultValue = false, Order = 2)]
-        public HealthCheckRequestPayload payload;
+        public HealthCheckRequestPayload payload { get; set; }
     }
 
     [DataContract(Namespace = "Alexa.ConnectedHome.System")]
     public class SystemResponse
     {
         [DataMember(Name = "header")]
-        public Header header;
+        public Header header { get; set; }
 
         [DataMember(Name = "payload", EmitDefaultValue = false, IsRequired = true)]
-        public SystemResponsePayload payload;
+        public SystemResponsePayload payload { get; set; }
 
     }
 
@@ -420,13 +420,7 @@ namespace Alexa.SmartHome.V3
     #endregion
 
     #region Control
-    [DataContract]
-    public class ControlRequest
-    {
-        [DataMember(Name = "directive")]
-        public AlexaDirective directive;
-    }
-
+    
     [DataContract]
     public class ValidRangeInt
     {
@@ -447,6 +441,12 @@ namespace Alexa.SmartHome.V3
         [DataMember(Name = "message")]
         public string message { get; set; }
 
+        public ControlErrorPayload(string errorType, string errorMessage)
+        {
+            @type = errorType;
+            message = errorMessage;
+        }
+
     }
 
     [DataContract]
@@ -455,12 +455,23 @@ namespace Alexa.SmartHome.V3
         [DataMember(Name = "context", Order = 1, EmitDefaultValue = false)]
         public AlexaControlResponseContext context { get; set; }
         [DataMember(Name = "event", Order = 2)]
-        public AlexaEventBody @event;
+        public AlexaEventBody Event { get; set; }
 
-        public ControlResponse(AlexaDirective directive)
+        public ControlResponse()
         {
-            context = new AlexaControlResponseContext(directive);
-            @event = new AlexaEventBody(directive);
+
+        }
+
+        public ControlResponse(object[] args)
+        {
+            context = new AlexaControlResponseContext();
+            Event = new AlexaEventBody(args[0] as Header, args[1] as DirectiveEndpoint);
+        }
+
+        public ControlResponse(Header header, DirectiveEndpoint endpoint)
+        {
+            context = new AlexaControlResponseContext();
+            Event = new AlexaEventBody(header, endpoint);
         }
     }
 
@@ -483,9 +494,9 @@ namespace Alexa.SmartHome.V3
             uncertaintyInMilliseconds = 20;
         }
 
-        public AlexaProperty(AlexaDirective directive)
+        public AlexaProperty(Header header)
         {
-            @namespace = directive.header.@namespace;
+            @namespace = header.@namespace;
             uncertaintyInMilliseconds = 20;
         }
 
@@ -495,9 +506,9 @@ namespace Alexa.SmartHome.V3
     public class AlexaControlResponseContext
     {
         [DataMember(Name = "properties")]
-        public List<AlexaProperty> properties;
+        public List<AlexaProperty> properties { get; set; }
 
-        public AlexaControlResponseContext(AlexaDirective directive)
+        public AlexaControlResponseContext()
         {
             properties = new List<AlexaProperty>();
         }
@@ -511,7 +522,7 @@ namespace Alexa.SmartHome.V3
     }
 
     [DataContract]
-    internal class AlexaErrorResponsePayload : AlexaResponsePayload
+    public class AlexaErrorResponsePayload : AlexaResponsePayload
     {
         [DataMember(Name = "type")]
         public string type { get; set; }
@@ -540,9 +551,11 @@ namespace Alexa.SmartHome.V3
 
         public ResponseEndpoint(DirectiveEndpoint endpoint)
         {
-            scope = new Scope();
-            scope.type = endpoint.scope.type;
-            scope.token = endpoint.scope.token;
+            scope = new Scope
+            {
+                type = endpoint.scope.type,
+                token = endpoint.scope.token
+            };
             endpointId = endpoint.endpointId;
         }
     }
@@ -556,7 +569,7 @@ namespace Alexa.SmartHome.V3
         [DataMember(Name = "endpoint", EmitDefaultValue = false, Order = 2)]
         public ResponseEndpoint endpoint { get; set; }
 
-        [DataMember(Name = "payload", Order = 3)]
+        [DataMember(Name = "payload", EmitDefaultValue = false, Order = 3)]
         public AlexaResponsePayload payload { get; set; }
 
         public AlexaEventBody()
@@ -564,18 +577,18 @@ namespace Alexa.SmartHome.V3
 
         }
 
-        public AlexaEventBody(AlexaDirective directive)
+        public AlexaEventBody(Header header, DirectiveEndpoint directiveEndpoint)
         {
             header = new Header()
             {
                 @namespace = "Alexa",
                 name = "Response",
                 payloadVersion = "3",
-                messageID = directive.header.messageID,
-                correlationToken = directive.header.correlationToken
+                messageID = header.messageID,
+                correlationToken = header.correlationToken
             };
 
-            endpoint = new ResponseEndpoint(directive.endpoint);
+            endpoint = new ResponseEndpoint(directiveEndpoint);
             payload = new AlexaResponsePayload();
         }
     }
@@ -588,21 +601,21 @@ namespace Alexa.SmartHome.V3
     public class ReportStateRequest
     {
         [DataMember(Name = "directive")]
-        public AlexaDirective directive;
+        public AlexaDirective directive { get; set; }
     }
 
     [DataContract]
     public class ReportStateResponse
     {
         [DataMember(Name = "context", EmitDefaultValue = false)]
-        public Context context;
+        public Context context { get; set; }
 
         [DataMember(Name = "event")]
-        public AlexaEventBody @event;
+        public AlexaEventBody @event { get; set; }
 
         public ReportStateResponse(AlexaDirective directive)
         {
-            @event = new AlexaEventBody(directive);
+            @event = new AlexaEventBody(directive.header, directive.endpoint);
             context = new Context();
         }
     }
@@ -611,16 +624,16 @@ namespace Alexa.SmartHome.V3
     public class ChangeReportCause
     {
         [DataMember(Name = "type")]
-        public string type;
+        public string type { get; set; }
     }
 
     [DataContract]
     public class ChangeReportPayload
     {
         [DataMember(Name = "cause")]
-        public ChangeReportCause cause;
+        public ChangeReportCause cause { get; set; }
         [DataMember(Name = "properties")]
-        public List<AlexaProperty> properties;
+        public List<AlexaProperty> properties { get; set; }
 
         public ChangeReportPayload()
         {
@@ -634,11 +647,11 @@ namespace Alexa.SmartHome.V3
     public class AlexaChangeReportEvent
     {
         [DataMember(Name = "header", EmitDefaultValue = false)]
-        public Header header;
+        public Header header { get; set; }
         [DataMember(Name = "endpoint", EmitDefaultValue = false)]
-        public DirectiveEndpoint endpoint;
+        public DirectiveEndpoint endpoint { get; set; }
         [DataMember(Name = "payload", EmitDefaultValue = false)]
-        public ChangeReportPayload payload;
+        public ChangeReportPayload payload { get; set; }
 
         public AlexaChangeReportEvent()
         {
@@ -652,9 +665,9 @@ namespace Alexa.SmartHome.V3
     public class AlexaChangeReport
     {
         [DataMember(Name = "context", EmitDefaultValue = false)]
-        public Context context;
+        public Context context { get; set; }
         [DataMember(Name = "event", EmitDefaultValue = false)]
-        public AlexaChangeReportEvent @event;
+        public AlexaChangeReportEvent @event { get; set; }
 
         public AlexaChangeReport()
         {
@@ -671,46 +684,46 @@ namespace Alexa.SmartHome.V3
     public class AuthorizationGrant
     {
         [DataMember(Name = "type")]
-        public string type;
+        public string type { get; set; }
 
         [DataMember(Name = "code")]
-        public string code;
+        public string code { get; set; }
     }
 
     [DataContract]
     public class AuthorizationGrantee
     {
         [DataMember(Name = "type")]
-        public string type;
+        public string type { get; set; }
 
         [DataMember(Name = "token")]
-        public string token;
+        public string token { get; set; }
     }
 
     [DataContract]
     public class AuthorizationRequestPayload
     {
         [DataMember(Name = "grant")]
-        public AuthorizationGrant grant;
+        public AuthorizationGrant grant { get; set; }
 
         [DataMember(Name = "grantee")]
-        public AuthorizationGrantee grantee;
+        public AuthorizationGrantee grantee { get; set; }
     }
 
     [DataContract]
     public class AuthorizationDirective
     {
         [DataMember(Name = "header")]
-        public Header header;
+        public Header header { get; set; }
         [DataMember(Name = "payload")]
-        public AuthorizationRequestPayload payload;
+        public AuthorizationRequestPayload payload { get; set; }
     }
 
     [DataContract]
     public class AuthorizationRequest
     {
         [DataMember(Name = "directive")]
-        public AuthorizationDirective directive;
+        public AuthorizationDirective directive { get; set; }
     }
 
 
@@ -718,8 +731,7 @@ namespace Alexa.SmartHome.V3
     public class AuthorizationResponse
     {
         [DataMember(Name = "event")]
-        public AlexaEventBody @event;
-
+        public AlexaEventBody @event { get; set; }
 
         public AuthorizationResponse()
         {
@@ -728,12 +740,16 @@ namespace Alexa.SmartHome.V3
 
         public AuthorizationResponse(AuthorizationDirective directive)
         {
-            @event = new AlexaEventBody();
-            @event.header = new Header();
-            @event.header.@namespace = directive.header.@namespace;
-            @event.header.name = "AcceptGrant.Response";
-            @event.header.messageID = directive.header.messageID;
-            @event.payload = new AlexaResponsePayload();
+            @event = new AlexaEventBody
+            {
+                header = new Header
+                {
+                    @namespace = directive.header.@namespace,
+                    name = "AcceptGrant.Response",
+                    messageID = directive.header.messageID
+                },
+                payload = new AlexaResponsePayload()
+            };
         }
     }
 

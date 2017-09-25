@@ -1,7 +1,4 @@
-﻿using System;
-using System.Runtime.Serialization;
-using System.Collections.Generic;
-using SYSWebSockClient;
+﻿using System.Runtime.Serialization;
 
 namespace Alexa.SmartHome.V3
 {

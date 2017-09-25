@@ -104,9 +104,13 @@ namespace PremiseAlexaBridgeService
                     default:
                         response.header.@namespace = Faults.QueryNamespace;
                         response.header.name = Faults.UnsupportedOperationError;
-                        response.payload.exception = new ExceptionResponsePayload();
-                        response.payload.exception.errorInfo = new ErrorInfo();
-                        response.payload.exception.errorInfo.description = "Unsupported Query Request Type";
+                        response.payload.exception = new ExceptionResponsePayload
+                        {
+                            errorInfo = new ErrorInfo
+                            {
+                                description = "Unsupported Query Request Type"
+                            }
+                        };
                         break;
                 }
             }
@@ -114,9 +118,13 @@ namespace PremiseAlexaBridgeService
             {
                 response.header.@namespace = Faults.QueryNamespace;
                 response.header.name = Faults.DriverInternalError;
-                response.payload.exception = new ExceptionResponsePayload();
-                response.payload.exception.errorInfo = new ErrorInfo();
-                response.payload.exception.errorInfo.description = e.Message;
+                response.payload.exception = new ExceptionResponsePayload
+                {
+                    errorInfo = new ErrorInfo
+                    {
+                        description = e.Message
+                    }
+                };
             }
 
             return response;
@@ -251,11 +259,12 @@ namespace PremiseAlexaBridgeService
                 }
             }
 
-            response.payload.spacesStatus = new SpacesOperationStatus();
-
-            response.payload.spacesStatus.friendlyResponse = (assignedSpaces == 0) ? "FAILED_NO_ASSIGNED SPACES" : "SUCCESS";
-            response.payload.spacesStatus.count = opCount.ToString();
-            response.payload.spacesStatus.assignedSpacesCount = assignedSpaces.ToString();
+            response.payload.spacesStatus = new SpacesOperationStatus
+            {
+                friendlyResponse = (assignedSpaces == 0) ? "FAILED_NO_ASSIGNED SPACES" : "SUCCESS",
+                count = opCount.ToString(),
+                assignedSpacesCount = assignedSpaces.ToString()
+            };
             InformLastContact("Implicit Control Request").GetAwaiter().GetResult();
         }
 
@@ -315,12 +324,14 @@ namespace PremiseAlexaBridgeService
                         //ICollection<IPremiseObject> i = this_room.GetAggregatedProperties().GetAwaiter().GetResult();
                         //response.payload.applianceRoomStatus.lastOccupied = room.lastOccupied.ToString();
 
-                        response.payload.applianceRoomStatus = new RoomStatus();
-                        response.payload.applianceRoomStatus.friendlyName = toMatch;
-                        response.payload.applianceRoomStatus.occupied = room.Occupancy;
-                        response.payload.applianceRoomStatus.occupancyCount = room.OccupancyCount;
-                        response.payload.applianceRoomStatus.currentScene = room.CurrentScene;
-                        response.payload.applianceRoomStatus.deviceCount = count.ToString();
+                        response.payload.applianceRoomStatus = new RoomStatus
+                        {
+                            friendlyName = toMatch,
+                            occupied = room.Occupancy,
+                            occupancyCount = room.OccupancyCount,
+                            currentScene = room.CurrentScene,
+                            deviceCount = count.ToString()
+                        };
                         if (temperature != null)
                         {
                             response.payload.applianceRoomStatus.currentTemperature = double.Parse(string.Format("{0:N2}", temperature.Fahrenheit)).ToString();

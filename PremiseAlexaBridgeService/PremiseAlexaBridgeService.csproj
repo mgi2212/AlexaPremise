@@ -143,42 +143,59 @@
     <Content Include="App_Data\Micro Service for DB Lambda.js" />
     <Content Include="App_Data\Custom Skill Lambda.js" />
     <Content Include="App_Data\Smart Home Lambda.js" />
-    <Content Include="PremiseAlexaBridgeService.Custom.svc" />
-    <Content Include="PremiseAlexaBridgeService.svc" />
-    <Content Include="PremiseAlexaBridgeService.V3.svc" />
-    <Content Include="PremiseAlexaBridgeService.V2.svc" />
+    <Content Include="Alexa.Custom\PremiseAlexaBridgeService.Custom.svc" />
+    <Content Include="BaseClasses\PremiseAlexaBridgeService.svc" />
+    <Content Include="Alexa.V3\PremiseAlexaBridgeService.V3.svc" />
+    <Content Include="Alexa.V2\PremiseAlexaBridgeService.V2.svc" />
     <Content Include="Web.config" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Alexa.SmartHome.V3.cs" />
-    <Compile Include="Alexa.SmartHome.V2.cs" />
-    <Compile Include="Alexa.Premise.Custom.cs" />
-    <Compile Include="Alexa.ConnectedHome.V3.cs" />
-    <Compile Include="Alexa.ConnectedHome.V2.cs" />
-    <Compile Include="PremiseAlexaBridgeService.Custom.svc.cs">
+    <Compile Include="BaseClasses\Alexa.BlockingQueue.cs" />
+    <Compile Include="Alexa.Lighting\Alexa.AdjustBrightnessController.cs" />
+    <Compile Include="Alexa.Lighting\Alexa.SetBrightnessController.cs" />
+    <Compile Include="BaseClasses\Alexa.ControllerBase.cs" />
+    <Compile Include="Alexa.Power\Alexa.SetPowerStateController.cs" />
+    <Compile Include="Alexa.V3\Alexa.SmartHome.V3.cs" />
+    <Compile Include="Alexa.V2\Alexa.SmartHome.V2.cs" />
+    <Compile Include="Alexa.Custom\Alexa.Premise.Custom.cs" />
+    <Compile Include="Alexa.V3\Alexa.ConnectedHome.V3.cs" />
+    <Compile Include="Alexa.V2\Alexa.ConnectedHome.V2.cs" />
+    <Compile Include="BaseClasses\IAlexaController.cs" />
+    <Compile Include="Alexa.Custom\PremiseAlexaBridgeService.Custom.svc.cs">
       <DependentUpon>PremiseAlexaBridgeService.Custom.svc</DependentUpon>
     </Compile>
-    <Compile Include="PremiseAlexaBridgeService.svc.cs">
+    <Compile Include="BaseClasses\PremiseAlexaBridgeService.svc.cs">
       <DependentUpon>PremiseAlexaBridgeService.svc</DependentUpon>
     </Compile>
-    <Compile Include="PremiseAlexaBridgeService.V3.svc.cs">
+    <Compile Include="Alexa.V3\PremiseAlexaBridgeService.V3.svc.cs">
       <DependentUpon>PremiseAlexaBridgeService.V3.svc</DependentUpon>
     </Compile>
-    <Compile Include="PremiseAlexaBridgeService.V2.svc.cs">
+    <Compile Include="Alexa.V2\PremiseAlexaBridgeService.V2.svc.cs">
       <DependentUpon>PremiseAlexaBridgeService.V2.svc</DependentUpon>
     </Compile>
-    <Compile Include="PremiseServer.cs" />
+    <Compile Include="ServerService\PremiseServerSingleton.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="UtilityClasses.cs" />
+    <Compile Include="BaseClasses\UtilityClasses.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="packages.config" />
     <Content Include="App_Data\Alexa.xdo" />
+    <Content Include="Alexa.AV\readme.md" />
+    <Content Include="Alexa.Cameras\readme.md" />
+    <Content Include="Alexa.Custom\readme.md" />
+    <Content Include="Alexa.HVAC\readme.md" />
+    <Content Include="Alexa.Lighting\readme.md" />
+    <Content Include="Alexa.Power\readme.md" />
+    <Content Include="Alexa.Security\readme.md" />
+    <Content Include="Alexa.V2\readme.md" />
+    <Content Include="Alexa.V3\readme.md" />
+    <Content Include="BaseClasses\readme.md" />
     <None Include="Properties\PublishProfiles\AD2.pubxml" />
     <None Include="Properties\PublishProfiles\cek.pubxml" />
     <None Include="Properties\PublishProfiles\CustomProfile.pubxml" />
     <None Include="Properties\PublishProfiles\Kindel.pubxml" />
     <None Include="Properties\PublishProfiles\PremiseTest.pubxml" />
+    <Content Include="ServerService\readme.md" />
     <None Include="Web.Debug.config">
       <DependentUpon>Web.config</DependentUpon>
     </None>
@@ -193,6 +210,7 @@
       <Name>SYSWebSockClient</Name>
     </ProjectReference>
   </ItemGroup>
+  <ItemGroup />
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>
     <VSToolsPath Condition="'$(VSToolsPath)' == ''">$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)</VSToolsPath>
