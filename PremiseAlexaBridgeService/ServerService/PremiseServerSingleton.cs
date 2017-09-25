@@ -137,7 +137,6 @@ namespace PremiseAlexaBridgeService
 
                     using (homeObjectSubscriptionLock.Lock())
                     {
-                        //_asyncEventSubscription.Unsubscribe();
                         _asyncEventSubscription = null;
                     }
                     using (subscriptionsLock.Lock())
@@ -470,7 +469,7 @@ namespace PremiseAlexaBridgeService
 
         private void SendStateChangeReportsToAlexa()
         {
-            //blocks in the enumerator
+            //blocks in the enumerator so this is an infinate loop. 
             foreach (StateChangeReportWrapper item in stateReportQueue)
             {
                 if (item.Sent == true)

@@ -88,7 +88,7 @@ namespace Alexa.Controller
             set
             {
                 Type t = response.GetType();
-                PropertyInfo prop = t.GetProperty("event");
+                PropertyInfo prop = t.GetProperty("Event");
                 prop.SetValue(response, value);
             }
         }

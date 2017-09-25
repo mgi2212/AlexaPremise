@@ -8,27 +8,7 @@ using SYSWebSockClient;
 
 namespace Alexa.Lighting
 {
-    public static class InputExtensions
-    {
-        public static double LimitToRange(
-            this double value, double inclusiveMinimum, double inclusiveMaximum)
-        {
-            if (value < inclusiveMinimum) { return inclusiveMinimum; }
-            if (value > inclusiveMaximum) { return inclusiveMaximum; }
-            return value;
-        }
-
-        public static int LimitToRange(
-            this int value, int inclusiveMinimum, int inclusiveMaximum)
-        {
-            if (value < inclusiveMinimum) { return inclusiveMinimum; }
-            if (value > inclusiveMaximum) { return inclusiveMaximum; }
-            return value;
-        }
-
-    }
-
-    #region Adjust Brightness
+    #region Adjust Brightness Data Contracts
 
     public class AlexaAdjustBrightnessControllerRequest
     {
@@ -65,7 +45,7 @@ namespace Alexa.Lighting
 
     #endregion 
 
-     public class AlexaAdjustBrightnessController : AlexaControllerBase<AlexaAdjustBrightnessPayload, ControlResponse>, IAlexaController 
+    public class AlexaAdjustBrightnessController : AlexaControllerBase<AlexaAdjustBrightnessPayload, ControlResponse>, IAlexaController 
     {
         public readonly string @namespace = "Alexa.BrightnessController";
         public readonly string[] directiveNames = { "AdjustBrightness" };
@@ -80,7 +60,6 @@ namespace Alexa.Lighting
         public AlexaAdjustBrightnessController(IPremiseObject endpoint)
             : base(endpoint)
         {
-
         }
 
         public AlexaProperty GetPropertyState()
@@ -121,7 +100,7 @@ namespace Alexa.Lighting
 
             this.Response.Event.header.name = "Response";
 
-            // grab walk through related and supported controllers and report state
+            // walk through related and supported controllers and report state
             DiscoveryEndpoint discoveryEndpoint = PremiseServer.GetDiscoveryEndpoint(endpoint).GetAwaiter().GetResult();
             if (discoveryEndpoint != null)
             {

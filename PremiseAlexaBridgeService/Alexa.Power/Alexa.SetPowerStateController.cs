@@ -9,6 +9,8 @@ using SYSWebSockClient;
 namespace Alexa.Power
 {
 
+    #region PowerState Data Contracts
+
     [DataContract]
     public class AlexaSetPowerStateControllerRequest
     {
@@ -40,6 +42,8 @@ namespace Alexa.Power
     {
 
     }
+
+    #endregion
 
     public class AlexaSetPowerStateController : AlexaControllerBase<AlexaSetPowerStatePayload, ControlResponse>, IAlexaController
         {
@@ -106,7 +110,7 @@ namespace Alexa.Power
 
             this.Response.Event.header.name = "Response";
 
-            // grab walk through remaining supported controllers and report state
+            // walk through remaining supported controllers and report state
             DiscoveryEndpoint discoveryEndpoint = PremiseServer.GetDiscoveryEndpoint(endpoint).GetAwaiter().GetResult();
             if (discoveryEndpoint != null)
             {
@@ -118,9 +122,11 @@ namespace Alexa.Power
                             break;
 
                         case "Alexa.BrightnessController":
-                            AlexaSetBrightnessController controller = new AlexaSetBrightnessController(endpoint);
-                            AlexaProperty brightness = controller.GetPropertyState();
-                            response.context.properties.Add(brightness);
+                            {
+                                AlexaSetBrightnessController controller = new AlexaSetBrightnessController(endpoint);
+                                AlexaProperty brightness = controller.GetPropertyState();
+                                response.context.properties.Add(brightness);
+                            }
                             break;
 
                         case "Alexa.ColorController":

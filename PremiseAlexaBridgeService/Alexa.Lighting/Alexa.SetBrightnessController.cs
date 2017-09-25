@@ -8,7 +8,7 @@ using SYSWebSockClient;
 
 namespace Alexa.Lighting
 {
-    #region SetBrightness
+    #region SetBrightness Data Contracts
 
     [DataContract]
     public class AlexaSetBrightnessControllerRequest
@@ -46,12 +46,11 @@ namespace Alexa.Lighting
 
     #endregion
 
-    public class AlexaSetBrightnessController : AlexaControllerBase<AlexaSetBrightnessPayload, ControlResponse>, IAlexaController 
+    public class AlexaSetBrightnessController : AlexaControllerBase<AlexaSetBrightnessPayload, ControlResponse>, IAlexaController
     {
-
         public readonly string @namespace = "Alexa.BrightnessController";
         public readonly string[] directiveNames = { "SetBrightness" };
-        public readonly string  premiseProperty = "Brightness";
+        public readonly string premiseProperty = "Brightness";
         public readonly string alexaProperty = "brightness";
 
         public AlexaSetBrightnessController(AlexaSetBrightnessControllerRequest request)
@@ -59,11 +58,9 @@ namespace Alexa.Lighting
         {
         }
 
-
         public AlexaSetBrightnessController(IPremiseObject endpoint)
             : base(endpoint)
         {
-
         }
 
         public AlexaProperty GetPropertyState()
@@ -101,7 +98,7 @@ namespace Alexa.Lighting
 
             this.Response.Event.header.name = "Response";
 
-            // grab walk through related and supported controllers and report state
+            // walk through related and supported controllers and report state
             DiscoveryEndpoint discoveryEndpoint = PremiseServer.GetDiscoveryEndpoint(this.endpoint).GetAwaiter().GetResult();
             if (discoveryEndpoint != null)
             {

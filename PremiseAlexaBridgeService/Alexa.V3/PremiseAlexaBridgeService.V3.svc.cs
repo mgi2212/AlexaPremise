@@ -205,17 +205,6 @@ namespace PremiseAlexaBridgeService
 
             #endregion
 
-            //ServiceInstance.DisconnectServer(client);
-
-            // uncomment below to find serialization errors
-            //MemoryStream ms = new MemoryStream();
-            //DataContractJsonSerializer ser = new DataContractJsonSerializer(typeof(DiscoverResponseEvent));
-            //ser.WriteObject(ms, response);
-            //ms.Position = 0;
-            //StreamReader sr = new StreamReader(ms);
-            //Console.WriteLine("JSON serialized response object");
-            //Console.WriteLine(sr.ReadToEnd());
-
             return response;
         }
 
@@ -232,7 +221,6 @@ namespace PremiseAlexaBridgeService
         [WebInvoke(Method = "POST", RequestFormat = WebMessageFormat.Json, ResponseFormat = WebMessageFormat.Json, BodyStyle = WebMessageBodyStyle.Bare, UriTemplate = "/Control/SetPowerState/")]
         public ControlResponse SetPowerState(AlexaSetPowerStateControllerRequest request)
         {
-            //AlexaSetPowerStatePayload responsePayload = new AlexaSetPowerStatePayload();
             AlexaSetPowerStateController controller = new AlexaSetPowerStateController(request);
             if (controller.ValidateDirective(controller.directiveNames, controller.@namespace))
             {
@@ -249,7 +237,6 @@ namespace PremiseAlexaBridgeService
         [WebInvoke(Method = "POST", RequestFormat = WebMessageFormat.Json, ResponseFormat = WebMessageFormat.Json, BodyStyle = WebMessageBodyStyle.Bare, UriTemplate = "/Control/SetBrightness/")]
         public ControlResponse SetBrightness(AlexaSetBrightnessControllerRequest request)
         {
-            AlexaSetBrightnessPayload responsePayload = new AlexaSetBrightnessPayload();
             AlexaSetBrightnessController controller = new AlexaSetBrightnessController(request);
             if (controller.ValidateDirective(controller.directiveNames, controller.@namespace))
             {
@@ -266,7 +253,6 @@ namespace PremiseAlexaBridgeService
         [WebInvoke(Method = "POST", RequestFormat = WebMessageFormat.Json, ResponseFormat = WebMessageFormat.Json, BodyStyle = WebMessageBodyStyle.Bare, UriTemplate = "/Control/AdjustBrightness/")]
         public ControlResponse AdjustBrightness(AlexaAdjustBrightnessControllerRequest request)
         {
-            AlexaAdjustBrightnessPayload responsePayload = new AlexaAdjustBrightnessPayload();
             AlexaAdjustBrightnessController controller = new AlexaAdjustBrightnessController(request);
             if (controller.ValidateDirective(controller.directiveNames, controller.@namespace))
             {
@@ -274,8 +260,6 @@ namespace PremiseAlexaBridgeService
             }
             return controller.Response;
         }
-
-
 
         #endregion
 
@@ -289,8 +273,6 @@ namespace PremiseAlexaBridgeService
         [WebInvoke(Method = "POST", RequestFormat = WebMessageFormat.Json, ResponseFormat = WebMessageFormat.Json, BodyStyle = WebMessageBodyStyle.Bare, UriTemplate = "/ReportState/")]
         public ReportStateResponse ReportState(ReportStateRequest request)
         {
-
-            //IPremiseObject rootObject;
 
             AlexaDirective directive = request.directive;
 
@@ -306,7 +288,6 @@ namespace PremiseAlexaBridgeService
             }
 
             #endregion
-
 
             #region Connect To Premise Server
 
@@ -431,16 +412,6 @@ namespace PremiseAlexaBridgeService
                 response.@event.payload = new AlexaErrorResponsePayload(AlexaErrorTypes.INTERNAL_ERROR, ex.Message);
                 return response;
             }
-
-
-            // Serialization Check
-            //MemoryStream ms = new MemoryStream();
-            //DataContractJsonSerializer ser = new DataContractJsonSerializer(typeof(DiscoveryEvent));
-            //ser.WriteObject(ms, response);
-            //ms.Position = 0;
-            //StreamReader sr = new StreamReader(ms);
-            //Console.WriteLine("JSON serialized response object");
-            //Console.WriteLine(sr.ReadToEnd());
 
             return response;
         }
