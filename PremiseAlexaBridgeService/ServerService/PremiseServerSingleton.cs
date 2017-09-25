@@ -1,19 +1,20 @@
-﻿using Alexa.SmartHome.V3;
+﻿using Alexa.Lighting;
+using Alexa.Power;
 using Alexa.RegisteredTasks;
-using System;
-using System.Configuration;
-using SYSWebSockClient;
-using System.Diagnostics;
-using System.Net.WebSockets;
-using System.Collections.Generic;
-using System.Threading.Tasks;
+using Alexa.SmartHome.V3;
 using Newtonsoft.Json;
-using System.Threading;
-using System.Collections;
-using System.Net;
-using System.Text;
 using Nito.AsyncEx;
+using System;
+using System.Collections.Generic;
+using System.Configuration;
+using System.Diagnostics;
 using System.IO;
+using System.Net;
+using System.Net.WebSockets;
+using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
+using SYSWebSockClient;
 
 namespace PremiseAlexaBridgeService
 {
@@ -22,7 +23,7 @@ namespace PremiseAlexaBridgeService
         private static readonly PremiseServer instance = new PremiseServer();
         private static readonly SYSClient _sysClient = new SYSClient();
         private static readonly AlexaBlockingQueue<StateChangeReportWrapper> stateReportQueue = new AlexaBlockingQueue<StateChangeReportWrapper>();
-        private static readonly List<IPremiseSubscription> subscriptions = new List<IPremiseSubscription>();
+        private static readonly Dictionary<string, IPremiseSubscription> subscriptions = new Dictionary<string, IPremiseSubscription>();
         private static readonly List<DiscoveryEndpoint> endpoints = new List<DiscoveryEndpoint>();
         private static readonly AsyncLock homeObjectSubscriptionLock = new AsyncLock();
         private static readonly AsyncLock subscriptionsLock = new AsyncLock();
@@ -255,21 +256,24 @@ namespace PremiseAlexaBridgeService
                             Guid premiseId = new Guid(endpoint.endpointId);
                             IPremiseObject sysObject = await RootObject.GetObject(premiseId.ToString("B"));
                             IPremiseSubscription subscription = null;
-
-                            switch (capability.@interface)
+                            if (!subscriptions.ContainsKey(endpoint.endpointId + "." + capability.@interface))
                             {
-                                case "Alexa.BrightnessController":
-                                    subscription = await sysObject.Subscribe("Brightness", new Action<dynamic>(AlexaPropertyChanged));
-                                    break;
-                                case "Alexa.PowerController":
-                                    subscription = await sysObject.Subscribe("PowerState", new Action<dynamic>(AlexaPropertyChanged));
-                                    break;
-                                default:
-                                    break;
+
+                                switch (capability.@interface)
+                                {
+                                    case "Alexa.BrightnessController":
+                                        subscription = await sysObject.Subscribe("Brightness", new Action<dynamic>(AlexaPropertyChanged));
+                                        break;
+                                    case "Alexa.PowerController":
+                                        subscription = await sysObject.Subscribe("PowerState", new Action<dynamic>(AlexaPropertyChanged));
+                                        break;
+                                    default:
+                                        break;
+                                }
                             }
                             if (subscription != null)
                             {
-                                subscriptions.Add(subscription);
+                                subscriptions.Add(endpoint.endpointId + "." + capability.@interface, subscription);
                             }
                         }
                     }
@@ -283,9 +287,9 @@ namespace PremiseAlexaBridgeService
             {
                 if (subscriptions != null)
                 {
-                    foreach (IPremiseSubscription subscription in subscriptions)
+                    foreach (KeyValuePair<string, IPremiseSubscription> subscription in subscriptions)
                     {
-                        await subscription.Unsubscribe();
+                        await subscription.Value.Unsubscribe();
                     }
                     subscriptions.Clear();
                 }
@@ -299,8 +303,8 @@ namespace PremiseAlexaBridgeService
             {
                 // build event notification
                 Guid premiseId = new Guid(sub.sysObjectId);
-                IPremiseObject sysObject = RootObject.GetObject(premiseId.ToString("B")).GetAwaiter().GetResult();
-                DiscoveryEndpoint endpoint = GetDiscoveryEndpoint(sysObject).GetAwaiter().GetResult();
+                IPremiseObject endpont = RootObject.GetObject(premiseId.ToString("B")).GetAwaiter().GetResult();
+                DiscoveryEndpoint disoveryEndpoint = GetDiscoveryEndpoint(endpont).GetAwaiter().GetResult();
                 string authCode = (string) HomeObject.GetValue("AlexaAsyncAuthorizationCode").GetAwaiter().GetResult();
 
                 AlexaChangeReport changeReport = new AlexaChangeReport();
@@ -311,16 +315,22 @@ namespace PremiseAlexaBridgeService
                 changeReport.@event.endpoint.scope.type = "BearerToken";
                 changeReport.@event.endpoint.scope.token = authCode;
                 changeReport.@event.endpoint.endpointId = premiseId.ToString("B");
-                changeReport.@event.endpoint.cookie = endpoint.cookie;
+                changeReport.@event.endpoint.cookie = disoveryEndpoint.cookie;
                 changeReport.@event.payload.cause.type = "PHYSICAL_INTERACTION";
                 AlexaProperty changedProperty = null;
                 switch (sub.propertyName)
                 {
                     case "Brightness":
-                        changedProperty = PremiseAlexaV3Service.GetBrightnessProperty(sysObject);
+                        {
+                            AlexaSetBrightnessController controller = new AlexaSetBrightnessController(endpont);
+                            changedProperty = controller.GetPropertyState();
+                        }
                         break;
                     case "PowerState":
-                        changedProperty = PremiseAlexaV3Service.GetPowerStateProperty(sysObject);
+                        {
+                            AlexaSetPowerStateController controller = new AlexaSetPowerStateController(endpont);
+                            changedProperty = controller.GetPropertyState();
+                        }
                         break;
                     default:
                         break;
@@ -463,8 +473,12 @@ namespace PremiseAlexaBridgeService
             //blocks in the enumerator
             foreach (StateChangeReportWrapper item in stateReportQueue)
             {
+                if (item.Sent == true)
+                    continue;
+
                 try
                 {
+                    item.Sent = true;
                     // post to Alexa
                     WebRequest request = WebRequest.Create(item.uri);
                     request.Method = WebRequestMethods.Http.Post;
@@ -489,6 +503,7 @@ namespace PremiseAlexaBridgeService
     internal class StateChangeReportWrapper
     {
         public string Json { get; set; }
+        public bool Sent{ get; set; }
         public byte[] Bytes
         {
             get
@@ -500,45 +515,9 @@ namespace PremiseAlexaBridgeService
 
         public StateChangeReportWrapper()
         {
+            Sent = false;
             uri = PremiseServer.AlexaEventEndpoint;
         }
     }
 
-    internal class AlexaBlockingQueue<T> : IEnumerable<T>
-    {
-        private int _count = 0;
-        private Queue<T> _queue = new Queue<T>();
-
-        public T Dequeue()
-        {
-            lock (_queue)
-            {
-                while (_count <= 0) Monitor.Wait(_queue);
-                _count--;
-                return _queue.Dequeue();
-            }
-        }
-
-        public void Enqueue(T data)
-        {
-            if (data == null) throw new ArgumentNullException("data");
-
-            lock (_queue)
-            {
-                _queue.Enqueue(data);
-                _count++;
-                Monitor.Pulse(_queue);
-            }
-        }
-
-        IEnumerator<T> IEnumerable<T>.GetEnumerator()
-        {
-            while (true) yield return Dequeue();
-        }
-
-        IEnumerator IEnumerable.GetEnumerator()
-        {
-            return ((IEnumerable<T>)this).GetEnumerator();
-        }
-    }
 }

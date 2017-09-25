@@ -143,33 +143,39 @@
     <Content Include="App_Data\Micro Service for DB Lambda.js" />
     <Content Include="App_Data\Custom Skill Lambda.js" />
     <Content Include="App_Data\Smart Home Lambda.js" />
-    <Content Include="PremiseAlexaBridgeService.Custom.svc" />
-    <Content Include="PremiseAlexaBridgeService.svc" />
-    <Content Include="PremiseAlexaBridgeService.V3.svc" />
-    <Content Include="PremiseAlexaBridgeService.V2.svc" />
+    <Content Include="Alexa.Custom\PremiseAlexaBridgeService.Custom.svc" />
+    <Content Include="BaseClasses\PremiseAlexaBridgeService.svc" />
+    <Content Include="Alexa.V3\PremiseAlexaBridgeService.V3.svc" />
+    <Content Include="Alexa.V2\PremiseAlexaBridgeService.V2.svc" />
     <Content Include="Web.config" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Alexa.SmartHome.V3.cs" />
-    <Compile Include="Alexa.SmartHome.V2.cs" />
-    <Compile Include="Alexa.Premise.Custom.cs" />
-    <Compile Include="Alexa.ConnectedHome.V3.cs" />
-    <Compile Include="Alexa.ConnectedHome.V2.cs" />
-    <Compile Include="PremiseAlexaBridgeService.Custom.svc.cs">
+    <Compile Include="BaseClasses\Alexa.BlockingQueue.cs" />
+    <Compile Include="Alexa.Lighting\Alexa.AdjustBrightnessController.cs" />
+    <Compile Include="Alexa.Lighting\Alexa.SetBrightnessController.cs" />
+    <Compile Include="BaseClasses\Alexa.ControllerBase.cs" />
+    <Compile Include="Alexa.Power\Alexa.SetPowerStateController.cs" />
+    <Compile Include="Alexa.V3\Alexa.SmartHome.V3.cs" />
+    <Compile Include="Alexa.V2\Alexa.SmartHome.V2.cs" />
+    <Compile Include="Alexa.Custom\Alexa.Premise.Custom.cs" />
+    <Compile Include="Alexa.V3\Alexa.ConnectedHome.V3.cs" />
+    <Compile Include="Alexa.V2\Alexa.ConnectedHome.V2.cs" />
+    <Compile Include="BaseClasses\IAlexaController.cs" />
+    <Compile Include="Alexa.Custom\PremiseAlexaBridgeService.Custom.svc.cs">
       <DependentUpon>PremiseAlexaBridgeService.Custom.svc</DependentUpon>
     </Compile>
-    <Compile Include="PremiseAlexaBridgeService.svc.cs">
+    <Compile Include="BaseClasses\PremiseAlexaBridgeService.svc.cs">
       <DependentUpon>PremiseAlexaBridgeService.svc</DependentUpon>
     </Compile>
-    <Compile Include="PremiseAlexaBridgeService.V3.svc.cs">
+    <Compile Include="Alexa.V3\PremiseAlexaBridgeService.V3.svc.cs">
       <DependentUpon>PremiseAlexaBridgeService.V3.svc</DependentUpon>
     </Compile>
-    <Compile Include="PremiseAlexaBridgeService.V2.svc.cs">
+    <Compile Include="Alexa.V2\PremiseAlexaBridgeService.V2.svc.cs">
       <DependentUpon>PremiseAlexaBridgeService.V2.svc</DependentUpon>
     </Compile>
-    <Compile Include="PremiseServer.cs" />
+    <Compile Include="ServerService\PremiseServerSingleton.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="UtilityClasses.cs" />
+    <Compile Include="BaseClasses\UtilityClasses.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="packages.config" />
@@ -192,6 +198,12 @@
       <Project>{4bacf0aa-a338-49f8-aaf4-9128dd79ec4a}</Project>
       <Name>SYSWebSockClient</Name>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Alexa.AV\" />
+    <Folder Include="Alexa.Cameras\" />
+    <Folder Include="Alexa.HVAC\" />
+    <Folder Include="Alexa.Security\" />
   </ItemGroup>
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>

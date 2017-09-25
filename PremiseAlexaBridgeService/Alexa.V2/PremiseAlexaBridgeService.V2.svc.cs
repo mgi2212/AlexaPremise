@@ -40,10 +40,14 @@ namespace PremiseAlexaBridgeService
         [WebInvoke(Method = "POST", RequestFormat = WebMessageFormat.Json, ResponseFormat = WebMessageFormat.Json, BodyStyle = WebMessageBodyStyle.Bare, UriTemplate = "/System/")]
         public SystemResponse System(SystemRequest alexaRequest)
         {
-            var response = new SystemResponse();
-            response.header = new Header();
-            response.header.@namespace = "System";
-            response.payload = new SystemResponsePayload();
+            var response = new SystemResponse
+            {
+                header = new Header
+                {
+                    @namespace = "System"
+                },
+                payload = new SystemResponsePayload()
+            };
 
             //IPremiseObject PremiseServer.HomeObject;
 
@@ -214,9 +218,13 @@ namespace PremiseAlexaBridgeService
             {
                 response.header.@namespace = Faults.Namespace;
                 response.header.name = Faults.DriverInternalError;
-                response.payload.exception = new ExceptionResponsePayload();
-                response.payload.exception.errorInfo = new ErrorInfo();
-                response.payload.exception.errorInfo.description = ex.Message.ToString();
+                response.payload.exception = new ExceptionResponsePayload
+                {
+                    errorInfo = new ErrorInfo
+                    {
+                        description = ex.Message.ToString()
+                    }
+                };
             }
 
             return response;
@@ -680,10 +688,12 @@ namespace PremiseAlexaBridgeService
                             applianceToControl.SetValue("Saturation", saturation.ToString()).GetAwaiter().GetResult();
                             applianceToControl.SetValue("Brightness", brightness.ToString()).GetAwaiter().GetResult();
                             // read them back for achieved state
-                            response.payload.achievedState.color = new ApplianceColorValue();
-                            response.payload.achievedState.color.hue = Math.Round(applianceToControl.GetValue<Double>("Hue").GetAwaiter().GetResult(), 1); 
-                            response.payload.achievedState.color.saturation = Math.Round(applianceToControl.GetValue<Double>("Saturation").GetAwaiter().GetResult(), 4); 
-                            response.payload.achievedState.color.brightness = Math.Round(applianceToControl.GetValue<Double>("Brightness").GetAwaiter().GetResult(), 4); 
+                            response.payload.achievedState.color = new ApplianceColorValue
+                            {
+                                hue = Math.Round(applianceToControl.GetValue<Double>("Hue").GetAwaiter().GetResult(), 1),
+                                saturation = Math.Round(applianceToControl.GetValue<Double>("Saturation").GetAwaiter().GetResult(), 4),
+                                brightness = Math.Round(applianceToControl.GetValue<Double>("Brightness").GetAwaiter().GetResult(), 4)
+                            };
                             break;
 
                         case ControlRequestType.SetColorTemperatureRequest:
@@ -691,8 +701,10 @@ namespace PremiseAlexaBridgeService
                             // set the value
                             applianceToControl.SetValue("Temperature", Math.Round(valueToSend, 0).ToString()).GetAwaiter().GetResult();
                             // read it back
-                            response.payload.achievedState.colorTemperature = new ApplianceColorTemperatureValue();
-                            response.payload.achievedState.colorTemperature.value = applianceToControl.GetValue<int>("Temperature").GetAwaiter().GetResult();
+                            response.payload.achievedState.colorTemperature = new ApplianceColorTemperatureValue
+                            {
+                                value = applianceToControl.GetValue<int>("Temperature").GetAwaiter().GetResult()
+                            };
                             break;
 
                         case ControlRequestType.IncrementColorTemperature:
@@ -701,8 +713,10 @@ namespace PremiseAlexaBridgeService
                             // set the value
                             applianceToControl.SetValue("Temperature", valueToSend.ToString()).GetAwaiter().GetResult();
                             // read it back
-                            response.payload.achievedState.colorTemperature = new ApplianceColorTemperatureValue();
-                            response.payload.achievedState.colorTemperature.value = applianceToControl.GetValue<int>("Temperature").GetAwaiter().GetResult();
+                            response.payload.achievedState.colorTemperature = new ApplianceColorTemperatureValue
+                            {
+                                value = applianceToControl.GetValue<int>("Temperature").GetAwaiter().GetResult()
+                            };
                             break;
 
                         case ControlRequestType.DecrementColorTemperature:
@@ -711,8 +725,10 @@ namespace PremiseAlexaBridgeService
                             // set the value
                             applianceToControl.SetValue("Temperature", valueToSend.ToString()).GetAwaiter().GetResult();
                             // read it back
-                            response.payload.achievedState.colorTemperature = new ApplianceColorTemperatureValue();
-                            response.payload.achievedState.colorTemperature.value = applianceToControl.GetValue<int>("Temperature").GetAwaiter().GetResult();
+                            response.payload.achievedState.colorTemperature = new ApplianceColorTemperatureValue
+                            {
+                                value = applianceToControl.GetValue<int>("Temperature").GetAwaiter().GetResult()
+                            };
                             break;
 
                         default:
@@ -736,23 +752,29 @@ namespace PremiseAlexaBridgeService
                     {
                         case ControlRequestType.SetTargetTemperature:
                             // get target temperature in C
-                            targetTemperature = new Temperature();
-                            targetTemperature.Celcius = double.Parse(alexaRequest.payload.targetTemperature.value);
+                            targetTemperature = new Temperature
+                            {
+                                Celcius = double.Parse(alexaRequest.payload.targetTemperature.value)
+                            };
                             break;
                         case ControlRequestType.IncrementTargetTemperature:
                             // get delta temp in C
                             deltaTemperatureC = double.Parse(alexaRequest.payload.deltaTemperature.value);
                             // increment the targetTemp
-                            targetTemperature = new Temperature();
-                            targetTemperature.Celcius = previousTargetTemperature.Celcius + deltaTemperatureC;
+                            targetTemperature = new Temperature
+                            {
+                                Celcius = previousTargetTemperature.Celcius + deltaTemperatureC
+                            };
                             break;
 
                         case ControlRequestType.DecrementTargetTemperature:
                             // get delta temp in C
                             deltaTemperatureC = double.Parse(alexaRequest.payload.deltaTemperature.value);
                             // decrement the targetTemp
-                            targetTemperature = new Temperature();
-                            targetTemperature.Celcius = previousTargetTemperature.Celcius - deltaTemperatureC;
+                            targetTemperature = new Temperature
+                            {
+                                Celcius = previousTargetTemperature.Celcius - deltaTemperatureC
+                            };
                             break;
 
                         default:
@@ -763,25 +785,35 @@ namespace PremiseAlexaBridgeService
 
                     // set new target temperature
                     applianceToControl.SetValue("CurrentSetPoint", targetTemperature.Kelvin.ToString()).GetAwaiter().GetResult();
-                    response.payload.targetTemperature = new ApplianceValue();
-                    response.payload.targetTemperature.value = targetTemperature.Celcius.ToString();
+                    response.payload.targetTemperature = new ApplianceValue
+                    {
+                        value = targetTemperature.Celcius.ToString()
+                    };
 
                     // get new mode 
                     temperatureMode = applianceToControl.GetValue<int>("TemperatureMode").GetAwaiter().GetResult();
                     // report new mode
-                    response.payload.temperatureMode = new ApplianceValue();
-                    response.payload.temperatureMode.value = TemperatureMode.ModeToString(temperatureMode);
+                    response.payload.temperatureMode = new ApplianceValue
+                    {
+                        value = TemperatureMode.ModeToString(temperatureMode)
+                    };
 
                     // alloc a previousState object
-                    response.payload.previousState = new AppliancePreviousState();
+                    response.payload.previousState = new AppliancePreviousState
+                    {
 
-                    // report previous mode
-                    response.payload.previousState.mode = new ApplianceValue();
-                    response.payload.previousState.mode.value = TemperatureMode.ModeToString(previousTemperatureMode);
+                        // report previous mode
+                        mode = new ApplianceValue
+                        {
+                            value = TemperatureMode.ModeToString(previousTemperatureMode)
+                        },
 
-                    // report previous targetTemperature in C
-                    response.payload.previousState.targetTemperature = new ApplianceValue();
-                    response.payload.previousState.targetTemperature.value = previousTargetTemperature.Celcius.ToString();
+                        // report previous targetTemperature in C
+                        targetTemperature = new ApplianceValue
+                        {
+                            value = previousTargetTemperature.Celcius.ToString()
+                        }
+                    };
                 }
                 else
                 {
@@ -894,9 +926,13 @@ namespace PremiseAlexaBridgeService
                     default:
                         response.header.@namespace = Faults.QueryNamespace;
                         response.header.name = Faults.UnsupportedOperationError;
-                        response.payload.exception = new ExceptionResponsePayload();
-                        response.payload.exception.errorInfo = new ErrorInfo();
-                        response.payload.exception.errorInfo.description = "Unsupported Query Request Type";
+                        response.payload.exception = new ExceptionResponsePayload
+                        {
+                            errorInfo = new ErrorInfo
+                            {
+                                description = "Unsupported Query Request Type"
+                            }
+                        };
                         break;
                 }
             }
@@ -904,9 +940,13 @@ namespace PremiseAlexaBridgeService
             {
                 response.header.@namespace = Faults.QueryNamespace;
                 response.header.name = Faults.DriverInternalError;
-                response.payload.exception = new ExceptionResponsePayload();
-                response.payload.exception.errorInfo = new ErrorInfo();
-                response.payload.exception.errorInfo.description = e.Message;
+                response.payload.exception = new ExceptionResponsePayload
+                {
+                    errorInfo = new ErrorInfo
+                    {
+                        description = e.Message
+                    }
+                };
             }
 
             return response;
@@ -961,29 +1001,41 @@ namespace PremiseAlexaBridgeService
                         Temperature coolingSetPoint = new Temperature(applianceToQuery.GetValue<double>("CoolingSetPoint").GetAwaiter().GetResult());
                         Temperature heatingSetPoint = new Temperature(applianceToQuery.GetValue<double>("HeatingSetPoint").GetAwaiter().GetResult());
                         int temperatureMode = applianceToQuery.GetValue<int>("TemperatureMode").GetAwaiter().GetResult();
-                        response.payload.temperatureMode = new ApplianceTemperatureMode();
-                        response.payload.temperatureMode.value = TemperatureMode.ModeToString(temperatureMode);
-                        response.payload.heatingTargetTemperature = new ApplianceTemperatureReading();
-                        response.payload.heatingTargetTemperature.value = double.Parse(string.Format("{0:N2}", heatingSetPoint.Celcius));
-                        response.payload.heatingTargetTemperature.scale = "CELSIUS";
-                        response.payload.coolingTargetTemperature = new ApplianceTemperatureReading();
-                        response.payload.coolingTargetTemperature.value = double.Parse(string.Format("{0:N2}", coolingSetPoint.Celcius));
-                        response.payload.coolingTargetTemperature.scale = "CELSIUS";
+                        response.payload.temperatureMode = new ApplianceTemperatureMode
+                        {
+                            value = TemperatureMode.ModeToString(temperatureMode)
+                        };
+                        response.payload.heatingTargetTemperature = new ApplianceTemperatureReading
+                        {
+                            value = double.Parse(string.Format("{0:N2}", heatingSetPoint.Celcius)),
+                            scale = "CELSIUS"
+                        };
+                        response.payload.coolingTargetTemperature = new ApplianceTemperatureReading
+                        {
+                            value = double.Parse(string.Format("{0:N2}", coolingSetPoint.Celcius)),
+                            scale = "CELSIUS"
+                        };
                         //response.payload.applianceResponseTimestamp = DateTime.UtcNow.ToUniversalTime().ToString("yyyy-MM-dd'T'HH:mm:ss.ffZ");// XmlConvert.ToString(DateTime.UtcNow.ToUniversalTime(), XmlDateTimeSerializationMode.Utc);
                         break;
                     case QueryRequestType.GetTemperatureReading:
                         Temperature temperature = new Temperature(applianceToQuery.GetValue<double>("Temperature").GetAwaiter().GetResult());
-                        response.payload.temperatureReading = new ApplianceTemperatureReading();
-                        response.payload.temperatureReading.value = double.Parse(string.Format("{0:N2}", temperature.Celcius));
-                        response.payload.temperatureReading.scale = "CELSIUS";
+                        response.payload.temperatureReading = new ApplianceTemperatureReading
+                        {
+                            value = double.Parse(string.Format("{0:N2}", temperature.Celcius)),
+                            scale = "CELSIUS"
+                        };
                         //response.payload.applianceResponseTimestamp = DateTime.UtcNow.ToUniversalTime().ToString("yyyy-MM-dd'T'HH:mm:ss.ffZ"); //XmlConvert.ToString(DateTime.UtcNow.ToUniversalTime(), XmlDateTimeSerializationMode.Utc);
                         break;
                     default:
                         response.header.@namespace = Faults.QueryNamespace;
                         response.header.name = Faults.UnsupportedOperationError;
-                        response.payload.exception = new ExceptionResponsePayload();
-                        response.payload.exception.errorInfo = new ErrorInfo();
-                        response.payload.exception.errorInfo.description = "Unsupported Query Request Type";
+                        response.payload.exception = new ExceptionResponsePayload
+                        {
+                            errorInfo = new ErrorInfo
+                            {
+                                description = "Unsupported Query Request Type"
+                            }
+                        };
                         break;
                 }
             }

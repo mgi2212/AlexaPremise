@@ -165,8 +165,10 @@ namespace Alexa.Premise.Custom
 
         public CustomResponse()
         {
-            header = new Header();
-            header.messageId = "0"; // default
+            header = new Header
+            {
+                messageId = "0" // default
+            };
             payload = new CustomResponsePayload();
         }
     }
