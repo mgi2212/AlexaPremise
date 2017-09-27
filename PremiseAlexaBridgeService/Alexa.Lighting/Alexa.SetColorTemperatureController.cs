@@ -8,17 +8,17 @@ using SYSWebSockClient;
 
 namespace Alexa.Lighting
 {
-    #region SetBrightness Data Contracts
+    #region SetColorTemperature Data Contracts
 
     [DataContract]
-    public class AlexaSetBrightnessControllerRequest
+    public class AlexaSetColorTemperatureControllerRequest
     {
         [DataMember(Name = "directive")]
-        public AlexaSetBrightnessControllerRequestDirective directive { get; set; }
+        public AlexaSetColorTemperatureControllerRequestDirective directive { get; set; }
     }
 
     [DataContract]
-    public class AlexaSetBrightnessControllerRequestDirective
+    public class AlexaSetColorTemperatureControllerRequestDirective
     {
         [DataMember(Name = "header")]
         public Header header { get; set; }
@@ -27,53 +27,53 @@ namespace Alexa.Lighting
         public DirectiveEndpoint endpoint { get; set; }
 
         [DataMember(Name = "payload")]
-        public AlexaSetBrightnessRequestPayload payload { get; set; }
+        public AlexaSetColorTemperatureRequestPayload payload { get; set; }
 
-        public AlexaSetBrightnessControllerRequestDirective()
+        public AlexaSetColorTemperatureControllerRequestDirective()
         {
             header = new Header();
             endpoint = new DirectiveEndpoint();
-            payload = new AlexaSetBrightnessRequestPayload();
+            payload = new AlexaSetColorTemperatureRequestPayload();
         }
     }
 
     [DataContract]
-    public class AlexaSetBrightnessRequestPayload
+    public class AlexaSetColorTemperatureRequestPayload
     {
-        [DataMember(Name = "brightness")]
-        public int brightness { get; set; }
+        [DataMember(Name = "colorTemperatureInKelvin")]
+        public int colorTemperatureInKelvin { get; set; }
     }
 
     #endregion
 
-    public class AlexaSetBrightnessController : AlexaControllerBase<
-        AlexaSetBrightnessRequestPayload, 
+    public class AlexaSetColorTemperatureController : AlexaControllerBase<
+        AlexaSetColorTemperatureRequestPayload, 
         ControlResponse, 
-        AlexaSetBrightnessControllerRequest>, IAlexaController
+        AlexaSetColorTemperatureControllerRequest>, IAlexaController
     {
-        public readonly string @namespace = "Alexa.BrightnessController";
-        public readonly string[] directiveNames = { "SetBrightness" };
-        public readonly string premiseProperty = "Brightness";
-        public readonly string alexaProperty = "brightness";
+        public readonly string @namespace = "Alexa.ColorTemperatureController";
+        public readonly string[] directiveNames = { "SetColorTemperature" };
+        public readonly string premiseProperty = "Temperature";
+        public readonly string alexaProperty = "colorTemperatureInKelvin";
 
-        public AlexaSetBrightnessController(AlexaSetBrightnessControllerRequest request)
+        public AlexaSetColorTemperatureController(AlexaSetColorTemperatureControllerRequest request)
             : base(request)
         {
         }
 
-        public AlexaSetBrightnessController(IPremiseObject endpoint)
+        public AlexaSetColorTemperatureController(IPremiseObject endpoint)
             : base(endpoint)
         {
         }
 
         public AlexaProperty GetPropertyState()
         {
-            double brightness = this.endpoint.GetValue<double>(premiseProperty).GetAwaiter().GetResult();
+            double ColorTemperature = this.endpoint.GetValue<double>(premiseProperty).GetAwaiter().GetResult();
             AlexaProperty property = new AlexaProperty
             {
                 @namespace = @namespace,
                 name = alexaProperty,
-                value = ((int)brightness * 100).LimitToRange(0,100),
+                value = ((int)ColorTemperature).LimitToRange(1000,10000),
                 timeOfSample = GetUtcTime()
             };
             return property;
@@ -85,12 +85,13 @@ namespace Alexa.Lighting
             {
                 name = alexaProperty
             };
+
             try
             {
-                double setValue = (double)(payload.brightness / 100.00).LimitToRange(0.00, 1.000);
+                int setValue = payload.colorTemperatureInKelvin.LimitToRange(1000, 10000);
                 this.endpoint.SetValue(premiseProperty, setValue.ToString()).GetAwaiter().GetResult();
                 property.timeOfSample = GetUtcTime();
-                property.value = ((int)setValue * 100).LimitToRange(0,100);
+                property.value = setValue;
                 this.response.context.properties.Add(property);
             }
             catch (Exception ex)
@@ -108,7 +109,12 @@ namespace Alexa.Lighting
                 {
                     switch (capability.@interface)
                     {
-                        case "Alexa.BrightnessController": // already added
+                        case "Alexa.BrightnessController": 
+                            {
+                                AlexaSetBrightnessController controller = new AlexaSetBrightnessController(endpoint);
+                                AlexaProperty brightness = controller.GetPropertyState();
+                                response.context.properties.Add(brightness);
+                            }
                             break;
 
                         case "Alexa.PowerController":
@@ -126,12 +132,11 @@ namespace Alexa.Lighting
                             // TODO
                             break;
 
-                        case "Alexa.ColorTemperatureController":
+                        case "Alexa.ColorTemperatureController": // already added
                             {
-                                AlexaSetColorTemperatureController controller = new AlexaSetColorTemperatureController(this.endpoint);
-                                AlexaProperty powerState = controller.GetPropertyState();
-                                response.context.properties.Add(powerState);
+
                             }
+                            // TODO
                             break;
 
                         default:

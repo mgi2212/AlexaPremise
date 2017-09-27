@@ -1,6 +1,6 @@
 ﻿using Alexa.Controller;
 using Alexa.Lighting;
-using Alexa.SmartHome.V3;
+using Alexa.SmartHomeAPI.V3;
 using PremiseAlexaBridgeService;
 using System;
 using System.Runtime.Serialization;
@@ -8,18 +8,17 @@ using SYSWebSockClient;
 
 namespace Alexa.Power
 {
-
     #region PowerState Data Contracts
 
     [DataContract]
     public class AlexaSetPowerStateControllerRequest
     {
         [DataMember(Name = "directive")]
-        public AlexaSetPowerStateControllerDirective directive { get; set; }
+        public AlexaSetPowerStateControllerRequestDirective directive { get; set; }
     }
 
     [DataContract]
-    public class AlexaSetPowerStateControllerDirective
+    public class AlexaSetPowerStateControllerRequestDirective
     {
         [DataMember(Name = "header")]
         public Header header { get; set; }
@@ -28,40 +27,41 @@ namespace Alexa.Power
         public DirectiveEndpoint endpoint { get; set; }
 
         [DataMember(Name = "payload")]
-        public AlexaSetPowerStatePayload payload { get; set; }
+        public AlexaSetPowerStateRequestPayload payload { get; set; }
 
-        public AlexaSetPowerStateControllerDirective()
+        public AlexaSetPowerStateControllerRequestDirective()
         {
             header = new Header();
             endpoint = new DirectiveEndpoint();
-            payload = new AlexaSetPowerStatePayload();
+            payload = new AlexaSetPowerStateRequestPayload();
         }
     }
 
-    public class AlexaSetPowerStatePayload : object
+    public class AlexaSetPowerStateRequestPayload : object
     {
 
     }
 
     #endregion
 
-    public class AlexaSetPowerStateController : AlexaControllerBase<AlexaSetPowerStatePayload, ControlResponse>, IAlexaController
-        {
-
+    public class AlexaSetPowerStateController : AlexaControllerBase<
+        AlexaSetPowerStateRequestPayload, 
+        ControlResponse, 
+        AlexaSetPowerStateControllerRequest>, IAlexaController
+    {
         public readonly string @namespace = "Alexa.PowerController";
         public readonly string[] directiveNames = { "TurnOn", "TurnOff" };
         public readonly string premiseProperty = "PowerState";
         public readonly string alexaProperty = "powerState";
 
         public AlexaSetPowerStateController(AlexaSetPowerStateControllerRequest request)
-            : base(request.directive.header, request.directive.endpoint, request.directive.payload)
+            : base(request)
         {
         }
 
         public AlexaSetPowerStateController(IPremiseObject endpoint)
             : base(endpoint)
         {
-
         }
 
         public AlexaProperty GetPropertyState()
@@ -72,7 +72,7 @@ namespace Alexa.Power
                 @namespace = @namespace,
                 name = alexaProperty,
                 value = (powerState == true ? "ON" : "OFF"),
-                timeOfSample = DateTime.UtcNow.ToUniversalTime().ToString("yyyy-MM-dd'T'HH:mm:ss.ffZ")
+                timeOfSample = GetUtcTime()
             };
             return property;
         }
@@ -86,25 +86,30 @@ namespace Alexa.Power
 
             try
             {
+                string valueToSend;
                 if (header.name == "TurnOff")
                 {
-                    endpoint.SetValue(premiseProperty, "False").GetAwaiter().GetResult();
-                    property.timeOfSample = DateTime.UtcNow.ToUniversalTime().ToString("yyyy-MM-dd'T'HH:mm:ss.ffZ");
+                    valueToSend = "False";
                     property.value = "OFF";
-                    response.context.properties.Add(property);
                 }
                 else if (header.name == "TurnOn")
                 {
-                    endpoint.SetValue(premiseProperty, "True").GetAwaiter().GetResult();
-                    property.timeOfSample = DateTime.UtcNow.ToUniversalTime().ToString("yyyy-MM-dd'T'HH:mm:ss.ffZ");
+                    valueToSend = "True";
                     property.value = "ON";
-                    response.context.properties.Add(property);
                 }
+                else
+                {
+                    base.ReportError(AlexaErrorTypes.INVALID_DIRECTIVE, "Operation not supported!");
+                    return;
+                }
+
+                this.endpoint.SetValue(premiseProperty, valueToSend).GetAwaiter().GetResult();
+                property.timeOfSample = GetUtcTime();
+                this.response.context.properties.Add(property);
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
-                base.ClearResponseContextAndEventPayload();
-                this.Response.Event.payload = new AlexaErrorResponsePayload(AlexaErrorTypes.INTERNAL_ERROR, ex.Message);
+                base.ReportError(AlexaErrorTypes.public_ERROR, ex.Message);
                 return;
             }
 
@@ -130,13 +135,18 @@ namespace Alexa.Power
                             break;
 
                         case "Alexa.ColorController":
-                            // TODO
+                            {
+                                // TODO
+                            }
                             break;
 
                         case "Alexa.ColorTemperatureController":
-                            // TODO
+                            {
+                                AlexaSetColorTemperatureController controller = new AlexaSetColorTemperatureController(this.endpoint);
+                                AlexaProperty powerState = controller.GetPropertyState();
+                                response.context.properties.Add(powerState);
+                            }
                             break;
-
                         default:
                             break;
                     }

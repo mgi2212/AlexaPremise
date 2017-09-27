@@ -1,6 +1,6 @@
 ﻿using Alexa.Controller;
 using Alexa.Power;
-using Alexa.SmartHome.V3;
+using Alexa.SmartHomeAPI.V3;
 using PremiseAlexaBridgeService;
 using System;
 using System.Runtime.Serialization;
@@ -13,11 +13,11 @@ namespace Alexa.Lighting
     public class AlexaAdjustBrightnessControllerRequest
     {
         [DataMember(Name = "directive")]
-        public AlexaAjustBrightnessControllerDirective directive { get; set; }
+        public AlexaAdjustBrightnessControllerDirective directive { get; set; }
     }
 
     [DataContract]
-    public class AlexaAjustBrightnessControllerDirective
+    public class AlexaAdjustBrightnessControllerDirective
     {
         [DataMember(Name = "header")]
         public Header header { get; set; }
@@ -28,7 +28,7 @@ namespace Alexa.Lighting
         [DataMember(Name = "payload")]
         public AlexaAdjustBrightnessPayload payload { get; set; }
 
-        public AlexaAjustBrightnessControllerDirective()
+        public AlexaAdjustBrightnessControllerDirective()
         {
             header = new Header();
             endpoint = new DirectiveEndpoint();
@@ -45,7 +45,10 @@ namespace Alexa.Lighting
 
     #endregion 
 
-    public class AlexaAdjustBrightnessController : AlexaControllerBase<AlexaAdjustBrightnessPayload, ControlResponse>, IAlexaController 
+    public class AlexaAdjustBrightnessController : AlexaControllerBase<
+        AlexaAdjustBrightnessPayload, 
+        ControlResponse, 
+        AlexaAdjustBrightnessControllerRequest>, IAlexaController 
     {
         public readonly string @namespace = "Alexa.BrightnessController";
         public readonly string[] directiveNames = { "AdjustBrightness" };
@@ -53,7 +56,7 @@ namespace Alexa.Lighting
         public readonly string alexaProperty = "brightness";
 
         public AlexaAdjustBrightnessController(AlexaAdjustBrightnessControllerRequest request)
-            : base(request.directive.header, request.directive.endpoint, request.directive.payload)
+            : base(request)
         {
         }
 
@@ -70,7 +73,7 @@ namespace Alexa.Lighting
                 @namespace = @namespace,
                 name = alexaProperty,
                 value = (int)(brightness * 100),
-                timeOfSample = DateTime.UtcNow.ToUniversalTime().ToString("yyyy-MM-dd'T'HH:mm:ss.ffZ")
+                timeOfSample = GetUtcTime()
             };
             return property;
         }
@@ -88,14 +91,13 @@ namespace Alexa.Lighting
                 double currentValue = Math.Round(endpoint.GetValue<Double>(premiseProperty).GetAwaiter().GetResult(), 2);
                 double valueToSend = Math.Round(currentValue + adjustValue, 2).LimitToRange(0.00, 1.00);
                 endpoint.SetValue(premiseProperty, valueToSend.ToString()).GetAwaiter().GetResult();
-                property.timeOfSample = DateTime.UtcNow.ToUniversalTime().ToString("yyyy-MM-dd'T'HH:mm:ss.ffZ");
+                property.timeOfSample = GetUtcTime();
                 property.value = (int)(valueToSend * 100);
                 response.context.properties.Add(property);
             }
             catch (Exception ex)
             {
-                base.ClearResponseContextAndEventPayload();
-                this.Response.Event.payload = new AlexaErrorResponsePayload(AlexaErrorTypes.INTERNAL_ERROR, ex.Message);
+                base.ReportError(AlexaErrorTypes.public_ERROR, ex.Message);
             }
 
             this.Response.Event.header.name = "Response";

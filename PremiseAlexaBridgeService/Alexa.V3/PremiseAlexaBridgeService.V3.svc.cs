@@ -1,6 +1,7 @@
 ﻿using Alexa.Lighting;
 using Alexa.Power;
-using Alexa.SmartHome.V3;
+using Alexa.Discovery;
+using Alexa.SmartHomeAPI.V3;
 using System;
 using System.ServiceModel;
 using System.ServiceModel.Web;
@@ -21,7 +22,7 @@ namespace PremiseAlexaBridgeService
         AuthorizationResponse Authorization(AuthorizationRequest request);
 
         [OperationContract]
-        DiscoveryResponse Discovery(DiscoveryRequest request);
+        DiscoveryControllerResponse Discovery(AlexaDiscoveryControllerRequest request);
 
         [OperationContract]
         ControlResponse SetPowerState(AlexaSetPowerStateControllerRequest request);
@@ -31,6 +32,12 @@ namespace PremiseAlexaBridgeService
 
         [OperationContract]
         ControlResponse AdjustBrightness(AlexaAdjustBrightnessControllerRequest request);
+
+        [OperationContract]
+        ControlResponse AdjustColorTemperature (AlexaAdjustColorTemperatureControllerRequest request);
+
+        [OperationContract]
+        ControlResponse SetColorTemperature(AlexaSetColorTemperatureControllerRequest request);
 
         [OperationContract]
         ReportStateResponse ReportState(ReportStateRequest request);
@@ -89,7 +96,7 @@ namespace PremiseAlexaBridgeService
             return response;
         }
 
-        private SystemResponsePayload GetHealthCheckResponseV3()
+        public SystemResponsePayload GetHealthCheckResponseV3()
         {
             SystemResponsePayload payload = new SystemResponsePayload();
             var returnClause = new string[] { "Health", "HealthDescription" };
@@ -103,120 +110,35 @@ namespace PremiseAlexaBridgeService
 
         #region Discovery
 
+
         /// <summary>
-        /// Discovery - proxy call to premise looking for the AlexaEx class
+        /// Discovery directives are processed here
         /// </summary>
-        /// <param name="request"></param>
-        /// <returns></returns>
+        /// <param name="request", type="AlexaDiscoveryControllerRequest"></param>
+        /// <returns>ControlResponse</returns>
+        /// [WebInvoke(Method = "POST", RequestFormat = WebMessageFormat.Json, ResponseFormat = WebMessageFormat.Json, BodyStyle = WebMessageBodyStyle.Bare, UriTemplate = "/Discovery/")]
+        /// 
         [WebInvoke(Method = "POST", RequestFormat = WebMessageFormat.Json, ResponseFormat = WebMessageFormat.Json, BodyStyle = WebMessageBodyStyle.Bare, UriTemplate = "/Discovery/")]
-        public DiscoveryResponse Discovery(DiscoveryRequest request)
+        public DiscoveryControllerResponse Discovery(AlexaDiscoveryControllerRequest request)
         {
-
-            DiscoveryDirective directive = request.directive;
-            var response = new DiscoveryResponse(directive);
-
-            #region Validate Request
-
-            if (directive == null)
+            AlexaDiscoveryController controller = new AlexaDiscoveryController(request);
+            if (controller.ValidateDirective(controller.directiveNames, controller.@namespace))
             {
-                // return empty discovery
-                return response;
+                controller.ProcessControllerDirective();
             }
-
-            if ((directive == null) || (directive.header == null) || (directive.payload == null))
-            {
-                // return empty discovery
-                return response;
-            }
-
-            if ((directive.header.payloadVersion == null) || (directive.header.payloadVersion != "3"))
-            {
-                return response;
-            }
-
-            if ((directive.header.name != "Discover") || (directive.header.@namespace != "Alexa.Discovery"))
-            {
-                // return empty discovery per spec
-                return response;
-            }
-
-            #endregion
-
-            #region Connect To Premise Server
-
-            if (PremiseServer.RootObject == null)
-            {
-                // return empty discovery per spec
-                return response;
-            }
-
-            #endregion
-
-            #region Verify Access and Perform Discovery
-
-            try
-            {
-
-                if ((directive.payload.scope == null) || (directive.payload.scope.type != "BearerToken"))
-                {
-                    return response;
-                }
-
-                if (!CheckAccessToken(directive.payload.scope.token).GetAwaiter().GetResult())
-                {
-                    // return empty discovery per spec (todo: this is not helpful discovering what went wrong and pushes any investigation to 3P logs)
-                    return response;
-                }
-
-                #region Perform Discovery
-
-                InformLastContact(directive.header.name).GetAwaiter().GetResult();
-                response.@event.payload.endpoints = PremiseServer.GetEndpoints().GetAwaiter().GetResult();
-
-                if (PremiseServer.IsAsyncEventsEnabled)
-                {
-                    Task t = Task.Run(() =>
-                    {
-                        PremiseServer.Resubscribe();
-                    });
-                }
-
-
-                PremiseServer.HomeObject.SetValue("LastRefreshed", DateTime.Now.ToString());
-                int count = response.@event.payload.endpoints.Count;
-
-                if (count >= PremiseServer.AlexaDeviceLimit)
-                {
-                    PremiseServer.HomeObject.SetValue("HealthDescription", string.Format("Alexa device discovery limit reached or exceeded! Reported {0} endpoints.", count)).GetAwaiter().GetResult() ;
-                }
-                else
-                {
-                    PremiseServer.HomeObject.SetValue("HealthDescription", string.Format("Alexa discovery reported {0} endpoints.", count)).GetAwaiter().GetResult();
-                }
-                PremiseServer.HomeObject.SetValue("Health", "True").GetAwaiter().GetResult();
-
-                #endregion
-
-            }
-            catch
-            {
-                // return empty discovery
-            }
-
-            #endregion
-
-            return response;
+            return controller.Response;
         }
-
 
         #endregion
 
         #region Control
 
+        #region PowerState
+
         /// <summary>
         /// Control Requests are processed here
         /// </summary>
-        /// <param name="request", type="AlexaSetBrightnessControllerRequest"></param>
+        /// <param name="request", type="AlexaSetPowerStateControllerRequest"></param>
         /// <returns>ControlResponse</returns>
         [WebInvoke(Method = "POST", RequestFormat = WebMessageFormat.Json, ResponseFormat = WebMessageFormat.Json, BodyStyle = WebMessageBodyStyle.Bare, UriTemplate = "/Control/SetPowerState/")]
         public ControlResponse SetPowerState(AlexaSetPowerStateControllerRequest request)
@@ -228,6 +150,10 @@ namespace PremiseAlexaBridgeService
             }
             return controller.Response;
         }
+
+        #endregion
+
+        #region Brightness
 
         /// <summary>
         /// Control Requests are processed here
@@ -260,6 +186,44 @@ namespace PremiseAlexaBridgeService
             }
             return controller.Response;
         }
+
+        #endregion
+
+        #region ColorTemperature
+
+        /// <summary>
+        /// Control Requests are processed here
+        /// </summary>
+        /// <param name="request", type="AlexaAdjustColorTemperatureController"></param>
+        /// <returns>ControlResponse</returns>
+        [WebInvoke(Method = "POST", RequestFormat = WebMessageFormat.Json, ResponseFormat = WebMessageFormat.Json, BodyStyle = WebMessageBodyStyle.Bare, UriTemplate = "/Control/AdjustColorTemperature/")]
+        public ControlResponse AdjustColorTemperature(AlexaAdjustColorTemperatureControllerRequest request)
+        {
+            AlexaAdjustColorTemperatureController controller = new AlexaAdjustColorTemperatureController(request);
+            if (controller.ValidateDirective(controller.directiveNames, controller.@namespace))
+            {
+                controller.ProcessControllerDirective();
+            }
+            return controller.Response;
+        }
+
+        /// <summary>
+        /// Control Requests are processed here
+        /// </summary>
+        /// <param name="request", type="AlexaAdjustColorTemperatureController"></param>
+        /// <returns>ControlResponse</returns>
+        [WebInvoke(Method = "POST", RequestFormat = WebMessageFormat.Json, ResponseFormat = WebMessageFormat.Json, BodyStyle = WebMessageBodyStyle.Bare, UriTemplate = "/Control/SetColorTemperature/")]
+        public ControlResponse SetColorTemperature(AlexaSetColorTemperatureControllerRequest request)
+        {
+            AlexaSetColorTemperatureController controller = new AlexaSetColorTemperatureController(request);
+            if (controller.ValidateDirective(controller.directiveNames, controller.@namespace))
+            {
+                controller.ProcessControllerDirective();
+            }
+            return controller.Response;
+        }
+
+        #endregion
 
         #endregion
 
@@ -331,7 +295,7 @@ namespace PremiseAlexaBridgeService
             catch
             {
                 response.context = null;
-                response.@event.payload = new AlexaErrorResponsePayload(AlexaErrorTypes.INTERNAL_ERROR, "Cannot find Alexa home object on local Premise server.");
+                response.@event.payload = new AlexaErrorResponsePayload(AlexaErrorTypes.public_ERROR, "Cannot find Alexa home object on local Premise server.");
                 return response;
             }
 
@@ -352,7 +316,7 @@ namespace PremiseAlexaBridgeService
             catch
             {
                 response.context = null;
-                response.@event.payload = new AlexaErrorResponsePayload(AlexaErrorTypes.INTERNAL_ERROR, string.Format("Cannot find device {0} on server.", directive.endpoint.endpointId));
+                response.@event.payload = new AlexaErrorResponsePayload(AlexaErrorTypes.public_ERROR, string.Format("Cannot find device {0} on server.", directive.endpoint.endpointId));
                 return response;
             }
 
@@ -369,14 +333,13 @@ namespace PremiseAlexaBridgeService
             if (discoveryEndpoint == null)
             {
                 response.context = null;
-                response.@event.payload = new AlexaErrorResponsePayload(AlexaErrorTypes.INTERNAL_ERROR, string.Format("Cannot find or invalid discoveryJson for {0} on server.", directive.endpoint.endpointId));
+                response.@event.payload = new AlexaErrorResponsePayload(AlexaErrorTypes.public_ERROR, string.Format("Cannot find or invalid discoveryJson for {0} on server.", directive.endpoint.endpointId));
                 return response;
             }
             response.@event.endpoint.cookie = discoveryEndpoint.cookie;
 
             try
             {
-
                 foreach (Capability capability in discoveryEndpoint.capabilities)
                 {
                     switch (capability.@interface)
@@ -395,9 +358,16 @@ namespace PremiseAlexaBridgeService
                             break;
 
                         case "Alexa.ColorController":
+                            {
+
+                            }
                             break;
 
                         case "Alexa.ColorTemperatureController":
+                            {
+                                AlexaSetColorTemperatureController controller = new AlexaSetColorTemperatureController(endpoint);
+                                response.context.properties.Add(controller.GetPropertyState());
+                            }
                             break;
 
                         default:
@@ -409,7 +379,7 @@ namespace PremiseAlexaBridgeService
             catch (Exception ex)
             {
                 response.context = null;
-                response.@event.payload = new AlexaErrorResponsePayload(AlexaErrorTypes.INTERNAL_ERROR, ex.Message);
+                response.@event.payload = new AlexaErrorResponsePayload(AlexaErrorTypes.public_ERROR, ex.Message);
                 return response;
             }
 
@@ -460,7 +430,7 @@ namespace PremiseAlexaBridgeService
             }
             catch (Exception ex)
             {
-                response.@event.payload = new AlexaErrorResponsePayload(AlexaErrorTypes.INTERNAL_ERROR, ex.Message);
+                response.@event.payload = new AlexaErrorResponsePayload(AlexaErrorTypes.public_ERROR, ex.Message);
                 return response;
             }
 
@@ -478,7 +448,7 @@ namespace PremiseAlexaBridgeService
             }
             catch (Exception ex)
             {
-                response.@event.payload = new AlexaErrorResponsePayload(AlexaErrorTypes.INTERNAL_ERROR, ex.Message);
+                response.@event.payload = new AlexaErrorResponsePayload(AlexaErrorTypes.public_ERROR, ex.Message);
                 return response;
             }
 

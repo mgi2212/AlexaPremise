@@ -1,6 +1,6 @@
 ﻿using System.Runtime.Serialization;
 
-namespace Alexa.SmartHome.V1
+namespace Alexa.SmartHomeAPI.V1
 {
     public class Header
     {

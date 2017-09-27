@@ -1,8 +1,8 @@
-﻿using Alexa.SmartHome.V3;
+﻿using Alexa.SmartHomeAPI.V3;
 
 namespace Alexa.Controller
 {
-    interface IAlexaController
+    public interface IAlexaController
     {
         void ProcessControllerDirective();
         AlexaProperty GetPropertyState();

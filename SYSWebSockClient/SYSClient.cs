@@ -14,6 +14,7 @@
         public string sysObjectId;
         public string clientSideSubscriptionId;
         public string propertyName;
+        public string alexaControllerName;
         public Action<dynamic> callback;
         public dynamic @params;
 

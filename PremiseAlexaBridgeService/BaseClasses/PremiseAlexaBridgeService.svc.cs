@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using SYSWebSockClient;
-using System.ServiceModel.Web;
 
 
 namespace PremiseAlexaBridgeService
@@ -44,24 +42,24 @@ namespace PremiseAlexaBridgeService
 
     public class PremiseAlexaBase
     {
-        protected PremiseServer ServiceInstance = PremiseServer.Instance;
+        private PremiseServer ServiceInstance = PremiseServer.Instance;
 
         #region Utility
 
-        protected static async Task InformLastContact(string command)
+        public static async Task InformLastContact(string command)
         {
             await PremiseServer.HomeObject.SetValue("LastHeardFromAlexa", DateTime.Now.ToString());
             await PremiseServer.HomeObject.SetValue("LastHeardCommand", command);
         }
 
-        protected static async Task<bool> CheckAccessToken(string token)
+        public static async Task<bool> CheckAccessToken(string token)
         {
             var accessToken = await PremiseServer.HomeObject.GetValue<string>("AccessToken");
             List<string> tokens = new List<string>(accessToken.Split(','));
             return (-1 != tokens.IndexOf(token));
         }
 
-        protected static string NormalizeDisplayName(string displayName)
+        public static string NormalizeDisplayName(string displayName)
         {
             displayName = displayName.Trim();
 

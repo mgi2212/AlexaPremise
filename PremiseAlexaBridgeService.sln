@@ -12,6 +12,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ModelCheck", "ModelCheck\Mo
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SYSWebSockClient", "SYSWebSockClient\SYSWebSockClient.csproj", "{4BACF0AA-A338-49F8-AAF4-9128DD79EC4A}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WcfNewtonSoftJsonSerializer", "WcfNewtonsoftJsonSerializer\WcfNewtonSoftJsonSerializer.csproj", "{89596D3A-391F-4B14-AE58-AB8931BA07CC}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -30,6 +32,10 @@ Global
 		{4BACF0AA-A338-49F8-AAF4-9128DD79EC4A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4BACF0AA-A338-49F8-AAF4-9128DD79EC4A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4BACF0AA-A338-49F8-AAF4-9128DD79EC4A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{89596D3A-391F-4B14-AE58-AB8931BA07CC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{89596D3A-391F-4B14-AE58-AB8931BA07CC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{89596D3A-391F-4B14-AE58-AB8931BA07CC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{89596D3A-391F-4B14-AE58-AB8931BA07CC}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

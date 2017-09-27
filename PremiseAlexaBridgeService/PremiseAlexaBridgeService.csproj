@@ -150,6 +150,10 @@
     <Content Include="Web.config" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Alexa.Discovery\Alexa.DiscoveryController.cs" />
+    <Compile Include="Alexa.Lighting\Alexa.AdjustColorTemperatureController.cs" />
+    <Compile Include="Alexa.Lighting\Alexa.SetColorTemperatureController.cs" />
+    <Compile Include="Alexa.Scene\Alexa.SetSceneController.cs" />
     <Compile Include="BaseClasses\Alexa.BlockingQueue.cs" />
     <Compile Include="Alexa.Lighting\Alexa.AdjustBrightnessController.cs" />
     <Compile Include="Alexa.Lighting\Alexa.SetBrightnessController.cs" />
@@ -190,6 +194,8 @@
     <Content Include="Alexa.V2\readme.md" />
     <Content Include="Alexa.V3\readme.md" />
     <Content Include="BaseClasses\readme.md" />
+    <Content Include="Alexa.Discovery\readme.md" />
+    <Content Include="Alexa.Scene\readme.md" />
     <None Include="Properties\PublishProfiles\AD2.pubxml" />
     <None Include="Properties\PublishProfiles\cek.pubxml" />
     <None Include="Properties\PublishProfiles\CustomProfile.pubxml" />
@@ -208,6 +214,10 @@
     <ProjectReference Include="..\SYSWebSockClient\SYSWebSockClient.csproj">
       <Project>{4bacf0aa-a338-49f8-aaf4-9128dd79ec4a}</Project>
       <Name>SYSWebSockClient</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\WcfNewtonsoftJsonSerializer\WcfNewtonSoftJsonSerializer.csproj">
+      <Project>{89596d3a-391f-4b14-ae58-ab8931ba07cc}</Project>
+      <Name>WcfNewtonSoftJsonSerializer</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup />

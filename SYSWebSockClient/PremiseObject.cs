@@ -309,7 +309,7 @@
             return task;
         }
 
-        Task<IPremiseSubscription> IPremiseObject.Subscribe(string propertyName, Action<dynamic> callback)
+        Task<IPremiseSubscription> IPremiseObject.Subscribe(string propertyName, string alexaController, Action<dynamic> callback)
         {
             string clientSideSubscriptionId = FutureId.Next().ToString();
 
@@ -317,6 +317,7 @@
             {
                 sysObjectId = this.ObjectId,
                 propertyName = propertyName,
+                alexaControllerName = alexaController,
                 callback = callback
             };
 

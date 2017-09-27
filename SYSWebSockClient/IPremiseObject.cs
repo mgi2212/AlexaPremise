@@ -46,7 +46,7 @@
         Task<bool> IsOfType(string typeId);
         Task<bool> IsOfType(IPremiseObject typeId);
         Task<dynamic> Select(ICollection<string> returnClause, dynamic whereClause);
-        Task<IPremiseSubscription> Subscribe(string propertyName, Action<dynamic> callback);
+        Task<IPremiseSubscription> Subscribe(string propertyName, string alexaControllerName, Action<dynamic> callback);
 
 #if FOO
 		Task SetFlags();

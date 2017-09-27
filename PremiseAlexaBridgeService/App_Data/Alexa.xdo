@@ -370,7 +370,7 @@ end if
             <Object ID="{AE8D7732-8609-49AD-B62E-7D6EA1A2BF6B}" Name="Trigger" Flags="0xF00" Class="sys://Schema/System/Boolean" Bindable="-1" Description="Trigger a button virtually" Momentary="-1" />
           </Object>
           <Object ID="{3317BF5A-E61E-4E32-B6C8-5FD25B85C4E4}" Name="AlexaCapability" Class="sys://Schema/System/Class" Virtual="-1" >
-            <Object ID="{D02EA9B0-82AA-4E11-9AF0-9737F86ADA72}" Name="alexatype" Flags="0x900" Class="sys://Schema/System/Text" DefaultValue="Alexa.Interface" ReadOnly="-1" Required="-1" />
+            <Object ID="{D02EA9B0-82AA-4E11-9AF0-9737F86ADA72}" Name="alexatype" Flags="0x900" Class="sys://Schema/System/Text" DefaultValue="AlexaInterface" ReadOnly="-1" Required="-1" />
             <Object ID="{A2AC390D-BBEF-42BC-81E1-01D56D65F0C5}" Name="version" Flags="0x900" Class="sys://Schema/System/Text" DefaultValue="3" ReadOnly="-1" />
             <Object ID="{9597D450-2AC9-4E20-B1BE-70C8C3364EC3}" Name="proactivelyReported" Flags="0x900" Class="sys://Schema/System/Boolean" DefaultValue="-1" />
             <Object ID="{692DE327-FAFD-47FC-AF35-4881A0571E9B}" Name="retrievable" Flags="0x900" Class="sys://Schema/System/Boolean" DefaultValue="-1" />

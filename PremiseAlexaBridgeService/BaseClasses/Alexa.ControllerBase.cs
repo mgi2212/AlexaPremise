@@ -1,4 +1,4 @@
-﻿using Alexa.SmartHome.V3;
+﻿using Alexa.SmartHomeAPI.V3;
 using PremiseAlexaBridgeService;
 using System;
 using System.Collections.Generic;
@@ -10,37 +10,74 @@ using System.Runtime.Serialization.Json;
 using System.Threading.Tasks;
 using SYSWebSockClient;
 
+/// <summary>
+/// Templated base class for Alexa controllers
+/// T is the response payload (accounts for differences in payloads)
+/// TT is the response object
+/// TTT is the request object
+/// </summary>
 namespace Alexa.Controller
 {
-    public class AlexaControllerBase<T, TT> where TT : new()
+    public class AlexaControllerBase<T, TT, TTT> where TT : new()
     {
-        internal IPremiseObject endpoint;
-        internal TT response;
-        internal Header header;
-        internal DirectiveEndpoint directiveEndpoint;
-        internal T payload;
-        internal ControlErrorPayload errorPayload = null;
+        #region public Vars
 
-        public AlexaControllerBase(Header headerObject, DirectiveEndpoint directiveEndpointObject, T payloadObject)
+        public T payload;
+        public TT response;
+        public TTT request;
+        public IPremiseObject endpoint;
+        public Header header;
+        public DirectiveEndpoint directiveEndpoint;
+
+        #endregion
+
+        #region Constructors
+        /// <summary>
+        /// Used when full controller functionality is required
+        /// </summary>
+        /// <param name="requestObject"></param>
+        public AlexaControllerBase(TTT requestObject)
         {
-            directiveEndpoint = directiveEndpointObject;
-            header = headerObject;
-            payload = payloadObject;
-            object[] args = { headerObject, directiveEndpointObject };
-            response = GetObject(args);
-            this.ResponseEvent.header = headerObject;
-            this.ResponseEvent.endpoint.cookie = directiveEndpoint.cookie;
-        }
+            request = requestObject;
+            header = RequestHeader;
+            payload = (T)RequestPayload;
+            directiveEndpoint = RequestDirectiveEndpoint;
 
+            if (directiveEndpoint == null)
+            {
+                object[] args = { header };
+                response = GetNewResponseObject(args);
+            }
+            else
+            {
+                object[] args = { header, directiveEndpoint };
+                response = GetNewResponseObject(args);
+            }
+            if (directiveEndpoint != null)
+            {
+                this.ResponseEvent.endpoint.cookie = directiveEndpoint?.cookie;
+            }
+        }
+        /// <summary>
+        /// Used on State reports or reports on state in controller responses (when the full controller object functionality is not required)
+        /// </summary>
+        /// <param name="sysObject"></param>
         public AlexaControllerBase(IPremiseObject sysObject)
         {
             endpoint = sysObject;
         }
+        #endregion
 
-        protected TT GetObject(object[] args)
+        #region Reflection Code
+
+        protected TT GetNewResponseObject(object[] args)
         {
             return (TT)Activator.CreateInstance(typeof(TT), args);
         }
+
+        #endregion
+
+        #region Properties
 
         public TT Response
         {
@@ -50,10 +87,82 @@ namespace Alexa.Controller
             }
         }
 
-        public void ClearResponseContextAndEventPayload()
+        private DirectiveEndpoint RequestDirectiveEndpoint
         {
-            this.ResponseContext = null;
-            this.ResponseEvent.payload = null;
+            get
+            {
+                Type t = RequestDirective.GetType();
+                PropertyInfo prop = t.GetProperty("endpoint");
+                if (prop != null)
+                {
+                    DirectiveEndpoint endpoint = prop.GetValue(RequestDirective) as DirectiveEndpoint;
+                    return endpoint;
+                }
+                return null;
+            }
+        }
+
+        private object RequestDirective
+        {
+            get
+            {
+                Type t = request.GetType();
+                PropertyInfo prop = t.GetProperty("directive");
+                if (prop != null)
+                {
+                    object directive = (object)prop.GetValue(request);
+                    return directive;
+                }
+                return null;
+            }
+        }
+
+        private object RequestPayload
+        {
+            get
+            {
+                Type t = RequestDirective.GetType();
+                PropertyInfo prop = t.GetProperty("payload");
+                if (prop != null)
+                {
+                    object payload = prop.GetValue(RequestDirective);
+                    return payload;
+                }
+                return null;
+            }
+        }
+
+        private Header RequestHeader
+        {
+            get
+            {
+                Type t = RequestDirective.GetType();
+                PropertyInfo prop = t.GetProperty("header");
+                if (prop != null)
+                {
+                    Header header = prop.GetValue(RequestDirective) as Header;
+                    return header;
+                }
+                return null;
+            }
+        }
+
+        private Scope RequestPayloadScope
+        {
+            get
+            {
+                if (RequestPayload == null)
+                    return null;
+
+                Type t = RequestPayload.GetType();
+                PropertyInfo prop = t.GetProperty("scope");
+                if (prop != null)
+                {
+                    Scope scope = prop.GetValue(RequestPayload) as Scope;
+                    return scope;
+                }
+                return null;
+            }
         }
 
         private AlexaControlResponseContext ResponseContext
@@ -62,14 +171,21 @@ namespace Alexa.Controller
             {
                 Type t = response.GetType();
                 PropertyInfo prop = t.GetProperty("context");
-                AlexaControlResponseContext context = prop.GetValue(response) as AlexaControlResponseContext;
-                return context;
+                if (prop != null)
+                {
+                    AlexaControlResponseContext context = prop.GetValue(response) as AlexaControlResponseContext;
+                    return context;
+                }
+                return null;
             }
             set
             {
                 Type t = response.GetType();
                 PropertyInfo prop = t.GetProperty("context");
-                prop.SetValue(response, value);
+                if (prop != null)
+                {
+                    prop.SetValue(response, value);
+                }
             }
         }
 
@@ -93,14 +209,28 @@ namespace Alexa.Controller
             }
         }
 
+        #endregion
+
+        #region Methods
+
+        #region Instance Methods
+
+        public void ReportError(AlexaErrorTypes type, string message)
+        {
+            if (this.Response.GetType() == typeof(ControlResponse))
+            {
+                this.ResponseContext = null;
+                this.ResponseEvent.payload = new AlexaErrorResponsePayload(type, message);
+            }
+        }
+
         public bool ValidateDirective(string[] directiveNames, string @namespace)
         {
             #region Validate request
 
             if ((this.header.payloadVersion != "3") || (!directiveNames.Contains(this.header.name)) || (this.header.@namespace != @namespace))
             {
-                ClearResponseContextAndEventPayload();
-                this.ResponseEvent.payload= new AlexaErrorResponsePayload(AlexaErrorTypes.INVALID_DIRECTIVE, "Invalid directive!");
+                ReportError(AlexaErrorTypes.INVALID_DIRECTIVE, "Invalid directive!");
                 return false;
             }
 
@@ -112,15 +242,13 @@ namespace Alexa.Controller
             {
                 if (PremiseServer.RootObject == null)
                 {
-                    ClearResponseContextAndEventPayload();
-                    this.ResponseEvent.payload = new AlexaErrorResponsePayload(AlexaErrorTypes.ENDPOINT_UNREACHABLE, "Premise Server.");
+                    ReportError(AlexaErrorTypes.ENDPOINT_UNREACHABLE, "Premise Server.");
                     return false;
                 }
             }
             catch (Exception)
             {
-                ClearResponseContextAndEventPayload();
-                this.ResponseEvent.payload = new AlexaErrorResponsePayload(AlexaErrorTypes.ENDPOINT_UNREACHABLE, "Premise Server.");
+                ReportError(AlexaErrorTypes.ENDPOINT_UNREACHABLE, "Premise Server.");
                 return false;
             }
 
@@ -130,25 +258,31 @@ namespace Alexa.Controller
 
             try
             {
-                if ((directiveEndpoint.scope == null) || (directiveEndpoint.scope.type != "BearerToken"))
+                Scope testScope;
+                // must be an endpointeless directive (like Discovery) see if there is a scope in the payload
+                if ((this.directiveEndpoint == null) && (this.RequestPayloadScope != null))
                 {
-                    ClearResponseContextAndEventPayload();
-                    this.ResponseEvent.payload = new AlexaErrorResponsePayload(AlexaErrorTypes.INVALID_DIRECTIVE, "Invalid bearer token.");
-                    return false;
+                    testScope = this.RequestPayloadScope;
+                }
+                else
+                {
+                    testScope = this.directiveEndpoint.scope;
                 }
 
-                if (!CheckAccessToken(directiveEndpoint.scope.token).GetAwaiter().GetResult())
+                if ((testScope == null) || (testScope.type != "BearerToken") || (testScope.token == null))
                 {
-                    ClearResponseContextAndEventPayload();
-                    this.ResponseEvent.payload = new AlexaErrorResponsePayload(AlexaErrorTypes.INVALID_AUTHORIZATION_CREDENTIAL, "Not authorized on local premise server.");
+                    ReportError(AlexaErrorTypes.INVALID_DIRECTIVE, "Invalid bearer token.");
                     return false;
                 }
-
+                else if (!CheckAccessToken(testScope.token).GetAwaiter().GetResult())
+                {
+                    ReportError(AlexaErrorTypes.INVALID_AUTHORIZATION_CREDENTIAL, "Not authorized on local premise server.");
+                    return false;
+                }
             }
             catch
             {
-                ClearResponseContextAndEventPayload();
-                this.ResponseEvent.payload = new AlexaErrorResponsePayload(AlexaErrorTypes.INTERNAL_ERROR, "Cannot find Alexa home object on local Premise server.");
+                ReportError(AlexaErrorTypes.public_ERROR, "Cannot find Alexa home object on local Premise server.");
                 return false;
             }
 
@@ -161,26 +295,44 @@ namespace Alexa.Controller
 #pragma warning restore CS0219 
             try
             {
-                Guid premiseId = new Guid(directiveEndpoint.endpointId);
-                this.endpoint = PremiseServer.RootObject.GetObject(premiseId.ToString("B")).GetAwaiter().GetResult();
-                if (this.endpoint == null)
+                if ((directiveEndpoint != null) && (directiveEndpoint.endpointId != null))
                 {
-                    ClearResponseContextAndEventPayload();
-                    this.ResponseEvent.payload = new AlexaErrorResponsePayload(AlexaErrorTypes.INTERNAL_ERROR, string.Format("Cannot find device {0} on server.", directiveEndpoint.endpointId));
-                    return false;
+                    Guid premiseId = new Guid(directiveEndpoint.endpointId);
+                    this.endpoint = PremiseServer.RootObject.GetObject(premiseId.ToString("B")).GetAwaiter().GetResult();
+                    if (this.endpoint == null)
+                    {
+                        ReportError(AlexaErrorTypes.public_ERROR, string.Format("Cannot find device {0} on server.", directiveEndpoint.endpointId));
+                        return false;
+                    }
                 }
             }
-            catch
+            catch (Exception ex)
             {
-                ClearResponseContextAndEventPayload();
-                this.ResponseEvent.payload = new AlexaErrorResponsePayload(AlexaErrorTypes.INTERNAL_ERROR, string.Format("Cannot find device {0} on server.", directiveEndpoint.endpointId));
+                ReportError(AlexaErrorTypes.public_ERROR, ex.Message);
+                this.ResponseEvent.payload = new AlexaErrorResponsePayload(AlexaErrorTypes.public_ERROR, string.Format("Cannot find device {0} on server.", directiveEndpoint.endpointId));
                 return false;
             }
             #endregion
 
-            //SerialiszationTest(this.Response);
+            #region Debug
+
+            // Uncomment below to check serialization
+            // SerialiszationTest(this.Response);
+
+            #endregion
+
+            InformLastContact(header.name).GetAwaiter().GetResult();
 
             return true;
+        }
+
+        #endregion
+
+        #region Static Methods
+
+        protected static string GetUtcTime()
+        {
+            return DateTime.UtcNow.ToUniversalTime().ToString("yyyy-MM-dd'T'HH:mm:ss.ffZ");
         }
 
         public static void SerialiszationTest(TT response)
@@ -207,6 +359,10 @@ namespace Alexa.Controller
             List<string> tokens = new List<string>(accessToken.Split(','));
             return (-1 != tokens.IndexOf(token));
         }
+
+        #endregion
+
+        #endregion
 
     }
 }

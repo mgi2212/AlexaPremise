@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Runtime.Serialization;
 
-namespace Alexa.SmartHome.V3
+namespace Alexa.SmartHomeAPI.V3
 {
 
     #region Directive
@@ -135,6 +135,15 @@ namespace Alexa.SmartHome.V3
         [DataMember(Name = "properties", EmitDefaultValue = false)]
         public List<AlexaProperty> properties { get; set; }
 
+        [OnSerializing]
+        void OnSerializing(StreamingContext context)
+        {
+            if ((this.properties == null) || (this.properties.Count == 0))
+            {
+                this.properties = default(List<AlexaProperty>); // will not be serialized
+            }
+        }
+
         public Context()
         {
             properties = new List<AlexaProperty>();
@@ -171,7 +180,6 @@ namespace Alexa.SmartHome.V3
 
     }
 
-
     [DataContract(Name = "capability")]
     public class Capability
     {
@@ -181,111 +189,32 @@ namespace Alexa.SmartHome.V3
         public string @interface { get; set; }
         [DataMember(Name = "version", IsRequired = true, EmitDefaultValue = true, Order = 3)]
         public string version { get; set; }
-        [DataMember(Name = "properties", EmitDefaultValue = false, IsRequired = false, Order = 4)]
+        [DataMember(Name = "supportsDeactivation", EmitDefaultValue = false, IsRequired = false, Order = 4)]
+        public bool supportsDeactivation { get; set; }
+        [DataMember(Name = "proactivelyReported", EmitDefaultValue = false, IsRequired = false, Order = 5)]
+        public bool proactivelyReported { get; set; }
+        [DataMember(Name = "properties", EmitDefaultValue = false, IsRequired = false, Order = 6)]
         public Properties properties { get; set; }
-        public Capability()
+        [OnSerializing]
+        void OnSerializing(StreamingContext context)
         {
-
+            if (this.properties == null)
+            {
+                this.properties = default(Properties); // will not be serialized
+            }
         }
 
         public Capability(string interfaceName, bool asyncSupported, bool querySupported)
         {
-            this.type = "Alexa.Interface";
-            this.@interface = interfaceName;
+            this.type = "AlexaInterface";
             this.version = "3.0";
+            this.@interface = interfaceName;
             this.properties = new Properties(asyncSupported, querySupported);
         }
 
-    }
-
-    #endregion
-
-    #region Discovery
-
-    [DataContract]
-    public class DiscoveryRequest
-    {
-        [DataMember(Name = "directive")]
-        public DiscoveryDirective directive { get; set; }
-
-        public DiscoveryRequest()
+        public bool HasProperties()
         {
-            directive = new DiscoveryDirective();
-        }
-    }
-
-    [DataContract]
-    public class DiscoveryDirectivePayload
-    {
-        [DataMember(Name = "scope", EmitDefaultValue = false)]
-        public Scope scope { get; set; }
-
-        public DiscoveryDirectivePayload()
-        {
-            scope = new Scope();
-        }
-    }
-
-    [DataContract]
-    public class DiscoveryDirective
-    {
-        [DataMember(Name = "header", IsRequired = true, Order = 1)]
-        public Header header { get; set; }
-        [DataMember(Name = "payload", IsRequired = true, Order = 3)]
-        public DiscoveryDirectivePayload payload { get; set; }
-
-        public DiscoveryDirective()
-        {
-            header = new Header();
-            payload = new DiscoveryDirectivePayload();
-        }
-    }
-
-    [DataContract]
-    public class DiscoveryResponse
-    {
-        [DataMember(Name = "event", IsRequired = true, Order = 1)]
-        public DiscoveryResponseEvent @event { get; set; }
-        public DiscoveryResponse(DiscoveryDirective directive)
-        {
-            this.@event = new DiscoveryResponseEvent(directive);
-        }
-    }
-
-    [DataContract]
-    public class DiscoveryResponseEvent
-    {
-        [DataMember(Name = "header", IsRequired = true, Order = 1)]
-        public Header header { get; set; }
-        [DataMember(Name = "payload", IsRequired = true, Order = 2)]
-        public DiscoveryResponsePayload payload { get; set; }
-        public DiscoveryResponseEvent(DiscoveryDirective discoveryDirective)
-        {
-
-            this.header = new Header()
-            {
-                correlationToken = discoveryDirective?.header?.correlationToken,     // new ? is Null-condition operator does null test on member
-                messageID = discoveryDirective?.header?.messageID,                   // and returns null if member is null
-                name = "Discover.Response",
-                @namespace = "Alexa.Discovery"
-            };
-
-            this.payload = new DiscoveryResponsePayload();
-        }
-    }
-
-    [DataContract]
-    public class DiscoveryResponsePayload
-    {
-        [DataMember(Name = "endpoints", EmitDefaultValue = false, IsRequired = false)]
-        public List<DiscoveryEndpoint> endpoints { get; set; }
-
-        [DataMember(Name = "exception", EmitDefaultValue = false, IsRequired = false)]
-        public ExceptionResponsePayload exception { get; set; }
-
-        public DiscoveryResponsePayload()
-        {
-            endpoints = new List<DiscoveryEndpoint>();
+            return !((this.properties == null) || (this.properties.supported == null) || (this.properties.supported.Count == 0));
         }
     }
 
@@ -306,7 +235,7 @@ namespace Alexa.SmartHome.V3
         // Skill Adapter Faults:
         // These errors occur when the request is valid but the skill adapter cannot complete the required task because
         // of a hardware issue or limitation.
-        public const string DriverInternalError = "DriverInternalError";
+        public const string DriverpublicError = "DriverpublicError";
         public const string DependentServiceUnavailableError = "DependentServiceUnavailableError";
         public const string TargetConnectivityUnstableError = "TargetConnectivityUnstableError";
         public const string TargetBridgeConnectivityUnstableError = "TargetBridgeConnectivityUnstableError";
@@ -364,12 +293,6 @@ namespace Alexa.SmartHome.V3
     #endregion
 
     #region System
-
-    public enum SystemRequestType
-    {
-        Unknown,
-        HealthCheck,
-    }
 
     [DataContract(Namespace = "Alexa.ConnectedHome.System")]
     public class SystemRequest
@@ -430,25 +353,7 @@ namespace Alexa.SmartHome.V3
         int maximumValue { get; set; }
     }
 
-    [DataContract]
-    public class ControlErrorPayload
-    {
-        // used for error responses
-        [DataMember(Name = "type")]
-        public string @type { get; set; }
-
-        // used for error responses
-        [DataMember(Name = "message")]
-        public string message { get; set; }
-
-        public ControlErrorPayload(string errorType, string errorMessage)
-        {
-            @type = errorType;
-            message = errorMessage;
-        }
-
-    }
-
+    
     [DataContract]
     public class ControlResponse
     {
@@ -471,7 +376,10 @@ namespace Alexa.SmartHome.V3
         public ControlResponse(Header header, DirectiveEndpoint endpoint)
         {
             context = new AlexaControlResponseContext();
-            Event = new AlexaEventBody(header, endpoint);
+            Event = new AlexaEventBody(header, endpoint)
+            {
+                header = header,
+            };
         }
     }
 
@@ -505,9 +413,15 @@ namespace Alexa.SmartHome.V3
     [DataContract]
     public class AlexaControlResponseContext
     {
-        [DataMember(Name = "properties")]
+        [DataMember(Name = "properties", EmitDefaultValue = false)]
         public List<AlexaProperty> properties { get; set; }
-
+        void OnSerializing(StreamingContext context)
+        {
+            if ((this.properties == null) || (this.properties.Count == 0))
+            {
+                this.properties = default(List<AlexaProperty>); // will not be serialized
+            }
+        }
         public AlexaControlResponseContext()
         {
             properties = new List<AlexaProperty>();
@@ -515,7 +429,7 @@ namespace Alexa.SmartHome.V3
     }
 
     [KnownType(typeof(AlexaErrorResponsePayload))]
-    [DataContract(Namespace = "")]
+    [DataContract]
     public class AlexaResponsePayload
     {
 
@@ -587,8 +501,10 @@ namespace Alexa.SmartHome.V3
                 messageID = header.messageID,
                 correlationToken = header.correlationToken
             };
-
-            endpoint = new ResponseEndpoint(directiveEndpoint);
+            if (directiveEndpoint != null)
+            {
+                endpoint = new ResponseEndpoint(directiveEndpoint);
+            }
             payload = new AlexaResponsePayload();
         }
     }
@@ -616,6 +532,15 @@ namespace Alexa.SmartHome.V3
         public ReportStateResponse(AlexaDirective directive)
         {
             @event = new AlexaEventBody(directive.header, directive.endpoint);
+            @event.header = new Header()
+            {
+                @namespace = "Alexa",
+                name = "Response",
+                payloadVersion = "3",
+                messageID = directive.header.messageID,
+                correlationToken = directive.header.correlationToken
+            };
+
             context = new Context();
         }
     }
@@ -632,8 +557,18 @@ namespace Alexa.SmartHome.V3
     {
         [DataMember(Name = "cause")]
         public ChangeReportCause cause { get; set; }
-        [DataMember(Name = "properties")]
+        [DataMember(Name = "timestamp", EmitDefaultValue = false)]
+        public string timestamp { get; set; }
+        [DataMember(Name = "properties", EmitDefaultValue = false)]
         public List<AlexaProperty> properties { get; set; }
+        [OnSerializing]
+        void OnSerializing(StreamingContext context)
+        {
+            if ((this.properties == null) || (this.properties.Count == 0))
+            {
+                this.properties = default(List<AlexaProperty>); // will not be serialized
+            }
+        }
 
         public ChangeReportPayload()
         {

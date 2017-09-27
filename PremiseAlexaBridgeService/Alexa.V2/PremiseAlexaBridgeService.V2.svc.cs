@@ -1,4 +1,4 @@
-﻿using Alexa.SmartHome.V2;
+﻿using Alexa.SmartHomeAPI.V2;
 using System;
 using System.Collections.Generic;
 using System.ServiceModel;
@@ -217,7 +217,7 @@ namespace PremiseAlexaBridgeService
             catch (Exception ex)
             {
                 response.header.@namespace = Faults.Namespace;
-                response.header.name = Faults.DriverInternalError;
+                response.header.name = Faults.DriverpublicError;
                 response.payload.exception = new ExceptionResponsePayload
                 {
                     errorInfo = new ErrorInfo
@@ -825,7 +825,7 @@ namespace PremiseAlexaBridgeService
             catch
             {
                 response.header.@namespace = Faults.Namespace;
-                response.header.name = Faults.DriverInternalError;
+                response.header.name = Faults.DriverpublicError;
                 response.payload.exception = new ExceptionResponsePayload();
             }
 
@@ -939,7 +939,7 @@ namespace PremiseAlexaBridgeService
             catch (Exception e)
             {
                 response.header.@namespace = Faults.QueryNamespace;
-                response.header.name = Faults.DriverInternalError;
+                response.header.name = Faults.DriverpublicError;
                 response.payload.exception = new ExceptionResponsePayload
                 {
                     errorInfo = new ErrorInfo
