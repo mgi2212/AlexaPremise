@@ -64,6 +64,16 @@ namespace Alexa.SceneController
         {
         }
 
+        public string GetNameSpace()
+        {
+            return @namespace;
+        }
+
+        public string[] GetDirectiveNames()
+        {
+            return directiveNames;
+        }
+
         public AlexaProperty GetPropertyState()
         {
             bool powerState = endpoint.GetValue<bool>(premiseProperty).GetAwaiter().GetResult();
@@ -107,7 +117,7 @@ namespace Alexa.SceneController
             }
             catch (Exception ex)
             {
-                base.ReportError(AlexaErrorTypes.public_ERROR, ex.Message);
+                base.ReportError(AlexaErrorTypes.INTERNAL_ERROR, ex.Message);
                 return;
             }
         }

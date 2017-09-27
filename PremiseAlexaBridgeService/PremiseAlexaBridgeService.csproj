@@ -151,8 +151,11 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Alexa.Discovery\Alexa.DiscoveryController.cs" />
+    <Compile Include="Alexa.HVAC\Alexa.HVAC.cs" />
     <Compile Include="Alexa.Lighting\Alexa.AdjustColorTemperatureController.cs" />
     <Compile Include="Alexa.Lighting\Alexa.SetColorTemperatureController.cs" />
+    <Compile Include="Alexa.Lighting\Alexa.Lighting.cs" />
+    <Compile Include="Alexa.Power\Alexa.Power.cs" />
     <Compile Include="Alexa.Scene\Alexa.SetSceneController.cs" />
     <Compile Include="BaseClasses\Alexa.BlockingQueue.cs" />
     <Compile Include="Alexa.Lighting\Alexa.AdjustBrightnessController.cs" />
@@ -168,6 +171,7 @@
     <Compile Include="Alexa.Custom\PremiseAlexaBridgeService.Custom.svc.cs">
       <DependentUpon>PremiseAlexaBridgeService.Custom.svc</DependentUpon>
     </Compile>
+    <Compile Include="BaseClasses\IAlexaDeviceType.cs" />
     <Compile Include="BaseClasses\PremiseAlexaBridgeService.svc.cs">
       <DependentUpon>PremiseAlexaBridgeService.svc</DependentUpon>
     </Compile>

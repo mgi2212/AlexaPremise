@@ -24,6 +24,13 @@ namespace PremiseAlexaBridgeService
             return value;
         }
 
+        public static void AddUnique<List>(this IList<List> self, IEnumerable<List> items)
+        {
+            foreach (var item in items)
+                if (!self.Contains(item))
+                    self.Add(item);
+        }
+
     }
 
     public class PreWarmCache : System.Web.Hosting.IProcessHostPreloadClient

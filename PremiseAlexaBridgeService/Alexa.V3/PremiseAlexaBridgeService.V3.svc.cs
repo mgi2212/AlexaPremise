@@ -1,5 +1,7 @@
-﻿using Alexa.Lighting;
+﻿using Alexa;
+using Alexa.Lighting;
 using Alexa.Power;
+using Alexa.HVAC;
 using Alexa.Discovery;
 using Alexa.SmartHomeAPI.V3;
 using System;
@@ -7,6 +9,7 @@ using System.ServiceModel;
 using System.ServiceModel.Web;
 using System.Threading.Tasks;
 using SYSWebSockClient;
+using System.Linq;
 
 namespace PremiseAlexaBridgeService
 {
@@ -48,6 +51,8 @@ namespace PremiseAlexaBridgeService
 
     public class PremiseAlexaV3Service : PremiseAlexaBase, IPremiseAlexaV3Service
     {
+
+
 
         #region System
 
@@ -144,7 +149,7 @@ namespace PremiseAlexaBridgeService
         public ControlResponse SetPowerState(AlexaSetPowerStateControllerRequest request)
         {
             AlexaSetPowerStateController controller = new AlexaSetPowerStateController(request);
-            if (controller.ValidateDirective(controller.directiveNames, controller.@namespace))
+            if (controller.ValidateDirective(controller.GetDirectiveNames(), controller.GetNameSpace()))
             {
                 controller.ProcessControllerDirective();
             }
@@ -164,7 +169,7 @@ namespace PremiseAlexaBridgeService
         public ControlResponse SetBrightness(AlexaSetBrightnessControllerRequest request)
         {
             AlexaSetBrightnessController controller = new AlexaSetBrightnessController(request);
-            if (controller.ValidateDirective(controller.directiveNames, controller.@namespace))
+            if (controller.ValidateDirective(controller.GetDirectiveNames(), controller.GetNameSpace()))
             {
                 controller.ProcessControllerDirective();
             }
@@ -180,7 +185,7 @@ namespace PremiseAlexaBridgeService
         public ControlResponse AdjustBrightness(AlexaAdjustBrightnessControllerRequest request)
         {
             AlexaAdjustBrightnessController controller = new AlexaAdjustBrightnessController(request);
-            if (controller.ValidateDirective(controller.directiveNames, controller.@namespace))
+            if (controller.ValidateDirective(controller.GetDirectiveNames(), controller.GetNameSpace()))
             {
                 controller.ProcessControllerDirective();
             }
@@ -200,7 +205,7 @@ namespace PremiseAlexaBridgeService
         public ControlResponse AdjustColorTemperature(AlexaAdjustColorTemperatureControllerRequest request)
         {
             AlexaAdjustColorTemperatureController controller = new AlexaAdjustColorTemperatureController(request);
-            if (controller.ValidateDirective(controller.directiveNames, controller.@namespace))
+            if (controller.ValidateDirective(controller.GetDirectiveNames(), controller.GetNameSpace()))
             {
                 controller.ProcessControllerDirective();
             }
@@ -216,7 +221,7 @@ namespace PremiseAlexaBridgeService
         public ControlResponse SetColorTemperature(AlexaSetColorTemperatureControllerRequest request)
         {
             AlexaSetColorTemperatureController controller = new AlexaSetColorTemperatureController(request);
-            if (controller.ValidateDirective(controller.directiveNames, controller.@namespace))
+            if (controller.ValidateDirective(controller.GetDirectiveNames(), controller.GetNameSpace()))
             {
                 controller.ProcessControllerDirective();
             }
@@ -295,7 +300,7 @@ namespace PremiseAlexaBridgeService
             catch
             {
                 response.context = null;
-                response.@event.payload = new AlexaErrorResponsePayload(AlexaErrorTypes.public_ERROR, "Cannot find Alexa home object on local Premise server.");
+                response.@event.payload = new AlexaErrorResponsePayload(AlexaErrorTypes.INTERNAL_ERROR, "Cannot find Alexa home object on local Premise server.");
                 return response;
             }
 
@@ -316,7 +321,7 @@ namespace PremiseAlexaBridgeService
             catch
             {
                 response.context = null;
-                response.@event.payload = new AlexaErrorResponsePayload(AlexaErrorTypes.public_ERROR, string.Format("Cannot find device {0} on server.", directive.endpoint.endpointId));
+                response.@event.payload = new AlexaErrorResponsePayload(AlexaErrorTypes.INTERNAL_ERROR, string.Format("Cannot find device {0} on server.", directive.endpoint.endpointId));
                 return response;
             }
 
@@ -333,56 +338,30 @@ namespace PremiseAlexaBridgeService
             if (discoveryEndpoint == null)
             {
                 response.context = null;
-                response.@event.payload = new AlexaErrorResponsePayload(AlexaErrorTypes.public_ERROR, string.Format("Cannot find or invalid discoveryJson for {0} on server.", directive.endpoint.endpointId));
+                response.@event.payload = new AlexaErrorResponsePayload(AlexaErrorTypes.INTERNAL_ERROR, string.Format("Cannot find or invalid discoveryJson for {0} on server.", directive.endpoint.endpointId));
                 return response;
             }
             response.@event.endpoint.cookie = discoveryEndpoint.cookie;
-
             try
             {
-                foreach (Capability capability in discoveryEndpoint.capabilities)
+                // use reflection to instantiate all device type controllers
+                var interfaceType = typeof(IAlexaDeviceType);
+                var all = AppDomain.CurrentDomain.GetAssemblies()
+                  .SelectMany(x => x.GetTypes())
+                  .Where(x => interfaceType.IsAssignableFrom(x) && !x.IsInterface && !x.IsAbstract)
+                  .Select(x => Activator.CreateInstance(x));
+
+                foreach (IAlexaDeviceType deviceType in all)
                 {
-                    switch (capability.@interface)
-                    {
-                        case "Alexa.PowerController":
-                            {
-                                AlexaSetPowerStateController controller = new AlexaSetPowerStateController(endpoint);
-                                response.context.properties.Add(controller.GetPropertyState());
-                            }
-                            break;
-                        case "Alexa.BrightnessController":
-                            {
-                                AlexaSetBrightnessController controller = new AlexaSetBrightnessController(endpoint);
-                                response.context.properties.Add(controller.GetPropertyState());
-                            }
-                            break;
-
-                        case "Alexa.ColorController":
-                            {
-
-                            }
-                            break;
-
-                        case "Alexa.ColorTemperatureController":
-                            {
-                                AlexaSetColorTemperatureController controller = new AlexaSetColorTemperatureController(endpoint);
-                                response.context.properties.Add(controller.GetPropertyState());
-                            }
-                            break;
-
-                        default:
-                            break;
-                    }
+                    response.context.properties.AddRange(deviceType.FindRelatedProperties(endpoint, ""));
                 }
-
             }
             catch (Exception ex)
             {
                 response.context = null;
-                response.@event.payload = new AlexaErrorResponsePayload(AlexaErrorTypes.public_ERROR, ex.Message);
+                response.@event.payload = new AlexaErrorResponsePayload(AlexaErrorTypes.INTERNAL_ERROR, ex.Message);
                 return response;
             }
-
             return response;
         }
         #endregion
@@ -430,7 +409,7 @@ namespace PremiseAlexaBridgeService
             }
             catch (Exception ex)
             {
-                response.@event.payload = new AlexaErrorResponsePayload(AlexaErrorTypes.public_ERROR, ex.Message);
+                response.@event.payload = new AlexaErrorResponsePayload(AlexaErrorTypes.INTERNAL_ERROR, ex.Message);
                 return response;
             }
 
@@ -448,7 +427,7 @@ namespace PremiseAlexaBridgeService
             }
             catch (Exception ex)
             {
-                response.@event.payload = new AlexaErrorResponsePayload(AlexaErrorTypes.public_ERROR, ex.Message);
+                response.@event.payload = new AlexaErrorResponsePayload(AlexaErrorTypes.INTERNAL_ERROR, ex.Message);
                 return response;
             }
 

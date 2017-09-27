@@ -1,5 +1,7 @@
-﻿using Alexa.Lighting;
+﻿using Alexa;
+using Alexa.Lighting;
 using Alexa.Power;
+using Alexa.HVAC;
 using Alexa.SceneController;
 using Alexa.RegisteredTasks;
 using Alexa.SmartHomeAPI.V3;
@@ -16,6 +18,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using SYSWebSockClient;
+using System.Linq;
 
 namespace PremiseAlexaBridgeService
 {
@@ -253,47 +256,25 @@ namespace PremiseAlexaBridgeService
                 {
                     UnsubscribeAll().GetAwaiter().GetResult();
                 }
-                foreach (DiscoveryEndpoint endpoint in endpoints)
+                Action<dynamic> callback = new Action<dynamic>(AlexaPropertyChanged);
+                foreach (DiscoveryEndpoint discoveryEndpoint in endpoints)
                 {
-                    foreach (Capability capability in endpoint.capabilities)
+                    Guid premiseId = new Guid(discoveryEndpoint.endpointId);
+                    IPremiseObject endpoint = await RootObject.GetObject(premiseId.ToString("B"));
+
+                    // use reflection to instantiate all device type controllers
+                    var interfaceType = typeof(IAlexaDeviceType);
+                    var all = AppDomain.CurrentDomain.GetAssemblies()
+                      .SelectMany(x => x.GetTypes())
+                      .Where(x => interfaceType.IsAssignableFrom(x) && !x.IsInterface && !x.IsAbstract)
+                      .Select(x => Activator.CreateInstance(x));
+
+                    foreach (IAlexaDeviceType deviceType in all)
                     {
-                        Guid premiseId = new Guid(endpoint.endpointId);
-                        IPremiseObject sysObject = await RootObject.GetObject(premiseId.ToString("B"));
-                        IPremiseSubscription subscription = null;
-                        if (!subscriptions.ContainsKey(endpoint.endpointId + "." + capability.@interface))
-                        {
-                            if ((capability.HasProperties() == false) && (capability.proactivelyReported == true)) // scense have no properties but use Powerstate
-                            {
-                                subscription = await sysObject.Subscribe("PowerState", capability.@interface, new Action<dynamic>(AlexaPropertyChanged));  // scenes use powerstate
-                            }
-                            else if (capability.properties == null)
-                            {
-                                Debug.Assert(false, "unhandled discovery condition");
-                                continue;
-                            }
-                            else if (capability.properties.proactivelyReported)
-                            {
-                                switch (capability.@interface)
-                                {
-                                    case "Alexa.PowerController":
-                                        subscription = await sysObject.Subscribe("PowerState", capability.@interface, new Action<dynamic>(AlexaPropertyChanged));
-                                        break;
-                                    case "Alexa.BrightnessController":
-                                        subscription = await sysObject.Subscribe("Brightness", capability.@interface, new Action<dynamic>(AlexaPropertyChanged));
-                                        break;
-                                    case "Alexa.ColorTemperatureController":
-                                        subscription = await sysObject.Subscribe("Temperature", capability.@interface, new Action<dynamic>(AlexaPropertyChanged));
-                                        break;
-                                    default:
-                                        break;
-                                }
-                            }
-                        }
-                        if (subscription != null)
-                        {
-                            subscriptions.Add(endpoint.endpointId + "." + capability.@interface, subscription);
-                        }
+                        deviceType.SubcribeToSupportedProperties(endpoint, discoveryEndpoint, callback);
                     }
+                    //AlexaPower.SubcribeToSupportedProperties(endpoint, discoveryEndpoint, callback);
+                    //AlexaLighting.SubcribeToSupportedProperties(endpoint, discoveryEndpoint, callback);
                 }
             }
         }
@@ -347,7 +328,19 @@ namespace PremiseAlexaBridgeService
                 changeReport.@event.endpoint.endpointId = premiseId.ToString("B");
                 changeReport.@event.endpoint.cookie = disoveryEndpoint.cookie;
                 changeReport.@event.payload.cause.type = "PHYSICAL_INTERACTION";
-                AlexaProperty changedProperty = null;
+
+                // use reflection to instantiate all device type controllers
+                var interfaceType = typeof(IAlexaDeviceType);
+                var all = AppDomain.CurrentDomain.GetAssemblies()
+                  .SelectMany(x => x.GetTypes())
+                  .Where(x => interfaceType.IsAssignableFrom(x) && !x.IsInterface && !x.IsAbstract)
+                  .Select(x => Activator.CreateInstance(x));
+
+                foreach (IAlexaDeviceType deviceType in all)
+                {
+                    changeReport.context.properties.AddRange(deviceType.FindRelatedProperties(endpoint, ""));
+                }
+
                 foreach (Capability capability in disoveryEndpoint.capabilities)
                 {
                     if ((capability.HasProperties() == false))
@@ -370,33 +363,6 @@ namespace PremiseAlexaBridgeService
                     else
                     {
                         changeReport.@event.header.name = "ChangeReport";
-                        switch (capability.@interface)
-                        {
-                            case "Alexa.PowerController":
-                                {
-                                    AlexaSetPowerStateController controller = new AlexaSetPowerStateController(endpoint);
-                                    changedProperty = controller.GetPropertyState();
-                                    changeReport.context.properties.Add(changedProperty);
-                                }
-                                break;
-                            case "Alexa.BrightnessController":
-                                {
-                                    AlexaSetBrightnessController controller = new AlexaSetBrightnessController(endpoint);
-                                    changedProperty = controller.GetPropertyState();
-                                    changeReport.context.properties.Add(changedProperty);
-                                }
-                                break;
-                            case "Alexa.ColorTemperatureController":
-                                {
-                                    AlexaAdjustColorTemperatureController controller = new AlexaAdjustColorTemperatureController(endpoint);
-                                    changedProperty = controller.GetPropertyState();
-                                    changeReport.context.properties.Add(changedProperty);
-                                }
-                                break;
-
-                            default:
-                                break;
-                        }
                     }
                 }
 

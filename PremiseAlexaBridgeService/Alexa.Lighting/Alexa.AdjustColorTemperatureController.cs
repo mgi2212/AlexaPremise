@@ -49,10 +49,11 @@ namespace Alexa.Lighting
         ControlResponse,
         AlexaAdjustColorTemperatureControllerRequest>, IAlexaController
     {
-        public readonly string @namespace = "Alexa.ColorTemperatureController";
-        public readonly string[] directiveNames = { "IncreaseColorTemperature", "DecreaseColorTemperature" };
-        public readonly string premiseProperty = "Temperature";
-        public readonly string alexaProperty = "colorTemperatureInKelvin";
+        private readonly string @namespace = "Alexa.ColorTemperatureController";
+        private readonly string[] directiveNames = { "IncreaseColorTemperature", "DecreaseColorTemperature" };
+        private readonly string premiseProperty = "Temperature";
+        private readonly string alexaProperty = "colorTemperatureInKelvin";
+        public readonly AlexaLighting PropertyHelpers = new AlexaLighting();
 
         // corresponds to warm white, soft white, white, daylight, cool white
         private int[] colorTable = { 2200, 2700, 4000, 5500, 7000 };
@@ -65,6 +66,15 @@ namespace Alexa.Lighting
         public AlexaAdjustColorTemperatureController(IPremiseObject endpoint)
             : base(endpoint)
         {
+        }
+
+        public string GetNameSpace()
+        {
+            return @namespace;
+        }
+        public string [] GetDirectiveNames()
+        {
+            return directiveNames;
         }
 
         public AlexaProperty GetPropertyState()
@@ -150,54 +160,11 @@ namespace Alexa.Lighting
                 response.context.properties.Add(property);
 
                 this.Response.Event.header.name = "Response";
-
-                // walk through related and supported controllers and report state
-                DiscoveryEndpoint discoveryEndpoint = PremiseServer.GetDiscoveryEndpoint(endpoint).GetAwaiter().GetResult();
-                if (discoveryEndpoint != null)
-                {
-                    foreach (Capability capability in discoveryEndpoint.capabilities)
-                    {
-                        switch (capability.@interface)
-                        {
-                            case "Alexa.BrightnessController":
-                                {
-                                    AlexaSetBrightnessController controller = new AlexaSetBrightnessController(endpoint);
-                                    AlexaProperty brightness = controller.GetPropertyState();
-                                    response.context.properties.Add(brightness);
-                                }
-                                break;
-
-                            case "Alexa.PowerController":
-                                {
-                                    AlexaSetPowerStateController controller = new AlexaSetPowerStateController(endpoint);
-                                    AlexaProperty powerState = controller.GetPropertyState();
-                                    response.context.properties.Add(powerState);
-                                }
-                                break;
-
-                            case "Alexa.ColorController":
-                                {
-                                    //AlexaSetColorController controller = new AlexaSetColorController(endpoint);
-                                    //AlexaProperty brightness = controller.GetPropertyState();
-                                    //response.context.properties.Add(brightness);
-                                }
-                                // TODO
-                                break;
-
-                            case "Alexa.ColorTemperatureController": // already added
-                                {
-                                }
-                                break;
-
-                            default:
-                                break;
-                        }
-                    }
-                }
+                this.response.context.properties.AddRange(this.PropertyHelpers.FindRelatedProperties(endpoint, @namespace));
             }
             catch (Exception ex)
             {
-                base.ReportError(AlexaErrorTypes.public_ERROR, ex.Message);
+                base.ReportError(AlexaErrorTypes.INTERNAL_ERROR, ex.Message);
             }
         }
     }

@@ -121,10 +121,21 @@ namespace Alexa.Discovery
         {
         }
 
+        public string GetNameSpace()
+        {
+            return @namespace;
+        }
+
+        public string[] GetDirectiveNames()
+        {
+            return directiveNames;
+        }
+
         public AlexaProperty GetPropertyState()
         {
             return null;
         }
+
 
         public void ProcessControllerDirective()
         {

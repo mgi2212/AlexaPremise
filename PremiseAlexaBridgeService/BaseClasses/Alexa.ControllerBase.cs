@@ -282,7 +282,7 @@ namespace Alexa.Controller
             }
             catch
             {
-                ReportError(AlexaErrorTypes.public_ERROR, "Cannot find Alexa home object on local Premise server.");
+                ReportError(AlexaErrorTypes.INTERNAL_ERROR, "Cannot find Alexa home object on local Premise server.");
                 return false;
             }
 
@@ -301,15 +301,15 @@ namespace Alexa.Controller
                     this.endpoint = PremiseServer.RootObject.GetObject(premiseId.ToString("B")).GetAwaiter().GetResult();
                     if (this.endpoint == null)
                     {
-                        ReportError(AlexaErrorTypes.public_ERROR, string.Format("Cannot find device {0} on server.", directiveEndpoint.endpointId));
+                        ReportError(AlexaErrorTypes.INTERNAL_ERROR, string.Format("Cannot find device {0} on server.", directiveEndpoint.endpointId));
                         return false;
                     }
                 }
             }
             catch (Exception ex)
             {
-                ReportError(AlexaErrorTypes.public_ERROR, ex.Message);
-                this.ResponseEvent.payload = new AlexaErrorResponsePayload(AlexaErrorTypes.public_ERROR, string.Format("Cannot find device {0} on server.", directiveEndpoint.endpointId));
+                ReportError(AlexaErrorTypes.INTERNAL_ERROR, ex.Message);
+                this.ResponseEvent.payload = new AlexaErrorResponsePayload(AlexaErrorTypes.INTERNAL_ERROR, string.Format("Cannot find device {0} on server.", directiveEndpoint.endpointId));
                 return false;
             }
             #endregion

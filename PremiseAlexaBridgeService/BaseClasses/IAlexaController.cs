@@ -6,5 +6,7 @@ namespace Alexa.Controller
     {
         void ProcessControllerDirective();
         AlexaProperty GetPropertyState();
+        string GetNameSpace();
+        string [] GetDirectiveNames();
     }
 }

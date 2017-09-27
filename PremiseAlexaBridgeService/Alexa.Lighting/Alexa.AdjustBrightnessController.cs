@@ -50,10 +50,11 @@ namespace Alexa.Lighting
         ControlResponse, 
         AlexaAdjustBrightnessControllerRequest>, IAlexaController 
     {
-        public readonly string @namespace = "Alexa.BrightnessController";
-        public readonly string[] directiveNames = { "AdjustBrightness" };
-        public readonly string  premiseProperty = "Brightness";
-        public readonly string alexaProperty = "brightness";
+        public readonly AlexaLighting PropertyHelpers = new AlexaLighting();
+        private readonly string @namespace = "Alexa.BrightnessController";
+        private readonly string[] directiveNames = { "AdjustBrightness" };
+        private readonly string premiseProperty = "Brightness";
+        private readonly string alexaProperty = "brightness";
 
         public AlexaAdjustBrightnessController(AlexaAdjustBrightnessControllerRequest request)
             : base(request)
@@ -64,6 +65,16 @@ namespace Alexa.Lighting
             : base(endpoint)
         {
         }
+
+        public string GetNameSpace()
+        {
+            return @namespace;
+        }
+        public string [] GetDirectiveNames()
+        {
+            return directiveNames;
+        }
+
 
         public AlexaProperty GetPropertyState()
         {
@@ -94,51 +105,13 @@ namespace Alexa.Lighting
                 property.timeOfSample = GetUtcTime();
                 property.value = (int)(valueToSend * 100);
                 response.context.properties.Add(property);
+
+                this.Response.Event.header.name = "Response";
+                this.response.context.properties.AddRange(this.PropertyHelpers.FindRelatedProperties(endpoint, @namespace));
             }
             catch (Exception ex)
             {
-                base.ReportError(AlexaErrorTypes.public_ERROR, ex.Message);
-            }
-
-            this.Response.Event.header.name = "Response";
-
-            // walk through related and supported controllers and report state
-            DiscoveryEndpoint discoveryEndpoint = PremiseServer.GetDiscoveryEndpoint(endpoint).GetAwaiter().GetResult();
-            if (discoveryEndpoint != null)
-            {
-                foreach (Capability capability in discoveryEndpoint.capabilities)
-                {
-                    switch (capability.@interface)
-                    {
-                        case "Alexa.BrightnessController": // already added
-                            break;
-
-                        case "Alexa.PowerController":
-                            {
-                                AlexaSetPowerStateController controller = new AlexaSetPowerStateController(endpoint);
-                                AlexaProperty powerState = controller.GetPropertyState();
-                                response.context.properties.Add(powerState);
-                            }
-                            break;
-
-                        case "Alexa.ColorController":
-                            {
-
-                            }
-                            // TODO
-                            break;
-
-                        case "Alexa.ColorTemperatureController":
-                            {
-
-                            }
-                            // TODO
-                            break;
-
-                        default:
-                            break;
-                    }
-                }
+                base.ReportError(AlexaErrorTypes.INTERNAL_ERROR, ex.Message);
             }
         }
     }

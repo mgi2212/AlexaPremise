@@ -1,5 +1,4 @@
 ﻿using Alexa.Controller;
-using Alexa.Power;
 using Alexa.SmartHomeAPI.V3;
 using PremiseAlexaBridgeService;
 using System;
@@ -51,10 +50,11 @@ namespace Alexa.Lighting
         ControlResponse, 
         AlexaSetColorTemperatureControllerRequest>, IAlexaController
     {
-        public readonly string @namespace = "Alexa.ColorTemperatureController";
-        public readonly string[] directiveNames = { "SetColorTemperature" };
-        public readonly string premiseProperty = "Temperature";
-        public readonly string alexaProperty = "colorTemperatureInKelvin";
+        private readonly string @namespace = "Alexa.ColorTemperatureController";
+        private readonly string[] directiveNames = { "SetColorTemperature" };
+        private readonly string premiseProperty = "Temperature";
+        private readonly string alexaProperty = "colorTemperatureInKelvin";
+        public readonly AlexaLighting PropertyHelpers = new AlexaLighting();
 
         public AlexaSetColorTemperatureController(AlexaSetColorTemperatureControllerRequest request)
             : base(request)
@@ -64,6 +64,16 @@ namespace Alexa.Lighting
         public AlexaSetColorTemperatureController(IPremiseObject endpoint)
             : base(endpoint)
         {
+        }
+
+        public string GetNameSpace()
+        {
+            return @namespace;
+        }
+
+        public string [] GetDirectiveNames()
+        {
+            return directiveNames;
         }
 
         public AlexaProperty GetPropertyState()
@@ -93,56 +103,12 @@ namespace Alexa.Lighting
                 property.timeOfSample = GetUtcTime();
                 property.value = setValue;
                 this.response.context.properties.Add(property);
+                this.Response.Event.header.name = "Response";
+                this.response.context.properties.AddRange(this.PropertyHelpers.FindRelatedProperties(endpoint, @namespace));
             }
             catch (Exception ex)
             {
-                base.ReportError(AlexaErrorTypes.public_ERROR, ex.Message);
-            }
-
-            this.Response.Event.header.name = "Response";
-
-            // walk through related and supported controllers and report state
-            DiscoveryEndpoint discoveryEndpoint = PremiseServer.GetDiscoveryEndpoint(this.endpoint).GetAwaiter().GetResult();
-            if (discoveryEndpoint != null)
-            {
-                foreach (Capability capability in discoveryEndpoint.capabilities)
-                {
-                    switch (capability.@interface)
-                    {
-                        case "Alexa.BrightnessController": 
-                            {
-                                AlexaSetBrightnessController controller = new AlexaSetBrightnessController(endpoint);
-                                AlexaProperty brightness = controller.GetPropertyState();
-                                response.context.properties.Add(brightness);
-                            }
-                            break;
-
-                        case "Alexa.PowerController":
-                            {
-                                AlexaSetPowerStateController controller = new AlexaSetPowerStateController(this.endpoint);
-                                AlexaProperty powerState = controller.GetPropertyState();
-                                response.context.properties.Add(powerState);
-                            }
-                            break;
-
-                        case "Alexa.ColorController":
-                            {
-
-                            }
-                            // TODO
-                            break;
-
-                        case "Alexa.ColorTemperatureController": // already added
-                            {
-
-                            }
-                            // TODO
-                            break;
-
-                        default:
-                            break;
-                    }
-                }
+                base.ReportError(AlexaErrorTypes.INTERNAL_ERROR, ex.Message);
             }
         }
     }
