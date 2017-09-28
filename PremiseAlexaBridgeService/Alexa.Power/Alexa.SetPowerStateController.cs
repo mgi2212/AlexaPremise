@@ -35,7 +35,7 @@ namespace Alexa.Power
         }
     }
 
-    public class AlexaSetPowerStateRequestPayload : object
+    public class AlexaSetPowerStateRequestPayload 
     {
 
     }

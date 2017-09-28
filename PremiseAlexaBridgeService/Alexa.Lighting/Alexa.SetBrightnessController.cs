@@ -76,7 +76,6 @@ namespace Alexa.Lighting
             return directiveNames;
         }
 
-
         public AlexaProperty GetPropertyState()
         {
             double brightness = this.endpoint.GetValue<double>(premiseProperty).GetAwaiter().GetResult();
@@ -84,7 +83,7 @@ namespace Alexa.Lighting
             {
                 @namespace = @namespace,
                 name = alexaProperty,
-                value = ((int)brightness * 100).LimitToRange(0,100),
+                value = (int)((brightness * 100)).LimitToRange(0,100),
                 timeOfSample = GetUtcTime()
             };
             return property;

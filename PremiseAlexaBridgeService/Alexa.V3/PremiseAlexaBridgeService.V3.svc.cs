@@ -2,6 +2,7 @@
 using Alexa.Lighting;
 using Alexa.Power;
 using Alexa.HVAC;
+using Alexa.Scene;
 using Alexa.Discovery;
 using Alexa.SmartHomeAPI.V3;
 using System;
@@ -37,10 +38,16 @@ namespace PremiseAlexaBridgeService
         ControlResponse AdjustBrightness(AlexaAdjustBrightnessControllerRequest request);
 
         [OperationContract]
+        ControlResponse SetScene(AlexaSetSceneControllerRequest request);
+
+        [OperationContract]
         ControlResponse AdjustColorTemperature (AlexaAdjustColorTemperatureControllerRequest request);
 
         [OperationContract]
         ControlResponse SetColorTemperature(AlexaSetColorTemperatureControllerRequest request);
+
+        [OperationContract]
+        ControlResponse SetColor(AlexaSetColorControllerRequest request);
 
         [OperationContract]
         ReportStateResponse ReportState(ReportStateRequest request);
@@ -194,6 +201,26 @@ namespace PremiseAlexaBridgeService
 
         #endregion
 
+        #region Scene
+
+        /// <summary>
+        /// Control Requests are processed here
+        /// </summary>
+        /// <param name="request", type="AlexaSetPowerStateControllerRequest"></param>
+        /// <returns>ControlResponse</returns>
+        [WebInvoke(Method = "POST", RequestFormat = WebMessageFormat.Json, ResponseFormat = WebMessageFormat.Json, BodyStyle = WebMessageBodyStyle.Bare, UriTemplate = "/Control/Scene/")]
+        public ControlResponse SetScene(AlexaSetSceneControllerRequest request)
+        {
+            AlexaSetSceneController controller = new AlexaSetSceneController(request);
+            if (controller.ValidateDirective(controller.GetDirectiveNames(), controller.GetNameSpace()))
+            {
+                controller.ProcessControllerDirective();
+            }
+            return controller.Response;
+        }
+
+        #endregion
+
         #region ColorTemperature
 
         /// <summary>
@@ -221,6 +248,26 @@ namespace PremiseAlexaBridgeService
         public ControlResponse SetColorTemperature(AlexaSetColorTemperatureControllerRequest request)
         {
             AlexaSetColorTemperatureController controller = new AlexaSetColorTemperatureController(request);
+            if (controller.ValidateDirective(controller.GetDirectiveNames(), controller.GetNameSpace()))
+            {
+                controller.ProcessControllerDirective();
+            }
+            return controller.Response;
+        }
+
+        #endregion
+
+        #region Color
+
+        /// <summary>
+        /// Control Requests are processed here
+        /// </summary>
+        /// <param name="request", type="AlexaSetColorControllerRequest"></param>
+        /// <returns>ControlResponse</returns>
+        [WebInvoke(Method = "POST", RequestFormat = WebMessageFormat.Json, ResponseFormat = WebMessageFormat.Json, BodyStyle = WebMessageBodyStyle.Bare, UriTemplate = "/Control/SetColor/")]
+        public ControlResponse SetColor(AlexaSetColorControllerRequest request)
+        {
+            AlexaSetColorController controller = new AlexaSetColorController(request);
             if (controller.ValidateDirective(controller.GetDirectiveNames(), controller.GetNameSpace()))
             {
                 controller.ProcessControllerDirective();
@@ -353,8 +400,39 @@ namespace PremiseAlexaBridgeService
 
                 foreach (IAlexaDeviceType deviceType in all)
                 {
-                    response.context.properties.AddRange(deviceType.FindRelatedProperties(endpoint, ""));
+                    var related = deviceType.FindRelatedProperties(endpoint, "");
+                    foreach (AlexaProperty property in related)
+                    {
+                        if (!response.context.propertiesInternal.ContainsKey(property.@namespace))
+                        {
+                            response.context.propertiesInternal.Add(property.@namespace, property);
+                        }
+                    }
                 }
+
+                foreach (Capability capability in discoveryEndpoint.capabilities)
+                {
+                    //if ((capability.HasProperties() == false))
+                    //{
+                        switch (capability.@interface)  // scenes are special cased
+                        {
+                            case "Alexa.SceneController":
+                                {
+                                    AlexaSetSceneController controller = new AlexaSetSceneController(endpoint);
+                                    AlexaProperty prop = controller.GetPropertyState();
+                                    response.@event.header.name = (string)prop.value;
+                                    response.@event.payload.cause = new ChangeReportCause();
+                                    response.@event.payload.cause.type = "VOICE_INTERACTION";
+                                    response.@event.payload.timestamp = prop.timeOfSample;
+                                }
+                                break;
+
+                            default:
+                                break;
+                        }
+                    //}
+                }
+
             }
             catch (Exception ex)
             {

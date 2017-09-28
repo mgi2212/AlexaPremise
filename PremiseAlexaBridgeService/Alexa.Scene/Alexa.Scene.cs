@@ -1,14 +1,13 @@
 ﻿using Alexa;
-using Alexa.EndpointHealth;
 using Alexa.SmartHomeAPI.V3;
 using PremiseAlexaBridgeService;
 using System.Collections.Generic;
 using SYSWebSockClient;
 using System;
 
-namespace Alexa.Power
+namespace Alexa.Scene
 {
-    public class AlexaPower : IAlexaDeviceType
+    public class AlexaScene  : IAlexaDeviceType
     {
         public List<AlexaProperty> FindRelatedProperties(IPremiseObject endpoint, string currentController)
         {
@@ -28,16 +27,9 @@ namespace Alexa.Power
 
                 switch (capability.@interface)
                 {
-                    case "Alexa.PowerController":
+                    case "Alexa.SceneController":
                         {
-                            AlexaSetPowerStateController controller = new AlexaSetPowerStateController(endpoint);
-                            property = controller.GetPropertyState();
-                        }
-                        break;
-
-                    case "Alexa.EndpointHealth":
-                        {
-                            AlexaEndpointHealthController controller = new AlexaEndpointHealthController(endpoint);
+                            AlexaSetSceneController controller = new AlexaSetSceneController(endpoint);
                             property = controller.GetPropertyState();
                         }
                         break;
@@ -61,16 +53,11 @@ namespace Alexa.Power
             {
                 IPremiseSubscription subscription = null;
 
-                if (capability.HasProperties() == false)
-                {
-                    continue;
-                }
-
-                if (capability.properties.proactivelyReported)
+                if (capability.proactivelyReported) // scenes are a special cased
                 {
                     switch (capability.@interface)
                     {
-                        case "Alexa.PowerController":
+                        case "Alexa.SceneController":
                             subscription = endpoint.Subscribe("PowerState", capability.@interface, callback).GetAwaiter().GetResult();
                             break;
                         default:

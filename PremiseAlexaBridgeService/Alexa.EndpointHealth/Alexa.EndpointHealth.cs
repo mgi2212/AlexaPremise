@@ -1,14 +1,13 @@
 ﻿using Alexa;
-using Alexa.EndpointHealth;
 using Alexa.SmartHomeAPI.V3;
 using PremiseAlexaBridgeService;
 using System.Collections.Generic;
 using SYSWebSockClient;
 using System;
 
-namespace Alexa.Power
+namespace Alexa.EndpointHealth
 {
-    public class AlexaPower : IAlexaDeviceType
+    public class AlexaEndpointHealth  : IAlexaDeviceType
     {
         public List<AlexaProperty> FindRelatedProperties(IPremiseObject endpoint, string currentController)
         {
@@ -28,13 +27,6 @@ namespace Alexa.Power
 
                 switch (capability.@interface)
                 {
-                    case "Alexa.PowerController":
-                        {
-                            AlexaSetPowerStateController controller = new AlexaSetPowerStateController(endpoint);
-                            property = controller.GetPropertyState();
-                        }
-                        break;
-
                     case "Alexa.EndpointHealth":
                         {
                             AlexaEndpointHealthController controller = new AlexaEndpointHealthController(endpoint);
@@ -66,12 +58,12 @@ namespace Alexa.Power
                     continue;
                 }
 
-                if (capability.properties.proactivelyReported)
+                if (capability.properties.proactivelyReported) 
                 {
                     switch (capability.@interface)
                     {
-                        case "Alexa.PowerController":
-                            subscription = endpoint.Subscribe("PowerState", capability.@interface, callback).GetAwaiter().GetResult();
+                        case "Alexa.EndpointHealth":
+                            subscription = endpoint.Subscribe("IsReachable", capability.@interface, callback).GetAwaiter().GetResult();
                             break;
                         default:
                             break;

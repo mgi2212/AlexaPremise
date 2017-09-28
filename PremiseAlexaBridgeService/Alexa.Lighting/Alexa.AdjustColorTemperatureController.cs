@@ -128,7 +128,6 @@ namespace Alexa.Lighting
             return colorTable[x];
         }
 
-
         public void ProcessControllerDirective()
         {
             AlexaProperty property = new AlexaProperty(header)

@@ -1,4 +1,5 @@
-﻿using Alexa.Lighting;
+﻿using Alexa.EndpointHealth;
+using Alexa.Lighting;
 using Alexa.Power;
 using Alexa.SmartHomeAPI.V3;
 using PremiseAlexaBridgeService;
@@ -11,6 +12,12 @@ namespace Alexa
     public class AlexaLighting : IAlexaDeviceType
     {
         #region Related Properties
+        /// <summary>
+        /// Add all capabilites here exclusively related to this device type. Yes, this differs from the method below by design.
+        /// </summary>
+        /// <param name="endpoint"></param>
+        /// <param name="currentController"></param>
+        /// <returns></returns>
         public List<AlexaProperty> FindRelatedProperties(IPremiseObject endpoint, string currentController)
         {
             List<AlexaProperty> relatedProperties = new List<AlexaProperty>();
@@ -29,6 +36,13 @@ namespace Alexa
 
                 switch (capability.@interface)
                 {
+                    case "Alexa.EndpointHealth":
+                        {
+                            AlexaEndpointHealthController controller = new AlexaEndpointHealthController(endpoint);
+                            property = controller.GetPropertyState();
+                        }
+                        break;
+
                     case "Alexa.PowerController":
                         {
                             AlexaSetPowerStateController controller = new AlexaSetPowerStateController(endpoint);
@@ -44,9 +58,9 @@ namespace Alexa
 
                     case "Alexa.ColorController":
                         {
-
+                            AlexaSetColorController controller = new AlexaSetColorController(endpoint);
+                            property = controller.GetPropertyState();
                         }
-                        // TODO
                         break;
 
                     case "Alexa.ColorTemperatureController":
@@ -69,6 +83,14 @@ namespace Alexa
 
         #endregion
 
+        #region Subscribe To Supported Properties
+        /// <summary>
+        /// Only add subscription supprt for the type of class. For example adding PowerState here in this function is not correct results in a stack overflow issue
+        /// </summary>
+        /// <param name="endpoint"></param>
+        /// <param name="discoveryEndpoint"></param>
+        /// <param name="callback"></param>
+        /// <returns></returns>
         public Dictionary<string, IPremiseSubscription> SubcribeToSupportedProperties(IPremiseObject endpoint, DiscoveryEndpoint discoveryEndpoint, Action<dynamic> callback)
         {
             Dictionary<string, IPremiseSubscription> subscriptions = new Dictionary<string, IPremiseSubscription>();
@@ -85,22 +107,32 @@ namespace Alexa
                 {
                     switch (capability.@interface)
                     {
-                        case "Alexa.BrightnessController":
-                            subscription = endpoint.Subscribe("Brightness", capability.@interface, callback).GetAwaiter().GetResult();
-                            break;
-                        case "Alexa.ColorTemperatureController":
-                            subscription = endpoint.Subscribe("Temperature", capability.@interface, callback).GetAwaiter().GetResult();
+                        case "Alexa.ColorController":
+                            subscription = endpoint.Subscribe("Hue", capability.@interface, callback).GetAwaiter().GetResult();
+                            if (subscription != null)
+                            {
+                                subscriptions.Add(discoveryEndpoint.endpointId + ".Hue." + capability.@interface, subscription);
+                            }
+                            subscription = endpoint.Subscribe("Saturation", capability.@interface, callback).GetAwaiter().GetResult();
+                            if (subscription != null)
+                            {
+                                subscriptions.Add(discoveryEndpoint.endpointId + ".Saturation." + capability.@interface, subscription);
+                            }
+                            // if its a dimmable light brightness is already subscribed
+                            //subscription = endpoint.Subscribe("Brightness", capability.@interface, callback).GetAwaiter().GetResult();
+                            //if (subscription != null)
+                            //{
+                            //    subscriptions.Add(discoveryEndpoint.endpointId + "." + capability.@interface, subscription);
+                            //}
                             break;
                         default:
                             break;
                     }
                 }
-                if (subscription != null)
-                {
-                    subscriptions.Add(discoveryEndpoint.endpointId + "." + capability.@interface, subscription);
-                }
             }
             return subscriptions;
         }
+
+        #endregion
     }
 }

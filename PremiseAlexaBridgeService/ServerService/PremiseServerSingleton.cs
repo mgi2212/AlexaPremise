@@ -1,8 +1,5 @@
 ﻿using Alexa;
-using Alexa.Lighting;
-using Alexa.Power;
-using Alexa.HVAC;
-using Alexa.SceneController;
+using Alexa.Scene;
 using Alexa.RegisteredTasks;
 using Alexa.SmartHomeAPI.V3;
 using Newtonsoft.Json;
@@ -312,8 +309,8 @@ namespace PremiseAlexaBridgeService
                 // build event notification
                 Guid premiseId = new Guid(sub.sysObjectId);
                 IPremiseObject endpoint = RootObject.GetObject(premiseId.ToString("B")).GetAwaiter().GetResult();
-                DiscoveryEndpoint disoveryEndpoint = GetDiscoveryEndpoint(endpoint).GetAwaiter().GetResult();
-                if (disoveryEndpoint == null)
+                DiscoveryEndpoint discoveryEndpoint = GetDiscoveryEndpoint(endpoint).GetAwaiter().GetResult();
+                if (discoveryEndpoint == null)
                 {
                     // object deleted! 
                     return;
@@ -326,8 +323,8 @@ namespace PremiseAlexaBridgeService
                 changeReport.@event.endpoint.scope.type = "BearerToken";
                 changeReport.@event.endpoint.scope.token = authCode;
                 changeReport.@event.endpoint.endpointId = premiseId.ToString("B");
-                changeReport.@event.endpoint.cookie = disoveryEndpoint.cookie;
-                changeReport.@event.payload.cause.type = "PHYSICAL_INTERACTION";
+                changeReport.@event.endpoint.cookie = discoveryEndpoint.cookie;
+                changeReport.@event.payload.change.cause.type = "PHYSICAL_INTERACTION";
 
                 // use reflection to instantiate all device type controllers
                 var interfaceType = typeof(IAlexaDeviceType);
@@ -336,33 +333,47 @@ namespace PremiseAlexaBridgeService
                   .Where(x => interfaceType.IsAssignableFrom(x) && !x.IsInterface && !x.IsAbstract)
                   .Select(x => Activator.CreateInstance(x));
 
+                string changeType =  "";
+
                 foreach (IAlexaDeviceType deviceType in all)
                 {
-                    changeReport.context.properties.AddRange(deviceType.FindRelatedProperties(endpoint, ""));
-                }
-
-                foreach (Capability capability in disoveryEndpoint.capabilities)
-                {
-                    if ((capability.HasProperties() == false))
+                    var related = deviceType.FindRelatedProperties(endpoint, "");
+                    foreach (AlexaProperty prop in related)
                     {
-                        switch (capability.@interface)
+                        // first device property gets reported as the actual change.
+                        if (changeReport.@event.payload.change.properties.Count == 0)
                         {
-                            case "Alexa.SceneController":
-                                {
-                                    AlexaSetSceneController controller = new AlexaSetSceneController(endpoint);
-                                    AlexaProperty prop = controller.GetPropertyState();
-                                    changeReport.@event.header.name = (string)prop.value;
-                                    changeReport.@event.payload.timestamp = prop.timeOfSample;
-                                }
-                                break;
-
-                            default:
-                                break;
+                            changeType = prop.@namespace;
+                            if (prop.@namespace != "Alexa.SceneController")
+                            {
+                                changeReport.@event.payload.change.properties.Add(prop);
+                            }
+                        }
+                        else
+                        {
+                            if ((!changeReport.context.propertiesInternal.ContainsKey(prop.@namespace)) && (prop.@namespace != changeType) )
+                            {
+                                changeReport.context.propertiesInternal.Add(prop.@namespace, prop);
+                            }
                         }
                     }
-                    else
+                }
+
+                changeReport.@event.header.name = "ChangeReport";
+
+                foreach (Capability capability in discoveryEndpoint.capabilities)
+                {
+                    switch (capability.@interface)  // scenes are special cased
                     {
-                        changeReport.@event.header.name = "ChangeReport";
+                        case "Alexa.SceneController":
+                            {
+                                AlexaSetSceneController controller = new AlexaSetSceneController(endpoint);
+                                changeReport = controller.AlterChangeReport(changeReport);
+                            }
+                            break;
+
+                        default:
+                            break;
                     }
                 }
 

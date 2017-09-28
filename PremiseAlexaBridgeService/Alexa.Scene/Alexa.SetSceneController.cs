@@ -4,7 +4,7 @@ using System;
 using System.Runtime.Serialization;
 using SYSWebSockClient;
 
-namespace Alexa.SceneController
+namespace Alexa.Scene
 {
     #region Scene Data Contracts
 
@@ -37,10 +37,6 @@ namespace Alexa.SceneController
     [DataContract]
     public class AlexaSetSceneRequestPayload : object
     {
-        [DataMember(Name ="cause", IsRequired = true, EmitDefaultValue = true, Order = 1)]
-        public ChangeReportCause cause;
-        [DataMember(Name = "timestamp", IsRequired = true, EmitDefaultValue = true, Order = 2)]
-        public string timestamp;
     }
 
     #endregion
@@ -50,6 +46,7 @@ namespace Alexa.SceneController
         ControlResponse, 
         AlexaSetSceneControllerRequest>, IAlexaController
     {
+        public readonly AlexaScene PropertyHelpers = new AlexaScene();
         public readonly string @namespace = "Alexa.SceneController";
         public readonly string[] directiveNames = { "Activate", "Deactivate" };
         public readonly string premiseProperty = "PowerState";
@@ -87,6 +84,19 @@ namespace Alexa.SceneController
             return property;
         }
 
+        public AlexaChangeReport AlterChangeReport(AlexaChangeReport report)
+        {
+            AlexaProperty prop = this.GetPropertyState();
+            report.context.propertiesInternal = null;
+            report.@event.payload.change = null;
+            report.@event.header.@namespace = @namespace;
+            report.@event.payload.cause = new ChangeReportCause();
+            report.@event.payload.cause.type = "APP_INTERACTION";
+            report.@event.header.name = (string)prop.value;
+            report.@event.payload.timestamp = prop.timeOfSample;
+            return report;
+        }
+
         public void ProcessControllerDirective()
         {
             try
@@ -111,9 +121,11 @@ namespace Alexa.SceneController
                 }
 
                 this.endpoint.SetValue(premiseProperty, valueToSend).GetAwaiter().GetResult();
-                payload.cause = new ChangeReportCause();
-                payload.cause.type = "RULE_TRIGGER";
-                payload.timestamp = GetUtcTime();
+                this.Response.context.properties = null;
+                this.Response.Event.payload.cause = new ChangeReportCause();
+                this.Response.Event.payload.cause.type = "VOICE_INTERACTION";
+                this.Response.Event.payload.timestamp = GetUtcTime();
+                this.Response.Event.endpoint.cookie.path = endpoint.GetPath().GetAwaiter().GetResult();
             }
             catch (Exception ex)
             {

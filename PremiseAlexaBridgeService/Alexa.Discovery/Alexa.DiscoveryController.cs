@@ -21,8 +21,8 @@ namespace Alexa.Discovery
 
         public DiscoveryControllerResponse()
         {
-
         }
+
         public DiscoveryControllerResponse(Header header)
         {
             Event = new DiscoveryControllerResponseEvent()
