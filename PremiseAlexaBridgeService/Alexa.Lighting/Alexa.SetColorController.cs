@@ -37,13 +37,13 @@ namespace Alexa.Lighting
     }
 
     [DataContract]
-    public class ColorValue
+    public class AlexaColorValue
     {
-        [DataMember(Name = "hue", EmitDefaultValue = false, Order = 1)]
+        [DataMember(Name = "hue", EmitDefaultValue = true, Order = 1)]
         public double hue { get; set; }
-        [DataMember(Name = "saturation", EmitDefaultValue = false, Order = 2)]
+        [DataMember(Name = "saturation", EmitDefaultValue = true, Order = 2)]
         public double saturation { get; set; }
-        [DataMember(Name = "brightness", EmitDefaultValue = false, Order = 3)]
+        [DataMember(Name = "brightness", EmitDefaultValue = true, Order = 3)]
         public double brightness { get; set; }
     }
 
@@ -51,30 +51,48 @@ namespace Alexa.Lighting
     public class AlexaSetColorRequestPayload
     {
         [DataMember(Name = "color")]
-        public ColorValue colorValue { get; set; }
+        public AlexaColorValue color { get; set; }
     }
 
     #endregion
 
     public class AlexaSetColorController : AlexaControllerBase<
-        AlexaSetColorRequestPayload, 
-        ControlResponse, 
+        AlexaSetColorRequestPayload,
+        ControlResponse,
         AlexaSetColorControllerRequest>, IAlexaController
     {
         private readonly string @namespace = "Alexa.ColorController";
         private readonly string[] directiveNames = { "SetColor" };
-        private readonly string[] premiseProperties = { "Hue","Saturation","Brightness" };
-        private readonly string alexaProperty = "color";
-        public readonly AlexaLighting PropertyHelpers = new AlexaLighting();
+        private readonly string[] premiseProperties = { "Hue", "Saturation", "Brightness" };
+        public readonly string alexaProperty = "color";
+        public readonly AlexaLighting PropertyHelpers;
 
         public AlexaSetColorController(AlexaSetColorControllerRequest request)
             : base(request)
         {
+            PropertyHelpers = new AlexaLighting();
         }
 
         public AlexaSetColorController(IPremiseObject endpoint)
             : base(endpoint)
         {
+            PropertyHelpers = new AlexaLighting();
+        }
+
+        public AlexaSetColorController()
+            : base()
+        {
+            PropertyHelpers = new AlexaLighting();
+        }
+
+        public string GetAlexaProperty()
+        {
+            return alexaProperty;
+        }
+
+        public string GetAssemblyTypeName()
+        {
+            return this.GetType().AssemblyQualifiedName;
         }
 
         public string GetNameSpace()
@@ -82,14 +100,34 @@ namespace Alexa.Lighting
             return @namespace;
         }
 
-        public string [] GetDirectiveNames()
+        public string[] GetDirectiveNames()
         {
             return directiveNames;
+        }
+        public bool HasAlexaProperty(string property)
+        {
+            return (property == this.alexaProperty);
+        }
+
+        public bool HasPremiseProperty(string property)
+        {
+            foreach (string s in this.premiseProperties)
+            {
+                if (s == property)
+                    return true;
+            }
+            return false;
+        }
+
+
+        public string AssemblyTypeName()
+        {
+            return this.GetType().AssemblyQualifiedName;
         }
 
         public AlexaProperty GetPropertyState()
         {
-            ColorValue colorValue = new ColorValue();
+            AlexaColorValue colorValue = new AlexaColorValue();
             foreach (string premiseProperty in premiseProperties)
             {
                 switch (premiseProperty)
@@ -123,14 +161,15 @@ namespace Alexa.Lighting
             {
                 name = alexaProperty
             };
+            response.Event.header.@namespace = "Alexa";
 
             try
             {
-                this.endpoint.SetValue("Hue", payload.colorValue.hue.ToString()).GetAwaiter().GetResult();
-                this.endpoint.SetValue("Saturation", payload.colorValue.saturation.ToString()).GetAwaiter().GetResult();
-                this.endpoint.SetValue("Brightness", payload.colorValue.brightness.ToString()).GetAwaiter().GetResult();
+                this.endpoint.SetValue("Hue", payload.color.hue.ToString()).GetAwaiter().GetResult();
+                this.endpoint.SetValue("Saturation", payload.color.saturation.ToString()).GetAwaiter().GetResult();
+                this.endpoint.SetValue("Brightness", payload.color.brightness.ToString()).GetAwaiter().GetResult();
                 property.timeOfSample = GetUtcTime();
-                property.value = payload.colorValue;
+                property.value = payload.color;
                 this.response.context.properties.Add(property);
                 this.Response.Event.header.name = "Response";
                 this.response.context.properties.AddRange(this.PropertyHelpers.FindRelatedProperties(endpoint, @namespace));

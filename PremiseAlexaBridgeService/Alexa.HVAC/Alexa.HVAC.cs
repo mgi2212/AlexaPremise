@@ -4,11 +4,14 @@ using PremiseAlexaBridgeService;
 using System;
 using System.Collections.Generic;
 using SYSWebSockClient;
+using Alexa.Controller;
 
 namespace Alexa.HVAC
 {
     public class AlexaHVAC : IAlexaDeviceType
     {
+
+        //Dictionary<string, IAlexaController> Controllers = new Dictionary<string, IAlexaController>();
 
         public List<AlexaProperty> FindRelatedProperties(IPremiseObject endpoint, string currentController)
         {

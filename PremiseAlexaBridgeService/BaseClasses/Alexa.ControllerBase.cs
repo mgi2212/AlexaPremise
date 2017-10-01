@@ -66,13 +66,17 @@ namespace Alexa.Controller
         {
             endpoint = sysObject;
         }
+        public AlexaControllerBase()
+        {
+        }
         #endregion
 
         #region Reflection Code
 
         protected TT GetNewResponseObject(object[] args)
         {
-            return (TT)Activator.CreateInstance(typeof(TT), args);
+            TT response = (TT)Activator.CreateInstance(typeof(TT), args);
+            return response;
         }
 
         #endregion
@@ -269,12 +273,12 @@ namespace Alexa.Controller
                     testScope = this.directiveEndpoint.scope;
                 }
 
-                if ((testScope == null) || (testScope.type != "BearerToken") || (testScope.token == null))
+                if ((testScope == null) || (testScope.type != "BearerToken") || (testScope.localAccessToken == null))
                 {
                     ReportError(AlexaErrorTypes.INVALID_DIRECTIVE, "Invalid bearer token.");
                     return false;
                 }
-                else if (!CheckAccessToken(testScope.token).GetAwaiter().GetResult())
+                else if (!CheckAccessToken(testScope.localAccessToken).GetAwaiter().GetResult())
                 {
                     ReportError(AlexaErrorTypes.INVALID_AUTHORIZATION_CREDENTIAL, "Not authorized on local premise server.");
                     return false;

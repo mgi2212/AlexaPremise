@@ -8,5 +8,9 @@ namespace Alexa.Controller
         AlexaProperty GetPropertyState();
         string GetNameSpace();
         string [] GetDirectiveNames();
+        bool HasAlexaProperty(string property);
+        bool HasPremiseProperty(string property);
+        string GetAssemblyTypeName();
+        string GetAlexaProperty();
     }
 }

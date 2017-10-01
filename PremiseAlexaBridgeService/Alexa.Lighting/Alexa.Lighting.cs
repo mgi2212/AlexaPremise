@@ -6,11 +6,14 @@ using PremiseAlexaBridgeService;
 using System;
 using System.Collections.Generic;
 using SYSWebSockClient;
-
+using Alexa.Controller;
 namespace Alexa
 {
     public class AlexaLighting : IAlexaDeviceType
     {
+
+        //Dictionary<string, IAlexaController> Controllers = new Dictionary<string, IAlexaController>();
+
         #region Related Properties
         /// <summary>
         /// Add all capabilites here exclusively related to this device type. Yes, this differs from the method below by design.
@@ -107,23 +110,36 @@ namespace Alexa
                 {
                     switch (capability.@interface)
                     {
+                        case "Alexa.BrightnessController":
+                            {
+                                subscription = endpoint.Subscribe("Brightness", capability.@interface, callback).GetAwaiter().GetResult();
+                                if (subscription != null)
+                                {
+                                    subscriptions.Add(discoveryEndpoint.endpointId + "." + capability.@interface, subscription);
+                                }
+                            }
+                            break;
                         case "Alexa.ColorController":
-                            subscription = endpoint.Subscribe("Hue", capability.@interface, callback).GetAwaiter().GetResult();
+                            Type type = this.GetType();
+                            subscription = endpoint.Subscribe("Hue", this.GetType().AssemblyQualifiedName, callback).GetAwaiter().GetResult();
                             if (subscription != null)
                             {
                                 subscriptions.Add(discoveryEndpoint.endpointId + ".Hue." + capability.@interface, subscription);
                             }
-                            subscription = endpoint.Subscribe("Saturation", capability.@interface, callback).GetAwaiter().GetResult();
+                            subscription = endpoint.Subscribe("Saturation", this.GetType().AssemblyQualifiedName, callback).GetAwaiter().GetResult();
                             if (subscription != null)
                             {
                                 subscriptions.Add(discoveryEndpoint.endpointId + ".Saturation." + capability.@interface, subscription);
                             }
-                            // if its a dimmable light brightness is already subscribed
-                            //subscription = endpoint.Subscribe("Brightness", capability.@interface, callback).GetAwaiter().GetResult();
-                            //if (subscription != null)
-                            //{
-                            //    subscriptions.Add(discoveryEndpoint.endpointId + "." + capability.@interface, subscription);
-                            //}
+                            break;
+                        case "Alexa.ColorTemperatureController":
+                            {
+                                subscription = endpoint.Subscribe("Temperature", capability.@interface, callback).GetAwaiter().GetResult();
+                                if (subscription != null)
+                                {
+                                    subscriptions.Add(discoveryEndpoint.endpointId + "." + capability.@interface, subscription);
+                                }
+                            }
                             break;
                         default:
                             break;

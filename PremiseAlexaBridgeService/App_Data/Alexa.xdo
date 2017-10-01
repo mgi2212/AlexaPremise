@@ -3,82 +3,102 @@
   <Object ID="{05B46F0B-A745-4B03-81C9-624D3B3E9CD7}" Name="Schema" Flags="0x52FA0000" Class="sys://Schema/System/Schema" >
     <Object ID="{79B9225F-8A86-42B2-9B31-78C8A2893404}" Name="Modules" Flags="0x40FA0000" Class="sys://Schema/System/ModuleFolder" Description="User-defined object types" DisplayName="Modules Folder" >
       <Object ID="{620A74C6-BF42-4AB7-BDA5-DC375CF487C0}" Name="Alexa" Class="sys://Schema/System/Module" Version="0" >
-        <Object ID="{C4E6A6CF-AE58-404E-9B2B-9D75C4AA2FB6}" Name="Classes" Flags="0x120000" Class="sys://Schema/System/ClassFolder" >
-          <Object ID="{3470B9B5-E685-4EB2-ABC0-2F4CCD7F686A}" Name="AlexaBase" Class="sys://Schema/System/Class" Virtual="-1" >
-            <Object ID="{24DC0F3F-5C64-4563-B106-1BD34C6A31E7}" Name="IsReachable" Flags="0x900" Class="sys://Schema/System/Boolean" DefaultValue="-1" Aggregation="2" />
-            <Object ID="{B1564A99-5CF7-40FA-B72E-531BF70C0EB5}" Name="IsDiscoverable" Flags="0x900" Class="sys://Schema/System/Boolean" DefaultValue="-1" />
-            <Object ID="{D7D056CA-9A53-40FA-AED8-D10BAD8236EA}" Name="ApplianceType" Flags="0x900" Class="sys://Schema/System/Text" />
-          </Object>
-          <Object ID="{6FFA8A02-14E2-4AA0-975F-DA866A99049D}" Name="AlexaSpaces" Class="sys://Schema/System/Class" >
-            <Object ID="{2EE4CE6C-4FFF-4946-89AC-BDB5383BC442}" Name="CurrentScene" Flags="0x900" Class="sys://Schema/System/Text" />
-            <Object ID="{AC2A2663-24D0-4754-8AA4-E89360BA74CA}" Class="sys://Schema/System/SubClass" LinkObject="{9B710A9C-0616-499D-A9FE-A82E3E029C8C}" />
-          </Object>
-          <Object ID="{31E99AB9-79D2-4BC1-9982-9D615DE6644E}" Name="AlexaStatus" Class="sys://Schema/System/Class" Virtual="-1" >
-            <Object ID="{68A63139-5D3A-4CDF-B7A4-46982D7A8C7B}" Name="Health" Flags="0x900" Class="sys://Schema/System/Boolean" DefaultValue="-1" />
-            <Object ID="{415F83E3-A174-4CF1-B1B0-789D04494348}" Name="HealthDescription" Flags="0x900" Class="sys://Schema/System/Text" />
-            <Object ID="{B51289C5-A483-4FCE-8C6E-88B8115793D6}" Name="AlexaAsyncAuthorizationCode" Flags="0x900" Class="sys://Schema/System/Text" />
-            <Object ID="{8944A9A9-5BBC-499C-8F5D-93DF139E7276}" Name="AccessToken" Flags="0x900" Class="sys://Schema/System/Text" />
-            <Object ID="{98931CAB-FD97-4246-B75A-2CE43E7E4341}" Name="LastRefreshed" Flags="0x900" Class="sys://Schema/System/DateTime" DefaultValue="8/30/2015 3:11:44 PM" />
-            <Object ID="{2EE46B9B-C1FB-40D9-9B19-F9A1B43C3073}" Name="LastHeardFromAlexa" Flags="0x900" Class="sys://Schema/System/DateTime" DefaultValue="12/26/2015 5:46:59 PM" />
-            <Object ID="{6ECA1B44-E52A-4BD4-A23F-CCCBCE659E2C}" Name="LastHeardCommand" Flags="0x900" Class="sys://Schema/System/Text" />
-            <Object ID="{919F21F9-CB23-47D2-9D40-465D8FAA99F3}" Class="sys://Schema/System/SubClass" LinkObject="{A4D2A312-9702-4549-AF69-84B816A65C78}" />
-            <Object ID="{6EAEAB32-D7CD-460A-8EBA-64DA1DE2F028}" Name="GenerateDiscoveryJson" Flags="0x900" Class="sys://Schema/System/Boolean" />
-            <Object ID="{2396A320-9A5B-4BA8-94C4-517C2C2E35B8}" Name="OnChangeGenerateDiscoveryJson" Class="sys://Schema/Scripting/ClassProperty" Property="{6EAEAB32-D7CD-460A-8EBA-64DA1DE2F028}" >
-              <![CDATA[
-Script=
-if sysevent.newVal = true then
-	GenerateDiscoveryJson
-	this.GenerateDiscoveryJson = false
-end if
-
-]]>
+        <Object ID="{468E46D5-4262-4D38-8CC4-6C3A1F51729A}" Name="Objects" Class="sys://Schema/System/Module" >
+          <Object ID="{1DB1BBE1-EEA0-44FB-BCED-DCFBF6839558}" Name="Classes" Flags="0x120000" Class="sys://Schema/System/ClassFolder" >
+            <Object ID="{219DFC9B-F094-4B5E-8A31-F088096D7072}" Name="ColorTemperature" Class="sys://Schema/System/Class" Virtual="-1" >
+              <Object ID="{3EB86F97-AB38-44E3-A51B-972C679A19B5}" Name="Temperature" Flags="0x900" Class="sys://Schema/System/Units/Temperature" DefaultValue="3000 K" DisplayName="Temperature" Description="Temperature" Aggregation="4" />
             </Object>
-            <Object ID="{862433D1-658F-4E05-9C91-A5232EFD096B}" Name="SendAsyncEventsToAlexa" Flags="0x900" Class="sys://Schema/System/Boolean" />
-          </Object>
-          <Object ID="{3C3B4F0D-9DC5-42EA-9CE3-2150D2AD58CB}" Name="AlexaAppliance" Class="sys://Schema/System/Class" Virtual="-1" >
-            <Object ID="{AC71ED16-5354-46C1-A4BC-64E4CF8F8606}" Name="FriendlyDescription" Flags="0x900" Class="sys://Schema/System/Text" Mergeable="0" DisplayName="Human Readable Description" Description="Human Readable Description" />
-            <Object ID="{41C98863-EDE3-4ED6-AF34-00DF88C7D154}" Name="FriendlyName" Flags="0x900" Class="sys://Schema/System/Text" Mergeable="0" DisplayName="What Alexa Hears" Description="What Alexa Hears" />
-            <Object ID="{DD1A6ADE-99B2-4F21-9D81-EB8B734705E0}" Class="sys://Schema/System/SuperClass" LinkObject="{3470B9B5-E685-4EB2-ABC0-2F4CCD7F686A}" />
-            <Object ID="{44471B9C-A87E-4B7E-91B0-2AE8CB1B7D50}" Name="discoveryJson" Flags="0x900" Class="sys://Schema/System/Text" />
-            <Object ID="{0FD0B716-45DD-435F-895D-73708A20C8B9}" Name="generateDiscoveryJson" Class="sys://Schema/Scripting/SimpleClassMethod" >
-              <![CDATA[
-Script=
-
-if (this.IsOfExplicitType("sys://Schema/Modules/Alexa/Classes/AlexaCapability")) then
-	tmp = "{"
-	tmp = tmp + JsonNameValue("endpointID", mid(this.ObjectID,2,36)) + ","
-	tmp = tmp + JsonNameValue("friendlyName",this.FriendlyName) + ","
-	tmp = tmp + JsonNameValue("description","A Premise " + this.Class.Name + " in the " + this.Parent.Description) + ","
-	tmp = tmp + JsonNameValue("manufacturerName", "Premise Server") + ","
-	tmp = tmp + JsonNameArray("displayCategories", this.displayCategories) + ","
-	tmp = tmp + chr(34) + "cookie" + chr(34) + ":" + "{ " + JsonNameValue("path", this.Path) + " },"
-	tmp = tmp + JsonNameArray("capabilities", this.renderDiscoveryJson())
-	tmp = tmp + "}"
-	this.discoveryJson = tmp
-end if
-tmp = ""
-]]>
+            <Object ID="{FEB5CCE9-F343-4CD9-9611-E75329EB3223}" Name="Color" Class="sys://Schema/System/Class" Virtual="-1" >
+              <Object ID="{AFE71B50-6818-4422-A259-8F816698AEB5}" Name="Hue" Flags="0x900" Class="sys://Schema/System/Real" DisplayName="Hue" Description="Hue" />
+              <Object ID="{264DE839-193A-4693-9E95-CBE54564A042}" Name="Saturation" Flags="0x900" Class="sys://Schema/System/Percent" DisplayName="Saturation" Description="Saturation" />
+            </Object>
+            <Object ID="{0DDAE1C2-2D66-4240-9D28-E9AD54C16A48}" Name="ColorLight" Class="sys://Schema/System/Class" Icon="AgAAAD4BAAAAAAEAAQAQEBAAAAAAACgBAAAWAAAAKAAAABAAAAAgAAAAAQAEAAAAAADAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAIAAAIAAAACAgACAAAAAgACAAICAAADAwMAAgICAAAAA/wAA/wAAAP//AP8AAAD/AP8A//8AAP///wAAAAAAAAAAAAAAAAAAAAAAAAETMiZkRQAACRs6LmxNAACBk7Km5MUAAAkbOi5sTQAAgZOypuTFAACJm7qu7M0AAHkbOi5sTQAAiZu6ruzNAACBk7Km5MUAAHmbuq7szQAAiRs6LmxNAAB5m7qu7M0AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=" >
+              <Object ID="{34898761-0982-4A77-A737-54BC16FD2785}" Class="sys://Schema/System/SuperClass" LinkObject="{0B1DA7E1-1731-49AC-9814-47470E78EFAB}" />
+              <Object ID="{B2001BC2-A39E-421A-8594-BDEACAFEFF22}" Class="sys://Schema/System/SuperClass" LinkObject="{DEB24C93-9143-4030-86FF-29C7626BC9E3}" />
+              <Object ID="{6F5B3CF1-A494-4F97-9425-41646997B511}" Class="sys://Schema/System/SuperClass" LinkObject="{FEB5CCE9-F343-4CD9-9611-E75329EB3223}" />
+              <Object ID="{2EF8E4F7-AF36-47FB-937E-43A13FE93703}" Class="sys://Schema/System/SuperClass" LinkObject="{219DFC9B-F094-4B5E-8A31-F088096D7072}" />
+            </Object>
+            <Object ID="{D8F244F3-FE3C-4A8B-AF81-289EE9F0EA70}" Name="AlexaEndpoint" Class="sys://Schema/System/Class" Delegatable="-1" BaseTemplate="{6215B898-613C-440E-9BC2-55D2FDDE2E1A}" >
+              <Object ID="{D676E7F6-08B6-4C2B-A7C0-42D274E0601C}" Class="sys://Schema/System/SuperClass" LinkObject="{6774D705-D9AA-422D-AB0A-6145366E925C}" />
             </Object>
           </Object>
-          <Object ID="{786ECB66-97E2-4A85-842E-81F0BA710F13}" Name="Alexa.ExtendCamera" Class="sys://Schema/System/Class" >
-            <Object ID="{C59643D6-216B-416F-95AB-5E7F4E9EC3C2}" Class="sys://Schema/System/SuperClass" LinkObject="{3C3B4F0D-9DC5-42EA-9CE3-2150D2AD58CB}" />
-            <Object ID="{87CE0DE8-CFFA-4BD0-9ED0-733427ABB7EE}" Class="sys://Schema/System/SubClass" LinkObject="{68BF174A-8984-4214-AC09-2975A4CEBEAA}" />
-            <Object ID="{A5D6166A-5FD1-499A-8E77-79BD3F32C996}" Name="Host" Flags="0x900" Class="sys://Schema/System/Text" />
-            <Object ID="{ECF94A79-09B8-4AEA-8238-18C3B54022E5}" Name="Port" Flags="0x900" Class="sys://Schema/System/Text" />
-            <Object ID="{36CB4EDE-2009-4D27-967F-68A02790189B}" Name="Path" Flags="0x900" Class="sys://Schema/System/Text" />
-            <Object ID="{ACB95BB5-B421-4181-9B68-91341CB2EC32}" Class="sys://Schema/System/SuperClass" LinkObject="{D5C779F6-88EC-44E5-BD63-15712449CB2D}" />
+          <Object ID="{8185A605-B130-4903-B4E2-837E140647F0}" Name="Templates" Flags="0x120000" Class="sys://Schema/System/TemplateFolder" />
+          <Object ID="{0F4B13DC-53D0-4E34-8365-ED1ABA96ADF4}" Name="GlobalScripts" Flags="0x120000" Class="sys://Schema/Scripting/GlobalScriptFolder" />
+          <Object ID="{28F7D19B-4223-43F5-8C2B-1F5E50C9DF0B}" Name="Logic" Flags="0x120000" Class="sys://Schema/Logic/RuleFolder" />
+          <Object ID="{B278A21C-E516-4AF9-B0DC-B27D4CA8671E}" Name="Variables" Flags="0x120000" Class="sys://Schema/System/VariableFolder" />
+          <Object ID="{BD7EE4EB-8758-4FC7-B4A3-57A8962BD6F8}" Name="Timers" Flags="0x120000" Class="sys://Schema/Timers/TimerFolder" />
+          <Object ID="{590FC9C0-AF1D-4025-9170-6326FF1EAE84}" Name="Macros" Flags="0x120000" Class="sys://Schema/System/MacroHolder" />
+        </Object>
+        <Object ID="{377FE4B7-E45A-43EA-9421-1B39BACB944D}" Name="AV" Class="sys://Schema/System/Module" >
+          <Object ID="{0372CCE5-36EB-46EB-BD51-9D91C678908B}" Name="Classes" Flags="0x120000" Class="sys://Schema/System/ClassFolder" >
+            <Object ID="{AE26BCAF-422A-40BF-AE9A-BE83A0FCE0E6}" Name="Alexa.ExtendAVComponents" Class="sys://Schema/System/Class" >
+              <Object ID="{37FA565E-0E50-49BF-8985-4D32017A58AF}" Class="sys://Schema/System/SubClass" LinkObject="{5FE57843-E24C-445A-BACD-B522B44E3F39}" />
+            </Object>
           </Object>
-          <Object ID="{43899476-23CD-4015-A655-09C6CA885DB3}" Name="Alexa.ExtendLighting" Class="sys://Schema/System/Class" Virtual="-1" >
-            <Object ID="{E763BBF9-9150-493D-900E-10CCD16EBBE6}" Class="sys://Schema/System/SuperClass" LinkObject="{3C3B4F0D-9DC5-42EA-9CE3-2150D2AD58CB}" />
-            <Object ID="{0BA2BC40-278B-4D1D-9B17-64337280F19C}" Class="sys://Schema/System/SubClass" LinkObject="{0B1DA7E1-1731-49AC-9814-47470E78EFAB}" />
-            <Object ID="{DE46EE9B-6375-471C-9581-715E30EC67C1}" Name="displayCategories" Flags="0x900" Class="sys://Schema/System/Text" ReadOnly="-1" DefaultValue="&quot;LIGHT&quot;" />
-            <Object ID="{63CF0643-6FE2-4E4B-80A9-1E03EA100F3D}" Name="renderDiscoveryJson" Class="sys://Schema/Scripting/ClassFunction" >
-              <![CDATA[
+          <Object ID="{68F56332-8F7E-463A-B0F1-37C341301228}" Name="Templates" Flags="0x120000" Class="sys://Schema/System/TemplateFolder" />
+          <Object ID="{E1B72CC8-D650-4322-80C6-4D5C75EFB227}" Name="GlobalScripts" Flags="0x120000" Class="sys://Schema/Scripting/GlobalScriptFolder" />
+          <Object ID="{3419F872-633C-402D-AFE2-480C08F0C901}" Name="Logic" Flags="0x120000" Class="sys://Schema/Logic/RuleFolder" />
+          <Object ID="{ABE791A3-B58B-41EA-8B9F-D3EA5425AD31}" Name="Variables" Flags="0x120000" Class="sys://Schema/System/VariableFolder" />
+          <Object ID="{F8BBC97C-74A7-41EC-B39E-5C7A8A96A2BB}" Name="Timers" Flags="0x120000" Class="sys://Schema/Timers/TimerFolder" />
+          <Object ID="{19DE86B2-BC28-4BC3-A5EF-6CB4ACB3437D}" Name="Macros" Flags="0x120000" Class="sys://Schema/System/MacroHolder" />
+        </Object>
+        <Object ID="{AE5854A0-7099-4F4C-B334-E7A7197D0DD9}" Name="Cameras" Class="sys://Schema/System/Module" >
+          <Object ID="{69BB8CBF-30CF-442A-BFE2-330F268A2A34}" Name="Classes" Flags="0x120000" Class="sys://Schema/System/ClassFolder" >
+            <Object ID="{4932B858-6C9A-4038-92BB-59A5C72C2C49}" Name="AlexaCameraStreamResolution" Class="sys://Schema/System/Class" >
+              <Object ID="{144FA3C7-AD78-4B96-A599-87D4F14C8331}" Name="width" Flags="0x900" Class="sys://Schema/System/Number" />
+              <Object ID="{1621FFF2-B877-478C-8A91-A570CA0BCFBA}" Name="height" Flags="0x900" Class="sys://Schema/System/Number" />
+            </Object>
+            <Object ID="{24E2A8B0-7215-4DDD-A9D6-7D2049394142}" Name="AlexaCameraStreamConfiguration" Class="sys://Schema/System/Class" >
+              <Object ID="{051C6DFF-31CA-4510-BB5B-ABB3DBB9C93D}" Name="protocols" Flags="0x900" Class="sys://Schema/System/Text" DefaultValue="[&quot;RTSP&quot;]" />
+              <Object ID="{BD26F259-062D-422D-A848-5E197BD413E0}" Class="sys://Schema/System/ChildClass" LinkObject="{4932B858-6C9A-4038-92BB-59A5C72C2C49}" />
+              <Object ID="{9F057B39-5E7E-4A0B-86B0-FAE7BDA7D7C5}" Name="authorizationTypes" Flags="0x900" Class="sys://Schema/System/Text" DefaultValue="[&quot;NONE&quot;]" />
+              <Object ID="{1F520238-4F50-4E09-A76E-0F80BF005A9C}" Name="videoCodecs" Flags="0x900" Class="sys://Schema/System/Text" DefaultValue="[&quot;H264&quot;]" />
+              <Object ID="{ABCB6025-C37B-472C-A242-6014831B4C9D}" Name="audioCodecs" Flags="0x900" Class="sys://Schema/System/Text" DefaultValue="[&quot;AAC&quot;]" />
+            </Object>
+            <Object ID="{786ECB66-97E2-4A85-842E-81F0BA710F13}" Name="Alexa.ExtendCamera" Class="sys://Schema/System/Class" >
+              <Object ID="{C59643D6-216B-416F-95AB-5E7F4E9EC3C2}" Class="sys://Schema/System/SuperClass" LinkObject="{3C3B4F0D-9DC5-42EA-9CE3-2150D2AD58CB}" />
+              <Object ID="{87CE0DE8-CFFA-4BD0-9ED0-733427ABB7EE}" Class="sys://Schema/System/SubClass" LinkObject="{68BF174A-8984-4214-AC09-2975A4CEBEAA}" />
+              <Object ID="{A5D6166A-5FD1-499A-8E77-79BD3F32C996}" Name="Host" Flags="0x900" Class="sys://Schema/System/Text" />
+              <Object ID="{ECF94A79-09B8-4AEA-8238-18C3B54022E5}" Name="Port" Flags="0x900" Class="sys://Schema/System/Text" />
+              <Object ID="{36CB4EDE-2009-4D27-967F-68A02790189B}" Name="Path" Flags="0x900" Class="sys://Schema/System/Text" />
+              <Object ID="{ACB95BB5-B421-4181-9B68-91341CB2EC32}" Class="sys://Schema/System/SuperClass" LinkObject="{D5C779F6-88EC-44E5-BD63-15712449CB2D}" />
+              <Object ID="{F7FA9245-09B5-4DAB-B697-47C0978F9CEC}" Name="displayCategories" Flags="0x900" Class="sys://Schema/System/Text" ReadOnly="-1" DefaultValue="&quot;CAMERA&quot;" />
+              <Object ID="{CCDCF8D4-B756-4CA5-9BAC-F6D0EE0ABC7E}" Name="renderDiscoveryJson" Class="sys://Schema/Scripting/ClassFunction" >
+                <![CDATA[
 Script=
 json = ""
 set classes = this.GetClasses()
 for each cls in classes
-	if (cls.Name = "Alexa.PowerController") then
+
+	
+next
+method.renderDiscoveryJson = json
+json = ""
+]]>
+              </Object>
+              <Object ID="{E4724CDE-9BB8-43AD-9CEB-00B27C8B8385}" Class="sys://Schema/System/ChildClass" LinkObject="{24E2A8B0-7215-4DDD-A9D6-7D2049394142}" />
+            </Object>
+          </Object>
+          <Object ID="{3A0E4789-BECE-4D20-B3FB-04D75C95CACC}" Name="Templates" Flags="0x120000" Class="sys://Schema/System/TemplateFolder" />
+          <Object ID="{26F7A311-5EDC-4D2C-9BA1-B082AEB74AFB}" Name="GlobalScripts" Flags="0x120000" Class="sys://Schema/Scripting/GlobalScriptFolder" />
+          <Object ID="{4DB342DB-6D4F-4E40-A807-3FABB75DA799}" Name="Logic" Flags="0x120000" Class="sys://Schema/Logic/RuleFolder" />
+          <Object ID="{94D4B63F-4201-4BEF-8878-113DB3C1FC6D}" Name="Variables" Flags="0x120000" Class="sys://Schema/System/VariableFolder" />
+          <Object ID="{C1D5523E-8F1B-4DB0-A991-3D2033CD91FB}" Name="Timers" Flags="0x120000" Class="sys://Schema/Timers/TimerFolder" />
+          <Object ID="{4DF0459B-40D4-418E-BA65-2D8D66DA1E5E}" Name="Macros" Flags="0x120000" Class="sys://Schema/System/MacroHolder" />
+        </Object>
+        <Object ID="{68456A2D-8C0B-4816-89CB-A9533F3D41D3}" Name="HVAC" Class="sys://Schema/System/Module" >
+          <Object ID="{9C4AA919-2554-4ED3-92C8-97D0EA530191}" Name="Classes" Flags="0x120000" Class="sys://Schema/System/ClassFolder" >
+            <Object ID="{6B9FC61E-EC40-48E2-9E24-3F6EEB9A418A}" Name="Alexa.ExtendThermostat" Class="sys://Schema/System/Class" Virtual="-1" >
+              <Object ID="{634F7766-1BE4-4BEB-8CB2-665CFF0A2BF5}" Class="sys://Schema/System/SuperClass" LinkObject="{3C3B4F0D-9DC5-42EA-9CE3-2150D2AD58CB}" />
+              <Object ID="{4246103B-5953-41B4-8093-B3D05A6AE276}" Class="sys://Schema/System/SubClass" LinkObject="{35ED9728-21C0-4868-BEFE-BCBA38D4C4B3}" />
+              <Object ID="{10725195-12BF-4F5E-9B23-9FC4A6E73146}" Name="displayCategories" Flags="0x900" Class="sys://Schema/System/Text" ReadOnly="-1" DefaultValue="&quot;THERMOSTAT&quot;" />
+              <Object ID="{F1D71917-E13D-49E6-8E2E-C7E2FC3209B5}" Name="renderDiscoveryJson" Class="sys://Schema/Scripting/ClassFunction" >
+                <![CDATA[
+Script=
+json = ""
+set classes = this.GetClasses()
+for each cls in classes
+	if (cls.Name = "Alexa.EndpointHealth") then
 		if (json <> "") then
 			json = json + ","
 		end if
@@ -86,14 +106,14 @@ for each cls in classes
 		json = json + this.discoveryJsonProlog()
 		json = json + JsonNameValue("interface",cls.Name) + ","
 		json = json + chr(34) + "properties" + chr(34) + ": {" + chr(34) + "supported" + chr(34) + ": [ {"
-		json = json + JsonNameValue("name","powerState") + "} ],"
+		json = json + JsonNameValue("name","connectivity") + "} ],"
 		json = json + chr(34) + "proactivelyReported" + chr(34) + ":" + LCase(CStr(this.proactivelyReported)) + ","
 		json = json + this.discoveryJsonEpilog()
 		json = json + "}"
 		json = json + "}"
 	end if
 	
-	if (cls.Name = "Alexa.BrightnessController") then
+	if (cls.Name = "Alexa.TemperatureSensor") then
 		if (json <> "") then
 			json = json + ","
 		end if
@@ -101,29 +121,77 @@ for each cls in classes
 		json = json + this.discoveryJsonProlog()
 		json = json + JsonNameValue("interface",cls.Name) + ","
 		json = json + chr(34) + "properties" + chr(34) + ": {" + chr(34) + "supported" + chr(34) + ": [ {"
-		json = json + JsonNameValue("name","brightness") + "} ],"
+		json = json + JsonNameValue("name","temperature") + "} ],"
 		json = json + chr(34) + "proactivelyReported" + chr(34) + ":" + LCase(CStr(this.proactivelyReported)) + ","
 		json = json + this.discoveryJsonEpilog()
 		json = json + "}"
 		json = json + "}"
 	end if
+	
+	if (cls.Name = "Alexa.ThermostatController") then
+		if (json <> "") then
+			json = json + ","
+		end if
+		json = json + "{"
+		json = json + this.discoveryJsonProlog()
+		json = json + JsonNameValue("interface",cls.Name) + ","
+		json = json + chr(34) + "properties" + chr(34) + ": {" + chr(34) + "supported" + chr(34) + ": [ {"
+		json = json + JsonNameValue("name","lowerSetpoint") + "},{"
+		json = json + JsonNameValue("name","targetSetpoint") + "},{"
+		json = json + JsonNameValue("name","upperSetpoint") + "},{"
+		json = json + JsonNameValue("name","thermostatMode") 
+		json = json + "} ],"
+		json = json + chr(34) + "proactivelyReported" + chr(34) + ":" + LCase(CStr(this.proactivelyReported)) + ","
+		json = json + this.discoveryJsonEpilog()
+		json = json + "}"
+		json = json + "}"
+	end if
+	
 next
 
 method.renderDiscoveryJson = json
 json = ""
 ]]>
+              </Object>
             </Object>
-          </Object>
-          <Object ID="{48FDB8E2-ABE0-41DC-BB59-D609CF25FC40}" Name="Alexa.ExtendFans" Class="sys://Schema/System/Class" Virtual="-1" >
-            <Object ID="{2CFBFDC2-93AA-4B2E-B69F-7C83EF67CE7D}" Class="sys://Schema/System/SuperClass" LinkObject="{3C3B4F0D-9DC5-42EA-9CE3-2150D2AD58CB}" />
-            <Object ID="{4C68D4B4-96A7-4348-BA76-8757EA5AD3A3}" Class="sys://Schema/System/SubClass" LinkObject="{77319741-F5A7-4CA5-A2EA-4F377D394301}" />
-            <Object ID="{C550BDC2-78EE-49D9-9B3D-363AF157E318}" Name="displayCategories" Flags="0x900" Class="sys://Schema/System/Text" ReadOnly="-1" DefaultValue="&quot;SWITCH&quot;" />
-            <Object ID="{DBF82029-8BDE-435D-8A27-3602E5F965B2}" Name="renderDiscoveryJson" Class="sys://Schema/Scripting/ClassFunction" >
-              <![CDATA[
+            <Object ID="{02F5573B-3721-4509-952B-55619100CDA8}" Name="Alexa.ThermostatController" Class="sys://Schema/System/Class" Virtual="-1" >
+              <Object ID="{98E54438-67B3-46EF-B3E7-86D2F3266811}" Class="sys://Schema/System/SuperClass" LinkObject="{3317BF5A-E61E-4E32-B6C8-5FD25B85C4E4}" />
+              <Object ID="{B8910671-7E0A-48EA-B29A-4473AEC941E7}" Name="interface" Flags="0x900" Class="sys://Schema/System/Text" DefaultValue="Alexa.TemperatureController" ReadOnly="-1" />
+              <Object ID="{06DDDD25-697D-48CF-9CEC-73CAC40CE78E}" Name="properties" Flags="0x900" Class="sys://Schema/System/Text" DefaultValue="lowerSetpoint,targetSetpoint,upperSetpoint,thermostatMode" ReadOnly="-1" />
+              <Object ID="{A1614C76-7D86-4E6D-B680-16FD78035C32}" Class="sys://Schema/System/SubClass" LinkObject="{1C399D51-E702-40B2-A0D3-E6BC46F45758}" />
+              <Object ID="{D3903523-A552-4F53-9FBF-474837ED0AA4}" Class="sys://Schema/System/SubClass" LinkObject="{F6842836-CE5A-4067-8D6A-340FEF4FCDDE}" />
+            </Object>
+            <Object ID="{4C305447-150E-4826-8D7C-A44A1181AFF0}" Name="Alexa.TemperatureSensor" Class="sys://Schema/System/Class" Virtual="-1" >
+              <Object ID="{BA916531-5AE4-4F24-88DB-E5602B6A42B1}" Class="sys://Schema/System/SuperClass" LinkObject="{3317BF5A-E61E-4E32-B6C8-5FD25B85C4E4}" />
+              <Object ID="{4E5CD496-92DE-41AA-94A2-6846D7EF0F0B}" Name="Alexa_TemperatureSensor" Flags="0x900" Class="sys://Schema/System/Text" DefaultValue="Alexa.TemperatureController" ReadOnly="-1" />
+              <Object ID="{F9464264-7A52-4AA7-A7F7-D419F3F8A238}" Name="properties" Flags="0x900" Class="sys://Schema/System/Text" DefaultValue="temperature" ReadOnly="-1" />
+              <Object ID="{3FDC9ECF-637B-43DB-8CBE-577B0A387036}" Class="sys://Schema/System/SubClass" LinkObject="{65C7B5C2-153D-4711-BAD7-D334FDB12338}" />
+            </Object>
+            <Object ID="{48FDB8E2-ABE0-41DC-BB59-D609CF25FC40}" Name="Alexa.ExtendFans" Class="sys://Schema/System/Class" Virtual="-1" >
+              <Object ID="{2CFBFDC2-93AA-4B2E-B69F-7C83EF67CE7D}" Class="sys://Schema/System/SuperClass" LinkObject="{3C3B4F0D-9DC5-42EA-9CE3-2150D2AD58CB}" />
+              <Object ID="{4C68D4B4-96A7-4348-BA76-8757EA5AD3A3}" Class="sys://Schema/System/SubClass" LinkObject="{77319741-F5A7-4CA5-A2EA-4F377D394301}" />
+              <Object ID="{C550BDC2-78EE-49D9-9B3D-363AF157E318}" Name="displayCategories" Flags="0x900" Class="sys://Schema/System/Text" ReadOnly="-1" DefaultValue="&quot;SWITCH&quot;" />
+              <Object ID="{DBF82029-8BDE-435D-8A27-3602E5F965B2}" Name="renderDiscoveryJson" Class="sys://Schema/Scripting/ClassFunction" >
+                <![CDATA[
 Script=
 json = ""
 set classes = this.GetClasses()
 for each cls in classes
+	if (cls.Name = "Alexa.EndpointHealth") then
+		if (json <> "") then
+			json = json + ","
+		end if
+		json = json + "{"
+		json = json + this.discoveryJsonProlog()
+		json = json + JsonNameValue("interface",cls.Name) + ","
+		json = json + chr(34) + "properties" + chr(34) + ": {" + chr(34) + "supported" + chr(34) + ": [ {"
+		json = json + JsonNameValue("name","connectivity") + "} ],"
+		json = json + chr(34) + "proactivelyReported" + chr(34) + ":" + LCase(CStr(this.proactivelyReported)) + ","
+		json = json + this.discoveryJsonEpilog()
+		json = json + "}"
+		json = json + "}"
+	end if
+	
 	if (cls.Name = "Alexa.PowerController") then
 		if (json <> "") then
 			json = json + ","
@@ -158,20 +226,32 @@ next
 method.renderDiscoveryJson = json
 json = ""
 ]]>
+              </Object>
+              <Object ID="{CBDD8DFD-CD27-4C2E-95FA-5C2F5EE4028D}" Class="sys://Schema/System/SuperClass" LinkObject="{B09958FD-B3F5-404B-B4E7-97395CB8BC76}" />
+              <Object ID="{5F9FD319-360D-4200-99A0-BD5C01BB8C6B}" Name="retrievable" Flags="0x900" Class="sys://Schema/System/Boolean" DefaultValue="-1" />
             </Object>
-            <Object ID="{CBDD8DFD-CD27-4C2E-95FA-5C2F5EE4028D}" Class="sys://Schema/System/SuperClass" LinkObject="{B09958FD-B3F5-404B-B4E7-97395CB8BC76}" />
           </Object>
-          <Object ID="{6B9FC61E-EC40-48E2-9E24-3F6EEB9A418A}" Name="Alexa.ExtendThermostat" Class="sys://Schema/System/Class" Virtual="-1" >
-            <Object ID="{634F7766-1BE4-4BEB-8CB2-665CFF0A2BF5}" Class="sys://Schema/System/SuperClass" LinkObject="{3C3B4F0D-9DC5-42EA-9CE3-2150D2AD58CB}" />
-            <Object ID="{4246103B-5953-41B4-8093-B3D05A6AE276}" Class="sys://Schema/System/SubClass" LinkObject="{35ED9728-21C0-4868-BEFE-BCBA38D4C4B3}" />
-            <Object ID="{10725195-12BF-4F5E-9B23-9FC4A6E73146}" Name="displayCategories" Flags="0x900" Class="sys://Schema/System/Text" ReadOnly="-1" DefaultValue="&quot;THERMOSTAT&quot;" />
-            <Object ID="{F1D71917-E13D-49E6-8E2E-C7E2FC3209B5}" Name="renderDiscoveryJson" Class="sys://Schema/Scripting/ClassFunction" >
-              <![CDATA[
+          <Object ID="{ADB29203-7E57-4263-84BE-FE960ECB7619}" Name="Templates" Flags="0x120000" Class="sys://Schema/System/TemplateFolder" />
+          <Object ID="{2CD3ADAB-BBAD-4019-9932-78E22FB94645}" Name="GlobalScripts" Flags="0x120000" Class="sys://Schema/Scripting/GlobalScriptFolder" />
+          <Object ID="{844A4E24-16D8-4F15-8F59-006DBCA8D516}" Name="Logic" Flags="0x120000" Class="sys://Schema/Logic/RuleFolder" />
+          <Object ID="{BC812643-0DFD-4D38-B9C5-4088ECB6DA57}" Name="Variables" Flags="0x120000" Class="sys://Schema/System/VariableFolder" />
+          <Object ID="{864F95C9-0DB1-4EFB-8883-0737B1CBAB26}" Name="Timers" Flags="0x120000" Class="sys://Schema/Timers/TimerFolder" />
+          <Object ID="{5BC8EA65-F169-4CAA-A55B-E05943284886}" Name="Macros" Flags="0x120000" Class="sys://Schema/System/MacroHolder" />
+        </Object>
+        <Object ID="{998EF0F5-82F2-46C8-BAE7-56FD23AB745F}" Name="Lighting" Class="sys://Schema/System/Module" >
+          <Object ID="{5F687817-296A-4282-9746-E5CF9DAB2E83}" Name="Classes" Flags="0x120000" Class="sys://Schema/System/ClassFolder" >
+            <Object ID="{43899476-23CD-4015-A655-09C6CA885DB3}" Name="Alexa.ExtendLighting" Class="sys://Schema/System/Class" Virtual="-1" >
+              <Object ID="{E763BBF9-9150-493D-900E-10CCD16EBBE6}" Class="sys://Schema/System/SuperClass" LinkObject="{3C3B4F0D-9DC5-42EA-9CE3-2150D2AD58CB}" />
+              <Object ID="{0BA2BC40-278B-4D1D-9B17-64337280F19C}" Class="sys://Schema/System/SubClass" LinkObject="{0B1DA7E1-1731-49AC-9814-47470E78EFAB}" />
+              <Object ID="{DE46EE9B-6375-471C-9581-715E30EC67C1}" Name="displayCategories" Flags="0x900" Class="sys://Schema/System/Text" ReadOnly="-1" DefaultValue="&quot;LIGHT&quot;" />
+              <Object ID="{63CF0643-6FE2-4E4B-80A9-1E03EA100F3D}" Name="renderDiscoveryJson" Class="sys://Schema/Scripting/ClassFunction" >
+                <![CDATA[
 Script=
 json = ""
 set classes = this.GetClasses()
 for each cls in classes
-	if (cls.Name = "Alexa.TemperatureSensor") then
+
+	if (cls.Name = "Alexa.EndpointHealth") then
 		if (json <> "") then
 			json = json + ","
 		end if
@@ -179,89 +259,13 @@ for each cls in classes
 		json = json + this.discoveryJsonProlog()
 		json = json + JsonNameValue("interface",cls.Name) + ","
 		json = json + chr(34) + "properties" + chr(34) + ": {" + chr(34) + "supported" + chr(34) + ": [ {"
-		json = json + JsonNameValue("name","temperature") + "} ],"
+		json = json + JsonNameValue("name","connectivity") + "} ],"
 		json = json + chr(34) + "proactivelyReported" + chr(34) + ":" + LCase(CStr(this.proactivelyReported)) + ","
 		json = json + this.discoveryJsonEpilog()
 		json = json + "}"
 		json = json + "}"
 	end if
 	
-	if (cls.Name = "Alexa.TemperatureController") then
-		if (json <> "") then
-			json = json + ","
-		end if
-		json = json + "{"
-		json = json + this.discoveryJsonProlog()
-		json = json + JsonNameValue("interface",cls.Name) + ","
-		json = json + chr(34) + "properties" + chr(34) + ": {" + chr(34) + "supported" + chr(34) + ": [ {"
-		json = json + JsonNameValue("name","lowerSetpoint") + "},{"
-		json = json + JsonNameValue("name","targetSetpoint") + "},{"
-		json = json + JsonNameValue("name","upperSetPoint") + "},{"
-		json = json + JsonNameValue("name","thermostatMode") 
-		json = json + "} ],"
-		json = json + chr(34) + "proactivelyReported" + chr(34) + ":" + LCase(CStr(this.proactivelyReported)) + ","
-		json = json + this.discoveryJsonEpilog()
-		json = json + "}"
-		json = json + "}"
-	end if
-	
-next
-
-method.renderDiscoveryJson = json
-json = ""
-]]>
-            </Object>
-          </Object>
-          <Object ID="{AE26BCAF-422A-40BF-AE9A-BE83A0FCE0E6}" Name="Alexa.ExtendAVComponents" Class="sys://Schema/System/Class" >
-            <Object ID="{37FA565E-0E50-49BF-8985-4D32017A58AF}" Class="sys://Schema/System/SubClass" LinkObject="{5FE57843-E24C-445A-BACD-B522B44E3F39}" />
-          </Object>
-          <Object ID="{0DDAE1C2-2D66-4240-9D28-E9AD54C16A48}" Name="ColorLight" Class="sys://Schema/System/Class" Icon="AgAAAD4BAAAAAAEAAQAQEBAAAAAAACgBAAAWAAAAKAAAABAAAAAgAAAAAQAEAAAAAADAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAIAAAIAAAACAgACAAAAAgACAAICAAADAwMAAgICAAAAA/wAA/wAAAP//AP8AAAD/AP8A//8AAP///wAAAAAAAAAAAAAAAAAAAAAAAAETMiZkRQAACRs6LmxNAACBk7Km5MUAAAkbOi5sTQAAgZOypuTFAACJm7qu7M0AAHkbOi5sTQAAiZu6ruzNAACBk7Km5MUAAHmbuq7szQAAiRs6LmxNAAB5m7qu7M0AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=" >
-            <Object ID="{34898761-0982-4A77-A737-54BC16FD2785}" Class="sys://Schema/System/SuperClass" LinkObject="{0B1DA7E1-1731-49AC-9814-47470E78EFAB}" />
-            <Object ID="{509BC756-9910-4B86-8F13-70E481283408}" Name="Temperature" Flags="0x900" Class="sys://Schema/System/Units/Temperature" DefaultValue="3000 K" DisplayName="Temperature" Description="Temperature" Aggregation="4" />
-            <Object ID="{3B5D249E-2CEA-4BA0-8819-57109A085870}" Name="Hue" Flags="0x900" Class="sys://Schema/System/Real" DisplayName="Hue" Description="Hue" />
-            <Object ID="{8C2D8E31-161F-4751-B0C0-D6A4FB10CBAD}" Name="Saturation" Flags="0x900" Class="sys://Schema/System/Percent" DisplayName="Saturation" Description="Saturation" />
-            <Object ID="{B2001BC2-A39E-421A-8594-BDEACAFEFF22}" Class="sys://Schema/System/SuperClass" LinkObject="{DEB24C93-9143-4030-86FF-29C7626BC9E3}" />
-          </Object>
-          <Object ID="{D8F244F3-FE3C-4A8B-AF81-289EE9F0EA70}" Name="AlexaEndpoint" Class="sys://Schema/System/Class" Delegatable="-1" BaseTemplate="{6215B898-613C-440E-9BC2-55D2FDDE2E1A}" >
-            <Object ID="{D676E7F6-08B6-4C2B-A7C0-42D274E0601C}" Class="sys://Schema/System/SuperClass" LinkObject="{6774D705-D9AA-422D-AB0A-6145366E925C}" />
-          </Object>
-          <Object ID="{4D32AF28-4E7C-4362-A130-B8238F2D471E}" Name="AlexaVirtualScene" Class="sys://Schema/System/Class" Icon="AgAAADYEAAAAAAEAAgAgIBAAAAAAAOgCAAAmAAAAEBAQAAAAAAAoAQAADgMAACgAAAAgAAAAQAAAAAEABAAAAAAAgAIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAAACAAAAAgIAAgAAAAIAAgACAgAAAwMDAAICAgAAAAP8AAP8AAAD//wD/AAAA/wD/AP//AAD///8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAB3d3d3d3d3d3d3AAAAAAAAd3d3d3d3d3d3dwAAAAAAAHeIiIiIiIiIiHcAAAAAAAB3iIiIiIiIiIh3AAAAAAAAd4iIiIiIiIiIdwAAAAAAAHeIiIiIiIiIiHcAAAAAAAB3d3d3d3d3d3d3AAAAAAAAd3d3d3d3d3d3dwAAAAAAAHeIiHeIiHeIiHcAAAAAAAB3iIh3iIh3iIh3AAAAAAAAd4iId4iId4iIdwAAAAAAAHeIiHeIiHeIiHcAAAAAAAB3d3d3d3d3d3d3AAAAAAAAd3d3d3d3d3d3dwAAAAAAAHeIiHeIiHeIiHcAAAAAAAB3iIh3iIh3iIh3AAAAAAAAd4iId4iId4iIdwAAAAAAAHeIiHeIiHeIiHcAAAAAAAB3d3d3d3d3d3d3AAAAAAAAd3d3d3d3d3d3dwAAAAAAAHciIiIiIiIiIncAAAAAAAB3IiIiIiIiIiJ3AAAAAAAAdyIiIiIiIiIidwAAAAAAAHciIiIiIiIiIncAAAAAAAB3IiIiIiIiIiJ3AAAAAAAAdyIiIiIiIiIidwAAAAAAAHd3d3d3d3d3d3cAAAAAAAB3d3d3d3d3d3d3AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADwAAAP8AAAD/AAAA/wAAAP8AAAD/AAAA/wAAAP8AAAD/AAAA/wAAAP8AAAD/AAAA/wAAAP8AAAD/AAAA/wAAAP8AAAD/AAAA/wAAAP8AAAD/AAAA/wAAAP8AAAD/AAAA/wAAAP8AAAD/AAAA/wAAAP8AAAD/AAAA/wAAAP8AAADygAAAAQAAAAIAAAAAEABAAAAAAAwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAAACAAAAAgIAAgAAAAIAAgACAgAAAwMDAAICAgAAAAP8AAP8AAAD//wD/AAAA/wD/AP//AAD///8AAAAAAAAAAAAAB3d3d3dwAAAHiIiIiHAAAAeIiIiIcAAAB3d3d3dwAAAHiHiHiHAAAAeIeIeIcAAAB3d3d3dwAAAHiHiHiHAAAAeIeIeIcAAAB3d3d3dwAAAHIiIiInAAAAciIiIicAAAByIiIiJwAAAHd3d3d3AAAAAAAAAAAADAAwAAwAMAAMADAADAAwAAwAMAAMADAADAAwAAwAMAAMADAADAAwAAwAMAAMADAADAAwAAwAMAAMADAADAAwAA" Description="Virtual Scene" >
-            <Object ID="{B6F4618E-C259-44E0-9733-2CA726D9627C}" Class="sys://Schema/System/SuperClass" LinkObject="{3C3B4F0D-9DC5-42EA-9CE3-2150D2AD58CB}" />
-            <Object ID="{22C2B32B-ED0F-437E-966A-B2352E23C742}" Class="sys://Schema/System/SuperClass" LinkObject="{671F4881-A05B-4029-B810-BF284F3EBFCF}" />
-            <Object ID="{239FA695-DB4E-4EE2-9C6A-32E1B42BB2B4}" Name="Power" Class="sys://Schema/System/SuperClass" LinkObject="{9C3E5340-EAB7-402D-979A-93B5135264AA}" />
-            <Object ID="{DFB63660-DC61-4ED7-B84D-5BC58827ED40}" Name="ClassConstructor" Class="sys://Schema/Scripting/ClassConstructor" >
-              <![CDATA[
-Script=
-this.CreateObject "sys://Schema/Modules/Alexa/Classes/AlexaTriggerButton","On"
-this.CreateObject "sys://Schema/Modules/Alexa/Classes/AlexaTriggerButton","Off"
-]]>
-            </Object>
-            <Object ID="{C87C350D-9216-4D8C-9B76-C518F07C46AC}" Name="OnChangePowerState" Class="sys://Schema/Scripting/ClassProperty" Property="{B3E124C2-388D-4E18-A276-0410DE54803A}" >
-              <![CDATA[
-Script=
-if (sysevent.newVal = true) then
-	set tmp = this.GetObjectsByTypeAndPropertyValue("sys://Schema/Modules/Alexa/Classes/AlexaTriggerButton", "Name", "On", true)
-else
-	set tmp = this.GetObjectsByTypeAndPropertyValue("sys://Schema/Modules/Alexa/Classes/AlexaTriggerButton", "Name", "Off", true)
-end if
-
-if not (tmp is nothing) then
-	for each obj in tmp
-		obj.Trigger = true
-	next
-end if
-set tmp = nothing
-
-]]>
-            </Object>
-            <Object ID="{1780E679-097A-4636-8C3A-6401F8678953}" Class="sys://Schema/System/ChildClass" LinkObject="{93E7B083-1F5E-4F41-9AAC-4AA8C8D3DBF9}" />
-            <Object ID="{B4B8955A-5695-4D3C-A557-347B51B5881F}" Name="displayCategories" Flags="0x900" Class="sys://Schema/System/Text" ReadOnly="-1" DefaultValue="&quot;SCENE_TRIGGER&quot;" />
-            <Object ID="{A9358E27-F33E-4CC8-AA80-9EE44423E889}" Name="renderDiscoveryJson" Class="sys://Schema/Scripting/ClassFunction" >
-              <![CDATA[
-Script=
-json = ""
-set classes = this.GetClasses()
-for each cls in classes
 	if (cls.Name = "Alexa.PowerController") then
 		if (json <> "") then
 			json = json + ","
@@ -272,9 +276,137 @@ for each cls in classes
 		json = json + chr(34) + "properties" + chr(34) + ": {" + chr(34) + "supported" + chr(34) + ": [ {"
 		json = json + JsonNameValue("name","powerState") + "} ],"
 		json = json + chr(34) + "proactivelyReported" + chr(34) + ":" + LCase(CStr(this.proactivelyReported)) + ","
-		json = json + chr(34) + "supportsDeactivation" + chr(34) + ":" + LCase(CStr(this.supportsDeactivation)) + ","
-		'json = json + this.discoveryJsonEpilog()
+		json = json + this.discoveryJsonEpilog()
 		json = json + "}"
+		json = json + "}"
+	end if
+	
+	if (cls.Name = "Alexa.BrightnessController") then
+		if (json <> "") then
+			json = json + ","
+		end if
+		json = json + "{"
+		json = json + this.discoveryJsonProlog()
+		json = json + JsonNameValue("interface",cls.Name) + ","
+		json = json + chr(34) + "properties" + chr(34) + ": {" + chr(34) + "supported" + chr(34) + ": [ {"
+		json = json + JsonNameValue("name","brightness") + "} ],"
+		json = json + chr(34) + "proactivelyReported" + chr(34) + ":" + LCase(CStr(this.proactivelyReported)) + ","
+		json = json + this.discoveryJsonEpilog()
+		json = json + "}"
+		json = json + "}"
+	end if
+	
+	if (cls.Name = "Alexa.ColorController") then
+		if (json <> "") then
+			json = json + ","
+		end if
+		json = json + "{"
+		json = json + this.discoveryJsonProlog()
+		json = json + JsonNameValue("interface",cls.Name) + ","
+		json = json + chr(34) + "properties" + chr(34) + ": {" + chr(34) + "supported" + chr(34) + ": [ {"
+		json = json + JsonNameValue("name","color") + "} ],"
+		json = json + chr(34) + "proactivelyReported" + chr(34) + ":" + LCase(CStr(this.proactivelyReported)) + ","
+		json = json + this.discoveryJsonEpilog()
+		json = json + "}"
+		json = json + "}"
+	end if
+	
+	if (cls.Name = "Alexa.ColorTemperatureController") then
+		if (json <> "") then
+			json = json + ","
+		end if
+		json = json + "{"
+		json = json + this.discoveryJsonProlog()
+		json = json + JsonNameValue("interface",cls.Name) + ","
+		json = json + chr(34) + "properties" + chr(34) + ": {" + chr(34) + "supported" + chr(34) + ": [ {"
+		json = json + JsonNameValue("name","colorTemperatureInKelvin") + "} ],"
+		json = json + chr(34) + "proactivelyReported" + chr(34) + ":" + LCase(CStr(this.proactivelyReported)) + ","
+		json = json + this.discoveryJsonEpilog()
+		json = json + "}"
+		json = json + "}"
+	end if
+	
+next
+
+method.renderDiscoveryJson = json
+json = ""
+]]>
+              </Object>
+            </Object>
+            <Object ID="{69CBCBEA-D3F4-4231-9C15-F5096E76EF23}" Name="Alexa.BrightnessController" Class="sys://Schema/System/Class" Virtual="-1" >
+              <Object ID="{358C70A8-DD66-4B5D-AEA3-EF27474F1404}" Class="sys://Schema/System/SuperClass" LinkObject="{3317BF5A-E61E-4E32-B6C8-5FD25B85C4E4}" />
+              <Object ID="{9E35BF24-409E-481E-A864-8ED1E3FA2703}" Name="interface" Flags="0x900" Class="sys://Schema/System/Text" DefaultValue="Alexa.BrightnessController" ReadOnly="-1" />
+              <Object ID="{891A52F6-41B8-40C9-BF6D-191F5737A320}" Name="properties" Flags="0x900" Class="sys://Schema/System/Text" DefaultValue="brightness" ReadOnly="-1" />
+              <Object ID="{41245588-42E2-44C4-9B78-6F000743F5AE}" Class="sys://Schema/System/SubClass" LinkObject="{DEB24C93-9143-4030-86FF-29C7626BC9E3}" />
+            </Object>
+            <Object ID="{B2BBF42A-7087-4F58-8AE7-144F35D2B763}" Name="Alexa.ColorController" Class="sys://Schema/System/Class" Virtual="-1" >
+              <Object ID="{ACBB45CA-D2D8-4A31-B268-384677410E8C}" Class="sys://Schema/System/SuperClass" LinkObject="{3317BF5A-E61E-4E32-B6C8-5FD25B85C4E4}" />
+              <Object ID="{76DEE8E4-A3BB-4BDA-AF45-71FC0E55F465}" Name="interface" Flags="0x900" Class="sys://Schema/System/Text" DefaultValue="Alexa.ColorController" ReadOnly="-1" />
+              <Object ID="{B6AF3582-E596-4D98-A741-A67FC44A5F9B}" Name="properties" Flags="0x900" Class="sys://Schema/System/Text" DefaultValue="color" ReadOnly="-1" />
+              <Object ID="{57EF2010-410C-4527-9FAB-5DF77BC02D43}" Class="sys://Schema/System/SubClass" LinkObject="{FEB5CCE9-F343-4CD9-9611-E75329EB3223}" />
+            </Object>
+            <Object ID="{C46D793B-1481-493B-8A78-F593F613A4CE}" Name="Alexa.ColorTemperatureController" Class="sys://Schema/System/Class" Virtual="-1" >
+              <Object ID="{A8FC5AF7-0A90-4A86-8142-0B30E169B5DB}" Class="sys://Schema/System/SuperClass" LinkObject="{3317BF5A-E61E-4E32-B6C8-5FD25B85C4E4}" />
+              <Object ID="{D03F58FD-DD41-48DB-806B-3CDB9AE98E03}" Name="interface" Flags="0x900" Class="sys://Schema/System/Text" DefaultValue="Alexa.ColorTemperatureController" ReadOnly="-1" />
+              <Object ID="{7B930C03-5F7C-4B27-B838-3E47FF65A5A8}" Name="properties" Flags="0x900" Class="sys://Schema/System/Text" DefaultValue="colorTemperatureInKelvin" ReadOnly="-1" />
+              <Object ID="{441D9F48-779F-4964-BED9-27D36B95CCB5}" Class="sys://Schema/System/SubClass" LinkObject="{219DFC9B-F094-4B5E-8A31-F088096D7072}" />
+            </Object>
+          </Object>
+          <Object ID="{0FD1FB4F-E281-4AC2-917C-422A1AAC2123}" Name="Templates" Flags="0x120000" Class="sys://Schema/System/TemplateFolder" />
+          <Object ID="{0786FB41-608B-4A7F-B4C6-7B8E56CC5920}" Name="GlobalScripts" Flags="0x120000" Class="sys://Schema/Scripting/GlobalScriptFolder" />
+          <Object ID="{68EC72A2-F2DA-40F3-955B-DCCD65C5C4C0}" Name="Logic" Flags="0x120000" Class="sys://Schema/Logic/RuleFolder" />
+          <Object ID="{0E647F5A-D15F-452B-B909-C11CC14DA13E}" Name="Variables" Flags="0x120000" Class="sys://Schema/System/VariableFolder" />
+          <Object ID="{0490AE05-56D2-4676-A339-C646A057D1B1}" Name="Timers" Flags="0x120000" Class="sys://Schema/Timers/TimerFolder" />
+          <Object ID="{7627E5BF-C3F5-4BE3-BCD5-B60F18AEF632}" Name="Macros" Flags="0x120000" Class="sys://Schema/System/MacroHolder" />
+        </Object>
+        <Object ID="{CBCF983E-32E7-4749-A8CB-C979723E4DCE}" Name="Power" Class="sys://Schema/System/Module" >
+          <Object ID="{7CF4B474-F131-4C74-BAAF-48AF1AF5709A}" Name="Classes" Flags="0x120000" Class="sys://Schema/System/ClassFolder" >
+            <Object ID="{680A5C36-8033-42EF-A2AE-30CCAE9B4CDB}" Name="Alexa.PowerController" Class="sys://Schema/System/Class" Virtual="-1" >
+              <Object ID="{019B36B9-628C-43A0-B517-2E66B4264315}" Class="sys://Schema/System/SuperClass" LinkObject="{3317BF5A-E61E-4E32-B6C8-5FD25B85C4E4}" />
+              <Object ID="{76142AC2-63B3-4B02-9A71-BD01F5F24A9E}" Name="interface" Flags="0x900" Class="sys://Schema/System/Text" DefaultValue="Alexa.PowerController" ReadOnly="-1" />
+              <Object ID="{763C71DA-412A-4AD6-8034-0EB4F21AC13D}" Name="properties" Flags="0x900" Class="sys://Schema/System/Text" DefaultValue="powerState" ReadOnly="-1" />
+              <Object ID="{CEFCC428-3353-4377-848E-892021C42DE7}" Class="sys://Schema/System/SubClass" LinkObject="{9C3E5340-EAB7-402D-979A-93B5135264AA}" />
+            </Object>
+            <Object ID="{B09958FD-B3F5-404B-B4E7-97395CB8BC76}" Name="Alexa.PowerLevelController" Class="sys://Schema/System/Class" Virtual="-1" >
+              <Object ID="{C022CA84-C6AE-4A98-A4AC-2F56469CAF15}" Class="sys://Schema/System/SuperClass" LinkObject="{3317BF5A-E61E-4E32-B6C8-5FD25B85C4E4}" />
+              <Object ID="{A4A90FBD-363D-4D90-BFFE-15E268586557}" Name="interface" Flags="0x900" Class="sys://Schema/System/Text" DefaultValue="Alexa.PowerLevelController" ReadOnly="-1" />
+              <Object ID="{0337A72E-755B-4873-83B1-8F9CA022AB9F}" Name="properties" Flags="0x900" Class="sys://Schema/System/Text" DefaultValue="powerLevel" ReadOnly="-1" />
+            </Object>
+          </Object>
+          <Object ID="{495575CB-150F-40D7-8B7B-8D3EA127191D}" Name="Templates" Flags="0x120000" Class="sys://Schema/System/TemplateFolder" />
+          <Object ID="{66658501-3226-4563-91CB-84627EC5DE36}" Name="GlobalScripts" Flags="0x120000" Class="sys://Schema/Scripting/GlobalScriptFolder" />
+          <Object ID="{C8059AAC-E953-4E40-984D-6CF35F419919}" Name="Logic" Flags="0x120000" Class="sys://Schema/Logic/RuleFolder" />
+          <Object ID="{0A53EAA8-2439-4678-82B2-E8055A840F2F}" Name="Variables" Flags="0x120000" Class="sys://Schema/System/VariableFolder" />
+          <Object ID="{989E155C-C25F-4CC5-8288-D27EE17F405E}" Name="Timers" Flags="0x120000" Class="sys://Schema/Timers/TimerFolder" />
+          <Object ID="{840178C8-5B1A-4F72-9776-9E24AEA701F7}" Name="Macros" Flags="0x120000" Class="sys://Schema/System/MacroHolder" />
+        </Object>
+        <Object ID="{09A746F4-9D2E-473B-9718-F200159EA94D}" Name="Scenes" Class="sys://Schema/System/Module" >
+          <Object ID="{0348A901-E38A-480D-9F68-362546069E7A}" Name="Classes" Flags="0x120000" Class="sys://Schema/System/ClassFolder" >
+            <Object ID="{4D32AF28-4E7C-4362-A130-B8238F2D471E}" Name="AlexaVirtualScene" Class="sys://Schema/System/Class" Icon="AgAAADYEAAAAAAEAAgAgIBAAAAAAAOgCAAAmAAAAEBAQAAAAAAAoAQAADgMAACgAAAAgAAAAQAAAAAEABAAAAAAAgAIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAAACAAAAAgIAAgAAAAIAAgACAgAAAwMDAAICAgAAAAP8AAP8AAAD//wD/AAAA/wD/AP//AAD///8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAB3d3d3d3d3d3d3AAAAAAAAd3d3d3d3d3d3dwAAAAAAAHeIiIiIiIiIiHcAAAAAAAB3iIiIiIiIiIh3AAAAAAAAd4iIiIiIiIiIdwAAAAAAAHeIiIiIiIiIiHcAAAAAAAB3d3d3d3d3d3d3AAAAAAAAd3d3d3d3d3d3dwAAAAAAAHeIiHeIiHeIiHcAAAAAAAB3iIh3iIh3iIh3AAAAAAAAd4iId4iId4iIdwAAAAAAAHeIiHeIiHeIiHcAAAAAAAB3d3d3d3d3d3d3AAAAAAAAd3d3d3d3d3d3dwAAAAAAAHeIiHeIiHeIiHcAAAAAAAB3iIh3iIh3iIh3AAAAAAAAd4iId4iId4iIdwAAAAAAAHeIiHeIiHeIiHcAAAAAAAB3d3d3d3d3d3d3AAAAAAAAd3d3d3d3d3d3dwAAAAAAAHciIiIiIiIiIncAAAAAAAB3IiIiIiIiIiJ3AAAAAAAAdyIiIiIiIiIidwAAAAAAAHciIiIiIiIiIncAAAAAAAB3IiIiIiIiIiJ3AAAAAAAAdyIiIiIiIiIidwAAAAAAAHd3d3d3d3d3d3cAAAAAAAB3d3d3d3d3d3d3AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADwAAAP8AAAD/AAAA/wAAAP8AAAD/AAAA/wAAAP8AAAD/AAAA/wAAAP8AAAD/AAAA/wAAAP8AAAD/AAAA/wAAAP8AAAD/AAAA/wAAAP8AAAD/AAAA/wAAAP8AAAD/AAAA/wAAAP8AAAD/AAAA/wAAAP8AAAD/AAAA/wAAAP8AAADygAAAAQAAAAIAAAAAEABAAAAAAAwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAAACAAAAAgIAAgAAAAIAAgACAgAAAwMDAAICAgAAAAP8AAP8AAAD//wD/AAAA/wD/AP//AAD///8AAAAAAAAAAAAAB3d3d3dwAAAHiIiIiHAAAAeIiIiIcAAAB3d3d3dwAAAHiHiHiHAAAAeIeIeIcAAAB3d3d3dwAAAHiHiHiHAAAAeIeIeIcAAAB3d3d3dwAAAHIiIiInAAAAciIiIicAAAByIiIiJwAAAHd3d3d3AAAAAAAAAAAADAAwAAwAMAAMADAADAAwAAwAMAAMADAADAAwAAwAMAAMADAADAAwAAwAMAAMADAADAAwAAwAMAAMADAADAAwAA" Description="Virtual Scene" >
+              <Object ID="{B6F4618E-C259-44E0-9733-2CA726D9627C}" Class="sys://Schema/System/SuperClass" LinkObject="{3C3B4F0D-9DC5-42EA-9CE3-2150D2AD58CB}" />
+              <Object ID="{22C2B32B-ED0F-437E-966A-B2352E23C742}" Class="sys://Schema/System/SuperClass" LinkObject="{671F4881-A05B-4029-B810-BF284F3EBFCF}" />
+              <Object ID="{239FA695-DB4E-4EE2-9C6A-32E1B42BB2B4}" Name="Power" Class="sys://Schema/System/SuperClass" LinkObject="{9C3E5340-EAB7-402D-979A-93B5135264AA}" />
+              <Object ID="{DFB63660-DC61-4ED7-B84D-5BC58827ED40}" Name="ClassConstructor" Class="sys://Schema/Scripting/ClassConstructor" >
+                <![CDATA[
+Script=
+this.CreateObject "sys://Schema/Modules/Alexa/Classes/AlexaTriggerButton","On"
+this.CreateObject "sys://Schema/Modules/Alexa/Classes/AlexaTriggerButton","Off"
+]]>
+              </Object>
+              <Object ID="{1780E679-097A-4636-8C3A-6401F8678953}" Class="sys://Schema/System/ChildClass" LinkObject="{93E7B083-1F5E-4F41-9AAC-4AA8C8D3DBF9}" />
+              <Object ID="{B4B8955A-5695-4D3C-A557-347B51B5881F}" Name="displayCategories" Flags="0x900" Class="sys://Schema/System/Text" ReadOnly="-1" DefaultValue="&quot;SCENE_TRIGGER&quot;" />
+              <Object ID="{A9358E27-F33E-4CC8-AA80-9EE44423E889}" Name="renderDiscoveryJson" Class="sys://Schema/Scripting/ClassFunction" >
+                <![CDATA[
+Script=
+json = ""
+set classes = this.GetClasses()
+for each cls in classes
+	if (cls.Name = "Alexa.PowerController") then
+		json = json + "{"
+		json = json + this.discoveryJsonProlog()
+		json = json + JsonNameValue("interface","Alexa.SceneController") + ","
+		json = json + chr(34) + "proactivelyReported" + chr(34) + ":" + LCase(CStr(this.proactivelyReported)) + ","
+		json = json + chr(34) + "supportsDeactivation" + chr(34) + ":" + LCase(CStr(this.supportsDeactivation)) 
 		json = json + "}"
 	end if
 next
@@ -282,29 +414,74 @@ next
 method.renderDiscoveryJson = json
 json = ""
 ]]>
+              </Object>
+              <Object ID="{6BA23DB8-0805-43E6-BD28-D3D34A5D1059}" Class="sys://Schema/System/SuperClass" LinkObject="{37181C11-1E1B-472F-B4AF-5A52D464D4B4}" />
+              <Object ID="{C682FBEA-6385-4A84-B641-76D590D0AA4F}" Name="OnChangePowerState" Class="sys://Schema/Scripting/ClassProperty" Property="{B3E124C2-388D-4E18-A276-0410DE54803A}" >
+                <![CDATA[
+Script=
+if (sysevent.newVal = true) then
+	set tmp = this.GetObjectsByTypeAndPropertyValue("sys://Schema/Modules/Alexa/Scenes/Classes/AlexaTriggerButton", "Name", "On", true)
+else
+	set tmp = this.GetObjectsByTypeAndPropertyValue("sys://Schema/Modules/Alexa/Scenes/Classes/AlexaTriggerButton", "Name", "Off", true)
+end if
+
+if not (tmp is nothing) then
+	for each obj in tmp
+		obj.Trigger = true
+	next
+end if
+set tmp = nothing
+
+]]>
+              </Object>
             </Object>
-            <Object ID="{6BA23DB8-0805-43E6-BD28-D3D34A5D1059}" Class="sys://Schema/System/SuperClass" LinkObject="{37181C11-1E1B-472F-B4AF-5A52D464D4B4}" />
-          </Object>
-          <Object ID="{49762896-87F6-4367-876A-EF2009C79D33}" Name="AlexaVirtualOccupancy" Class="sys://Schema/System/Class" Icon="AgAAADYEAAAAAAEAAgAgIBAAAAAAAOgCAAAmAAAAEBAQAAAAAAAoAQAADgMAACgAAAAgAAAAQAAAAAEABAAAAAAAgAIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAAACAAAAAgIAAgAAAAIAAgACAgAAAwMDAAICAgAAAAP8AAP8AAAD//wD/AAAA/wD/AP//AAD///8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAB3d3d3d3d3d3d3AAAAAAAAd3d3d3d3d3d3dwAAAAAAAHeIiIiIiIiIiHcAAAAAAAB3iIiIiIiIiIh3AAAAAAAAd3d3d3d3d3d3dwAAAAAAAHd3d3d3d3d3d3cAAAAAAAB3d3d3d3d3d3d3AAAAAAAAd3d3d3d3d3d3dwAAAAAAAHeIiId3d3iIiHcAAAAAAAB3iIiHd3d4iIh3AAAAAAAAd3d3d3d3d3d3dwAAAAAAAHd3d3d3d3d3d3cAAAAAAAB3iIiHd3d4iIh3AAAAAAAAd4iIh3d3eIiIdwAAAAAAAHd3d3d3d3d3d3cAAAAAAAB3d3d3d3d3d3d3AAAAAAAAd4iIh3d3eIiIdwAAAAAAAHeIiId3d3iIiHcAAAAAAAB3d3d3d3d3d3d3AAAAAAAAd3d3d3d3d3d3dwAAAAAAAHeIiId3d3iIiHcAAAAAAAB3iIiHd3d4iIh3AAAAAAAAd3d3d3d3d3d3dwAAAAAAAHd3d3d3d3d3d3cAAAAAAAB3iIiHd3d4iIh3AAAAAAAAd4iIh3d3eIiIdwAAAAAAAHd3d3d3d3d3d3cAAAAAAAB3d3d3d3d3d3d3AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADwAAAP8AAAD/AAAA/wAAAP8AAAD/AAAA/wAAAP8AAAD/AAAA/wAAAP8AAAD/AAAA/wAAAP8AAAD/AAAA/wAAAP8AAAD/AAAA/wAAAP8AAAD/AAAA/wAAAP8AAAD/AAAA/wAAAP8AAAD/AAAA/wAAAP8AAAD/AAAA/wAAAP8AAADygAAAAQAAAAIAAAAAEABAAAAAAAwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAAACAAAAAgIAAgAAAAIAAgACAgAAAwMDAAICAgAAAAP8AAP8AAAD//wD/AAAA/wD/AP//AAD///8AAAAAAAAAAAAAB3d3d3dwAAAHiIiIiHAAAAd3d3d3cAAAB3d3d3dwAAAHiId4iHAAAAd3d3d3cAAAB4iHeIhwAAAHd3d3d3AAAAeIh3iIcAAAB3d3d3dwAAAHiId4iHAAAAd3d3d3cAAAB4iHeIhwAAAHd3d3d3AAAAAAAAAAAADAAwAAwAMAAMADAADAAwAAwAMAAMADAADAAwAAwAMAAMADAADAAwAAwAMAAMADAADAAwAAwAMAAMADAADAAwAA" Description="Occupancy Scene" >
-            <Object ID="{51655BA6-C855-4F4C-8C9F-CC69DD8D8115}" Class="sys://Schema/System/SuperClass" LinkObject="{3C3B4F0D-9DC5-42EA-9CE3-2150D2AD58CB}" />
-            <Object ID="{182D7E1F-2F33-4660-9294-DA555B953515}" Class="sys://Schema/System/SuperClass" LinkObject="{671F4881-A05B-4029-B810-BF284F3EBFCF}" />
-            <Object ID="{B708E9AC-8D93-4CEC-A838-31553D2B0BE9}" Class="sys://Schema/System/ChildClass" LinkObject="{2AC12B87-3633-468D-B265-1FF53B088E50}" />
-            <Object ID="{9ACB14A4-9006-4431-98A9-BD1E95BF8B0F}" Name="Power" Class="sys://Schema/System/SuperClass" LinkObject="{9C3E5340-EAB7-402D-979A-93B5135264AA}" />
-            <Object ID="{A0914ED0-96B2-4CA3-8C10-0A12830A864D}" Name="ClassConstructor" Class="sys://Schema/Scripting/ClassConstructor" >
-              <![CDATA[
+            <Object ID="{37181C11-1E1B-472F-B4AF-5A52D464D4B4}" Name="Alexa.SceneController" Class="sys://Schema/System/Class" Virtual="-1" >
+              <Object ID="{82CED745-2601-4F53-8B23-9FEF15B09ED7}" Class="sys://Schema/System/SuperClass" LinkObject="{3317BF5A-E61E-4E32-B6C8-5FD25B85C4E4}" />
+              <Object ID="{0F483F98-E55D-4ABD-86BA-AD42C153535E}" Name="interface" Flags="0x900" Class="sys://Schema/System/Text" DefaultValue="Alexa.SceneController" ReadOnly="-1" />
+              <Object ID="{C0394B12-4393-413A-B17B-B67DB9EEB5B9}" Name="properties" Flags="0x900" Class="sys://Schema/System/Text" DefaultValue="powerState" ReadOnly="-1" />
+            </Object>
+            <Object ID="{49762896-87F6-4367-876A-EF2009C79D33}" Name="AlexaVirtualOccupancy" Class="sys://Schema/System/Class" Icon="AgAAADYEAAAAAAEAAgAgIBAAAAAAAOgCAAAmAAAAEBAQAAAAAAAoAQAADgMAACgAAAAgAAAAQAAAAAEABAAAAAAAgAIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAAACAAAAAgIAAgAAAAIAAgACAgAAAwMDAAICAgAAAAP8AAP8AAAD//wD/AAAA/wD/AP//AAD///8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAB3d3d3d3d3d3d3AAAAAAAAd3d3d3d3d3d3dwAAAAAAAHeIiIiIiIiIiHcAAAAAAAB3iIiIiIiIiIh3AAAAAAAAd3d3d3d3d3d3dwAAAAAAAHd3d3d3d3d3d3cAAAAAAAB3d3d3d3d3d3d3AAAAAAAAd3d3d3d3d3d3dwAAAAAAAHeIiId3d3iIiHcAAAAAAAB3iIiHd3d4iIh3AAAAAAAAd3d3d3d3d3d3dwAAAAAAAHd3d3d3d3d3d3cAAAAAAAB3iIiHd3d4iIh3AAAAAAAAd4iIh3d3eIiIdwAAAAAAAHd3d3d3d3d3d3cAAAAAAAB3d3d3d3d3d3d3AAAAAAAAd4iIh3d3eIiIdwAAAAAAAHeIiId3d3iIiHcAAAAAAAB3d3d3d3d3d3d3AAAAAAAAd3d3d3d3d3d3dwAAAAAAAHeIiId3d3iIiHcAAAAAAAB3iIiHd3d4iIh3AAAAAAAAd3d3d3d3d3d3dwAAAAAAAHd3d3d3d3d3d3cAAAAAAAB3iIiHd3d4iIh3AAAAAAAAd4iIh3d3eIiIdwAAAAAAAHd3d3d3d3d3d3cAAAAAAAB3d3d3d3d3d3d3AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADwAAAP8AAAD/AAAA/wAAAP8AAAD/AAAA/wAAAP8AAAD/AAAA/wAAAP8AAAD/AAAA/wAAAP8AAAD/AAAA/wAAAP8AAAD/AAAA/wAAAP8AAAD/AAAA/wAAAP8AAAD/AAAA/wAAAP8AAAD/AAAA/wAAAP8AAAD/AAAA/wAAAP8AAADygAAAAQAAAAIAAAAAEABAAAAAAAwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAAACAAAAAgIAAgAAAAIAAgACAgAAAwMDAAICAgAAAAP8AAP8AAAD//wD/AAAA/wD/AP//AAD///8AAAAAAAAAAAAAB3d3d3dwAAAHiIiIiHAAAAd3d3d3cAAAB3d3d3dwAAAHiId4iHAAAAd3d3d3cAAAB4iHeIhwAAAHd3d3d3AAAAeIh3iIcAAAB3d3d3dwAAAHiId4iHAAAAd3d3d3cAAAB4iHeIhwAAAHd3d3d3AAAAAAAAAAAADAAwAAwAMAAMADAADAAwAAwAMAAMADAADAAwAAwAMAAMADAADAAwAAwAMAAMADAADAAwAAwAMAAMADAADAAwAA" Description="Occupancy Scene" >
+              <Object ID="{51655BA6-C855-4F4C-8C9F-CC69DD8D8115}" Class="sys://Schema/System/SuperClass" LinkObject="{3C3B4F0D-9DC5-42EA-9CE3-2150D2AD58CB}" />
+              <Object ID="{182D7E1F-2F33-4660-9294-DA555B953515}" Class="sys://Schema/System/SuperClass" LinkObject="{671F4881-A05B-4029-B810-BF284F3EBFCF}" />
+              <Object ID="{B708E9AC-8D93-4CEC-A838-31553D2B0BE9}" Class="sys://Schema/System/ChildClass" LinkObject="{2AC12B87-3633-468D-B265-1FF53B088E50}" />
+              <Object ID="{9ACB14A4-9006-4431-98A9-BD1E95BF8B0F}" Name="Power" Class="sys://Schema/System/SuperClass" LinkObject="{9C3E5340-EAB7-402D-979A-93B5135264AA}" />
+              <Object ID="{A0914ED0-96B2-4CA3-8C10-0A12830A864D}" Name="ClassConstructor" Class="sys://Schema/Scripting/ClassConstructor" >
+                <![CDATA[
 Script=
 this.CreateObject "sys://Schema/Modules/Alexa/Classes/AlexaOccupancyButton","On"
 this.CreateObject "sys://Schema/Modules/Alexa/Classes/AlexaOccupancyButton","Off"
 
 ]]>
-            </Object>
-            <Object ID="{1B562B11-936B-459B-9CA6-EC6B19BE7464}" Name="OnChangePowerState" Class="sys://Schema/Scripting/ClassProperty" Property="{B3E124C2-388D-4E18-A276-0410DE54803A}" >
-              <![CDATA[
+              </Object>
+              <Object ID="{D2C67C15-6773-460E-83E1-9066C694283A}" Name="displayCategories" Flags="0x900" Class="sys://Schema/System/Text" ReadOnly="-1" DefaultValue="&quot;ACTIVITY_TRIGGER&quot;" />
+              <Object ID="{4AFFE3AE-C6CD-4EE5-AC8C-B53B3FD8633B}" Class="sys://Schema/System/SuperClass" LinkObject="{37181C11-1E1B-472F-B4AF-5A52D464D4B4}" />
+              <Object ID="{3A3773B8-B3C9-498A-A654-D86A9F3E2F65}" Name="renderDiscoveryJson" Class="sys://Schema/Scripting/ClassFunction" >
+                <![CDATA[
+Script=
+json = ""
+set classes = this.GetClasses()
+for each cls in classes
+	if (cls.Name = "Alexa.PowerController") then
+		json = json + "{"
+		json = json + this.discoveryJsonProlog()
+		json = json + JsonNameValue("interface","Alexa.SceneController") + ","
+		json = json + chr(34) + "proactivelyReported" + chr(34) + ":" + LCase(CStr(this.proactivelyReported)) + ","
+		json = json + chr(34) + "supportsDeactivation" + chr(34) + ":" + LCase(CStr(this.supportsDeactivation)) 
+		json = json + "}"
+	end if
+next
+
+method.renderDiscoveryJson = json
+json = ""
+]]>
+              </Object>
+              <Object ID="{72A048C0-2297-4352-B1C9-7A8B1A66179A}" Name="OnChangePowerState" Class="sys://Schema/Scripting/ClassProperty" Property="{B3E124C2-388D-4E18-A276-0410DE54803A}" >
+                <![CDATA[
 Script=
 if (sysevent.newVal = true) then
-	set tmp = this.GetObjectsByTypeAndPropertyValue("sys://Schema/Modules/Alexa/Classes/AlexaOccupancyButton", "Name", "On", true)
+	set tmp = this.GetObjectsByTypeAndPropertyValue("sys://Schema/Modules/Alexa/Scenes/Classes/AlexaOccupancyButton", "Name", "On", true)
 else
-	set tmp = this.GetObjectsByTypeAndPropertyValue("sys://Schema/Modules/Alexa/Classes/AlexaOccupancyButton", "Name", "Off", true)
+	set tmp = this.GetObjectsByTypeAndPropertyValue("sys://Schema/Modules/Alexa/Scenes/Classes/AlexaOccupancyButton", "Name", "Off", true)
 end if
 
 if not (tmp is nothing) then
@@ -315,42 +492,13 @@ end if
 set tmp = nothing
 
 ]]>
+              </Object>
             </Object>
-            <Object ID="{D2C67C15-6773-460E-83E1-9066C694283A}" Name="displayCategories" Flags="0x900" Class="sys://Schema/System/Text" ReadOnly="-1" DefaultValue="&quot;ACTIVITY_TRIGGER&quot;" />
-            <Object ID="{4AFFE3AE-C6CD-4EE5-AC8C-B53B3FD8633B}" Class="sys://Schema/System/SuperClass" LinkObject="{37181C11-1E1B-472F-B4AF-5A52D464D4B4}" />
-            <Object ID="{3A3773B8-B3C9-498A-A654-D86A9F3E2F65}" Name="renderDiscoveryJson" Class="sys://Schema/Scripting/ClassFunction" >
-              <![CDATA[
-Script=
-json = ""
-set classes = this.GetClasses()
-for each cls in classes
-	if (cls.Name = "Alexa.PowerController") then
-		if (json <> "") then
-			json = json + ","
-		end if
-		json = json + "{"
-		json = json + this.discoveryJsonProlog()
-		json = json + JsonNameValue("interface",cls.Name) + ","
-		json = json + chr(34) + "properties" + chr(34) + ": {" + chr(34) + "supported" + chr(34) + ": [ {"
-		json = json + JsonNameValue("name","powerState") + "} ],"
-		json = json + chr(34) + "proactivelyReported" + chr(34) + ":" + LCase(CStr(this.proactivelyReported)) + ","
-		json = json + chr(34) + "supportsDeactivation" + chr(34) + ":" + LCase(CStr(this.supportsDeactivation)) + ","
-		'json = json + this.discoveryJsonEpilog()
-		json = json + "}"
-		json = json + "}"
-	end if
-next
-
-method.renderDiscoveryJson = json
-json = ""
-]]>
-            </Object>
-          </Object>
-          <Object ID="{2AC12B87-3633-468D-B265-1FF53B088E50}" Name="AlexaOccupancyButton" Class="sys://Schema/System/Class" Icon="AgAAADYEAAAAAAEAAgAgIBAAAAAAAOgCAAAmAAAAEBAQAAAAAAAoAQAADgMAACgAAAAgAAAAQAAAAAEABAAAAAAAgAIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAAACAAAAAgIAAgAAAAIAAgACAgAAAwMDAAICAgAAAAP8AAP8AAAD//wD/AAAA/wD/AP//AAD///8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD//////////////////wAId3d3d3d3d3d3d3d3d38ACHd3d3d3d3d3d3d3d3d/AAh3d3d3d3d3d3d3d3d3fwAId3d3d3d3d3d3d3d3d38ACHd3d3d3d3d3d3d3d3d/AAh3d3d3d3d3d3d3d3d3fwAId3d3d3d3d3d3d3d3d38ACHd3d3d3d3d3d3d3d3d/AAh3d3d3d3d3d3d3d3d3fwAId3d3d3d3d3d3d3d3d38ACHd3d3d3d3d3d3d3d3d/AAiIiIiIiIiIiIiIiIiIgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD///////////////////////////////////////////////8AAAABQAAAAQAAAAEAAAABAAAAAQAAAAEAAAABAAAAAQAAAAEAAAABAAAAAQAAAAEAAAABAAAABQAAAAH//////////////////////////////////////////ygAAAAQAAAAIAAAAAEABAAAAAAAwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAAACAAAAAgIAAgAAAAIAAgACAgAAAwMDAAICAgAAAAP8AAP8AAAD//wD/AAAA/wD/AP//AAD///8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA////////8Ah3d3d3d3fwCHd3d3d3d/AId3d3d3d38Ah3d3d3d3fwCHd3d3d3d/AId3d3d3d38AiIiIiIiIgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD//wAA//8AAP//AAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAAAAAAAA//8AAP//AAD//wAA" >
-            <Object ID="{3530B75B-D1EB-4F73-8E54-672880FEC3DE}" Name="Trigger" Flags="0xF00" Class="sys://Schema/System/Boolean" Bindable="-1" Description="Trigger a button virtually" Momentary="-1" />
-            <Object ID="{74715D97-4830-4995-A8C4-C573A6E81878}" Name="Button" Class="sys://Schema/System/SuperClass" LinkObject="{B5CBA1EF-36E7-4D30-919E-F26EA814CC6D}" />
-            <Object ID="{6E9D1443-D5EA-4D0F-B8CD-3C69260090DC}" Name="OnChangeTrigger" Class="sys://Schema/Scripting/ClassProperty" Property="{3530B75B-D1EB-4F73-8E54-672880FEC3DE}" >
-              <![CDATA[
+            <Object ID="{2AC12B87-3633-468D-B265-1FF53B088E50}" Name="AlexaOccupancyButton" Class="sys://Schema/System/Class" Icon="AgAAADYEAAAAAAEAAgAgIBAAAAAAAOgCAAAmAAAAEBAQAAAAAAAoAQAADgMAACgAAAAgAAAAQAAAAAEABAAAAAAAgAIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAAACAAAAAgIAAgAAAAIAAgACAgAAAwMDAAICAgAAAAP8AAP8AAAD//wD/AAAA/wD/AP//AAD///8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD//////////////////wAId3d3d3d3d3d3d3d3d38ACHd3d3d3d3d3d3d3d3d/AAh3d3d3d3d3d3d3d3d3fwAId3d3d3d3d3d3d3d3d38ACHd3d3d3d3d3d3d3d3d/AAh3d3d3d3d3d3d3d3d3fwAId3d3d3d3d3d3d3d3d38ACHd3d3d3d3d3d3d3d3d/AAh3d3d3d3d3d3d3d3d3fwAId3d3d3d3d3d3d3d3d38ACHd3d3d3d3d3d3d3d3d/AAiIiIiIiIiIiIiIiIiIgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD///////////////////////////////////////////////8AAAABQAAAAQAAAAEAAAABAAAAAQAAAAEAAAABAAAAAQAAAAEAAAABAAAAAQAAAAEAAAABAAAABQAAAAH//////////////////////////////////////////ygAAAAQAAAAIAAAAAEABAAAAAAAwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAAACAAAAAgIAAgAAAAIAAgACAgAAAwMDAAICAgAAAAP8AAP8AAAD//wD/AAAA/wD/AP//AAD///8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA////////8Ah3d3d3d3fwCHd3d3d3d/AId3d3d3d38Ah3d3d3d3fwCHd3d3d3d/AId3d3d3d38AiIiIiIiIgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD//wAA//8AAP//AAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAAAAAAAA//8AAP//AAD//wAA" >
+              <Object ID="{3530B75B-D1EB-4F73-8E54-672880FEC3DE}" Name="Trigger" Flags="0xF00" Class="sys://Schema/System/Boolean" Bindable="-1" Description="Trigger a button virtually" Momentary="-1" />
+              <Object ID="{74715D97-4830-4995-A8C4-C573A6E81878}" Name="Button" Class="sys://Schema/System/SuperClass" LinkObject="{B5CBA1EF-36E7-4D30-919E-F26EA814CC6D}" />
+              <Object ID="{6E9D1443-D5EA-4D0F-B8CD-3C69260090DC}" Name="OnChangeTrigger" Class="sys://Schema/Scripting/ClassProperty" Property="{3530B75B-D1EB-4F73-8E54-672880FEC3DE}" >
+                <![CDATA[
 Script=
 if sysevent.newVal = true then
 	if (this.Name = "Off") then
@@ -361,20 +509,100 @@ if sysevent.newVal = true then
 end if
 
 ]]>
+              </Object>
+              <Object ID="{976767EE-B210-4747-9891-21DE2860E1F1}" Name="displayCategories" Flags="0x900" Class="sys://Schema/System/Text" ReadOnly="-1" DefaultValue="&quot;ACTIVITY_TRIGGER&quot;" />
+              <Object ID="{1DA5C764-9552-4E5B-9C45-2E491FB9D93E}" Class="sys://Schema/System/SuperClass" LinkObject="{37181C11-1E1B-472F-B4AF-5A52D464D4B4}" />
             </Object>
-            <Object ID="{976767EE-B210-4747-9891-21DE2860E1F1}" Name="displayCategories" Flags="0x900" Class="sys://Schema/System/Text" ReadOnly="-1" DefaultValue="&quot;ACTIVITY_TRIGGER&quot;" />
-            <Object ID="{1DA5C764-9552-4E5B-9C45-2E491FB9D93E}" Class="sys://Schema/System/SuperClass" LinkObject="{37181C11-1E1B-472F-B4AF-5A52D464D4B4}" />
+            <Object ID="{93E7B083-1F5E-4F41-9AAC-4AA8C8D3DBF9}" Name="AlexaTriggerButton" Class="sys://Schema/System/Class" >
+              <Object ID="{C9AE5E82-8C05-46E4-9B0A-FEB2EB8FCCE3}" Name="Button" Class="sys://Schema/System/SuperClass" LinkObject="{B5CBA1EF-36E7-4D30-919E-F26EA814CC6D}" />
+              <Object ID="{AE8D7732-8609-49AD-B62E-7D6EA1A2BF6B}" Name="Trigger" Flags="0xF00" Class="sys://Schema/System/Boolean" Bindable="-1" Description="Trigger a button virtually" Momentary="-1" />
+            </Object>
           </Object>
-          <Object ID="{93E7B083-1F5E-4F41-9AAC-4AA8C8D3DBF9}" Name="AlexaTriggerButton" Class="sys://Schema/System/Class" >
-            <Object ID="{C9AE5E82-8C05-46E4-9B0A-FEB2EB8FCCE3}" Name="Button" Class="sys://Schema/System/SuperClass" LinkObject="{B5CBA1EF-36E7-4D30-919E-F26EA814CC6D}" />
-            <Object ID="{AE8D7732-8609-49AD-B62E-7D6EA1A2BF6B}" Name="Trigger" Flags="0xF00" Class="sys://Schema/System/Boolean" Bindable="-1" Description="Trigger a button virtually" Momentary="-1" />
+          <Object ID="{558C3736-0888-46DD-A62D-301C31BB2FC3}" Name="Templates" Flags="0x120000" Class="sys://Schema/System/TemplateFolder" />
+          <Object ID="{B9073BDD-8DCB-4803-9AE9-752BF10F1BBC}" Name="GlobalScripts" Flags="0x120000" Class="sys://Schema/Scripting/GlobalScriptFolder" />
+          <Object ID="{D9B44FC7-4826-4A32-A6AF-E31F15218CB4}" Name="Logic" Flags="0x120000" Class="sys://Schema/Logic/RuleFolder" />
+          <Object ID="{7C912A23-C202-4F28-AA5E-7330C1D60F3F}" Name="Variables" Flags="0x120000" Class="sys://Schema/System/VariableFolder" />
+          <Object ID="{548B7579-EFD3-44D1-8E9B-B20E5EE1FD96}" Name="Timers" Flags="0x120000" Class="sys://Schema/Timers/TimerFolder" />
+          <Object ID="{0C138644-4FB9-4282-8FD9-7057EC75B893}" Name="Macros" Flags="0x120000" Class="sys://Schema/System/MacroHolder" />
+        </Object>
+        <Object ID="{B17A3F44-6A7A-4300-8A3D-5DA20BF27E7B}" Name="Spaces" Class="sys://Schema/System/Module" >
+          <Object ID="{7F7444A9-14ED-4C65-B1BC-8D191DE5D413}" Name="Classes" Flags="0x120000" Class="sys://Schema/System/ClassFolder" >
+            <Object ID="{6FFA8A02-14E2-4AA0-975F-DA866A99049D}" Name="AlexaSpaces" Class="sys://Schema/System/Class" >
+              <Object ID="{2EE4CE6C-4FFF-4946-89AC-BDB5383BC442}" Name="CurrentScene" Flags="0x900" Class="sys://Schema/System/Text" />
+              <Object ID="{AC2A2663-24D0-4754-8AA4-E89360BA74CA}" Class="sys://Schema/System/SubClass" LinkObject="{9B710A9C-0616-499D-A9FE-A82E3E029C8C}" />
+            </Object>
+          </Object>
+          <Object ID="{588D5926-893A-48EE-A951-3C1E73B61114}" Name="Templates" Flags="0x120000" Class="sys://Schema/System/TemplateFolder" />
+          <Object ID="{6FF994BB-EB6D-434B-8D9D-E20DFC0D04FE}" Name="GlobalScripts" Flags="0x120000" Class="sys://Schema/Scripting/GlobalScriptFolder" />
+          <Object ID="{CC9D88B0-CBC6-4EEC-9F40-F66B232E1CD9}" Name="Logic" Flags="0x120000" Class="sys://Schema/Logic/RuleFolder" />
+          <Object ID="{11C427C5-7580-4D13-BE2A-F77C930176D3}" Name="Variables" Flags="0x120000" Class="sys://Schema/System/VariableFolder" />
+          <Object ID="{13C3AB8C-086A-445A-815A-78C35AD7D620}" Name="Timers" Flags="0x120000" Class="sys://Schema/Timers/TimerFolder" />
+          <Object ID="{B5AD6142-AFEA-4A34-9ADF-4984BD33AA40}" Name="Macros" Flags="0x120000" Class="sys://Schema/System/MacroHolder" />
+        </Object>
+        <Object ID="{C4E6A6CF-AE58-404E-9B2B-9D75C4AA2FB6}" Name="Classes" Flags="0x120000" Class="sys://Schema/System/ClassFolder" >
+          <Object ID="{3470B9B5-E685-4EB2-ABC0-2F4CCD7F686A}" Name="AlexaBase" Class="sys://Schema/System/Class" Virtual="-1" >
+            <Object ID="{24DC0F3F-5C64-4563-B106-1BD34C6A31E7}" Name="IsReachable" Flags="0x900" Class="sys://Schema/System/Boolean" DefaultValue="-1" Aggregation="2" />
+            <Object ID="{B1564A99-5CF7-40FA-B72E-531BF70C0EB5}" Name="IsDiscoverable" Flags="0x900" Class="sys://Schema/System/Boolean" DefaultValue="-1" />
+            <Object ID="{D7D056CA-9A53-40FA-AED8-D10BAD8236EA}" Name="ApplianceType" Flags="0x900" Class="sys://Schema/System/Text" />
+          </Object>
+          <Object ID="{31E99AB9-79D2-4BC1-9982-9D615DE6644E}" Name="AlexaStatus" Class="sys://Schema/System/Class" Virtual="-1" >
+            <Object ID="{68A63139-5D3A-4CDF-B7A4-46982D7A8C7B}" Name="Health" Flags="0x900" Class="sys://Schema/System/Boolean" DefaultValue="-1" />
+            <Object ID="{415F83E3-A174-4CF1-B1B0-789D04494348}" Name="HealthDescription" Flags="0x900" Class="sys://Schema/System/Text" />
+            <Object ID="{B51289C5-A483-4FCE-8C6E-88B8115793D6}" Name="AlexaAsyncAuthorizationCode" Flags="0x2" Class="sys://Schema/System/Text" />
+            <Object ID="{0ACA49C6-F4A8-4456-9D22-02008D5FFC04}" Name="AlexaAsyncAuthorizationRefreshToken" Flags="0x2" Class="sys://Schema/System/Text" />
+            <Object ID="{470526F9-CD38-4E1C-85FE-2ACEAB3BD37A}" Name="AlexaAsyncAuthorizationCodeExpiry" Class="sys://Schema/System/Text" />
+            <Object ID="{66801F08-1126-4863-BCB8-D63F845ADD62}" Name="AlexaAsyncAuthorizationClientId" Flags="0x2" Class="sys://Schema/System/Text" DefaultValue="" />
+            <Object ID="{4CB14A20-1E8A-4017-8C21-2162C8D45C06}" Name="AlexaAsyncAuthorizationSecret" Flags="0x2" Class="sys://Schema/System/Text" DefaultValue="" />
+            <Object ID="{7E3A5983-0C34-49AC-A156-59BCBA16EEEF}" Name="AlexaAsyncUpdateCount" Flags="0x900" Class="sys://Schema/System/Number" />
+            <Object ID="{8944A9A9-5BBC-499C-8F5D-93DF139E7276}" Name="AccessToken" Flags="0x900" Class="sys://Schema/System/Text" />
+            <Object ID="{98931CAB-FD97-4246-B75A-2CE43E7E4341}" Name="LastRefreshed" Flags="0x900" Class="sys://Schema/System/DateTime" DefaultValue="8/30/2015 3:11:44 PM" />
+            <Object ID="{2EE46B9B-C1FB-40D9-9B19-F9A1B43C3073}" Name="LastHeardFromAlexa" Flags="0x900" Class="sys://Schema/System/DateTime" DefaultValue="12/26/2015 5:46:59 PM" />
+            <Object ID="{6ECA1B44-E52A-4BD4-A23F-CCCBCE659E2C}" Name="LastHeardCommand" Flags="0x900" Class="sys://Schema/System/Text" />
+            <Object ID="{919F21F9-CB23-47D2-9D40-465D8FAA99F3}" Class="sys://Schema/System/SubClass" LinkObject="{A4D2A312-9702-4549-AF69-84B816A65C78}" />
+            <Object ID="{6EAEAB32-D7CD-460A-8EBA-64DA1DE2F028}" Name="GenerateDiscoveryJson" Flags="0x900" Class="sys://Schema/System/Boolean" />
+            <Object ID="{2396A320-9A5B-4BA8-94C4-517C2C2E35B8}" Name="OnChangeGenerateDiscoveryJson" Class="sys://Schema/Scripting/ClassProperty" Property="{6EAEAB32-D7CD-460A-8EBA-64DA1DE2F028}" >
+              <![CDATA[
+Script=
+if sysevent.newVal = true then
+	GenerateDiscoveryJson
+	this.GenerateDiscoveryJson = false
+end if
+
+]]>
+            </Object>
+            <Object ID="{862433D1-658F-4E05-9C91-A5232EFD096B}" Name="SendAsyncEventsToAlexa" Flags="0x900" Class="sys://Schema/System/Boolean" />
+          </Object>
+          <Object ID="{3C3B4F0D-9DC5-42EA-9CE3-2150D2AD58CB}" Name="AlexaAppliance" Class="sys://Schema/System/Class" Virtual="-1" >
+            <Object ID="{AC71ED16-5354-46C1-A4BC-64E4CF8F8606}" Name="FriendlyDescription" Flags="0x900" Class="sys://Schema/System/Text" Mergeable="0" DisplayName="Human Readable Description" Description="Human Readable Description" />
+            <Object ID="{41C98863-EDE3-4ED6-AF34-00DF88C7D154}" Name="FriendlyName" Flags="0x900" Class="sys://Schema/System/Text" Mergeable="0" DisplayName="What Alexa Hears" Description="What Alexa Hears" />
+            <Object ID="{DD1A6ADE-99B2-4F21-9D81-EB8B734705E0}" Class="sys://Schema/System/SuperClass" LinkObject="{3470B9B5-E685-4EB2-ABC0-2F4CCD7F686A}" />
+            <Object ID="{44471B9C-A87E-4B7E-91B0-2AE8CB1B7D50}" Name="discoveryJson" Flags="0x900" Class="sys://Schema/System/Text" />
+            <Object ID="{0FD0B716-45DD-435F-895D-73708A20C8B9}" Name="generateDiscoveryJson" Class="sys://Schema/Scripting/SimpleClassMethod" >
+              <![CDATA[
+Script=
+if (this.IsOfExplicitType("sys://Schema/Modules/Alexa/Classes/AlexaCapability")) then
+	tmp = "{"
+	tmp = tmp + JsonNameValue("endpointID", mid(this.ObjectID,2,36)) + ","
+	tmp = tmp + JsonNameValue("friendlyName",this.FriendlyName) + ","
+	tmp = tmp + JsonNameValue("description","A Premise " + this.Class.Name + " in the " + this.Parent.Description) + ","
+	tmp = tmp + JsonNameValue("manufacturerName", "Premise Server") + ","
+	tmp = tmp + JsonNameArray("displayCategories", this.displayCategories) + ","
+	tmp = tmp + chr(34) + "cookie" + chr(34) + ":" + "{ " + JsonNameValue("path", this.Path) + " },"
+	tmp = tmp + JsonNameArray("capabilities", this.renderDiscoveryJson())
+	tmp = tmp + "}"
+	this.discoveryJson = tmp
+end if
+tmp = ""
+]]>
+            </Object>
+            <Object ID="{17880328-DA62-4B6B-9564-CDA645F012B2}" Class="sys://Schema/System/SuperClass" LinkObject="{1F5D079E-A373-499B-8130-F52DE07BD21F}" />
           </Object>
           <Object ID="{3317BF5A-E61E-4E32-B6C8-5FD25B85C4E4}" Name="AlexaCapability" Class="sys://Schema/System/Class" Virtual="-1" >
             <Object ID="{D02EA9B0-82AA-4E11-9AF0-9737F86ADA72}" Name="alexatype" Flags="0x900" Class="sys://Schema/System/Text" DefaultValue="AlexaInterface" ReadOnly="-1" Required="-1" />
             <Object ID="{A2AC390D-BBEF-42BC-81E1-01D56D65F0C5}" Name="version" Flags="0x900" Class="sys://Schema/System/Text" DefaultValue="3" ReadOnly="-1" />
             <Object ID="{9597D450-2AC9-4E20-B1BE-70C8C3364EC3}" Name="proactivelyReported" Flags="0x900" Class="sys://Schema/System/Boolean" DefaultValue="-1" />
             <Object ID="{692DE327-FAFD-47FC-AF35-4881A0571E9B}" Name="retrievable" Flags="0x900" Class="sys://Schema/System/Boolean" DefaultValue="-1" />
-            <Object ID="{4C2263B3-98C0-4230-BBFA-25FFF9ED84C9}" Name="supportsDeactivation" Flags="0x900" Class="sys://Schema/System/Boolean" />
+            <Object ID="{A5930F83-8B2B-4EA1-A411-446C2E51DAF4}" Name="supportsDeactivation" Flags="0x900" Class="sys://Schema/System/Boolean" DefaultValue="-1" ReadOnly="-1" />
             <Object ID="{3A6B8875-7B02-4CDE-8302-CD6F5EC44DDE}" Name="discoveryJsonProlog" Class="sys://Schema/Scripting/ClassFunction" >
               <![CDATA[
 Script=
@@ -396,50 +624,10 @@ epilog = ""
             </Object>
             <Object ID="{52B7C63E-5200-4D1F-AAB2-E9A4CDA8798D}" Name="DeviceID" Flags="0x900" Class="sys://Schema/System/Text" />
           </Object>
-          <Object ID="{680A5C36-8033-42EF-A2AE-30CCAE9B4CDB}" Name="Alexa.PowerController" Class="sys://Schema/System/Class" Virtual="-1" >
-            <Object ID="{019B36B9-628C-43A0-B517-2E66B4264315}" Class="sys://Schema/System/SuperClass" LinkObject="{3317BF5A-E61E-4E32-B6C8-5FD25B85C4E4}" />
-            <Object ID="{76142AC2-63B3-4B02-9A71-BD01F5F24A9E}" Name="interface" Flags="0x900" Class="sys://Schema/System/Text" DefaultValue="Alexa.PowerController" ReadOnly="-1" />
-            <Object ID="{763C71DA-412A-4AD6-8034-0EB4F21AC13D}" Name="properties" Flags="0x900" Class="sys://Schema/System/Text" DefaultValue="powerState" ReadOnly="-1" />
-            <Object ID="{CEFCC428-3353-4377-848E-892021C42DE7}" Class="sys://Schema/System/SubClass" LinkObject="{9C3E5340-EAB7-402D-979A-93B5135264AA}" />
-          </Object>
-          <Object ID="{69CBCBEA-D3F4-4231-9C15-F5096E76EF23}" Name="Alexa.BrightnessController" Class="sys://Schema/System/Class" Virtual="-1" >
-            <Object ID="{358C70A8-DD66-4B5D-AEA3-EF27474F1404}" Class="sys://Schema/System/SuperClass" LinkObject="{3317BF5A-E61E-4E32-B6C8-5FD25B85C4E4}" />
-            <Object ID="{9E35BF24-409E-481E-A864-8ED1E3FA2703}" Name="interface" Flags="0x900" Class="sys://Schema/System/Text" DefaultValue="Alexa.BrightnessController" ReadOnly="-1" />
-            <Object ID="{891A52F6-41B8-40C9-BF6D-191F5737A320}" Name="properties" Flags="0x900" Class="sys://Schema/System/Text" DefaultValue="brightness" ReadOnly="-1" />
-            <Object ID="{41245588-42E2-44C4-9B78-6F000743F5AE}" Class="sys://Schema/System/SubClass" LinkObject="{DEB24C93-9143-4030-86FF-29C7626BC9E3}" />
-          </Object>
-          <Object ID="{B2BBF42A-7087-4F58-8AE7-144F35D2B763}" Name="Alexa.ColorController" Class="sys://Schema/System/Class" Virtual="-1" >
-            <Object ID="{ACBB45CA-D2D8-4A31-B268-384677410E8C}" Class="sys://Schema/System/SuperClass" LinkObject="{3317BF5A-E61E-4E32-B6C8-5FD25B85C4E4}" />
-            <Object ID="{76DEE8E4-A3BB-4BDA-AF45-71FC0E55F465}" Name="interface" Flags="0x900" Class="sys://Schema/System/Text" DefaultValue="Alexa.ColorController" ReadOnly="-1" />
-            <Object ID="{B6AF3582-E596-4D98-A741-A67FC44A5F9B}" Name="properties" Flags="0x900" Class="sys://Schema/System/Text" DefaultValue="color" ReadOnly="-1" />
-          </Object>
-          <Object ID="{C46D793B-1481-493B-8A78-F593F613A4CE}" Name="Alexa.ColorTemperatureController" Class="sys://Schema/System/Class" Virtual="-1" >
-            <Object ID="{A8FC5AF7-0A90-4A86-8142-0B30E169B5DB}" Class="sys://Schema/System/SuperClass" LinkObject="{3317BF5A-E61E-4E32-B6C8-5FD25B85C4E4}" />
-            <Object ID="{D03F58FD-DD41-48DB-806B-3CDB9AE98E03}" Name="interface" Flags="0x900" Class="sys://Schema/System/Text" DefaultValue="Alexa.ColorTemperatureController" ReadOnly="-1" />
-            <Object ID="{7B930C03-5F7C-4B27-B838-3E47FF65A5A8}" Name="properties" Flags="0x900" Class="sys://Schema/System/Text" DefaultValue="colorTemperatureInKelvin" ReadOnly="-1" />
-          </Object>
-          <Object ID="{37181C11-1E1B-472F-B4AF-5A52D464D4B4}" Name="Alexa.SceneController" Class="sys://Schema/System/Class" Virtual="-1" >
-            <Object ID="{82CED745-2601-4F53-8B23-9FEF15B09ED7}" Class="sys://Schema/System/SuperClass" LinkObject="{3317BF5A-E61E-4E32-B6C8-5FD25B85C4E4}" />
-            <Object ID="{0F483F98-E55D-4ABD-86BA-AD42C153535E}" Name="interface" Flags="0x900" Class="sys://Schema/System/Text" DefaultValue="Alexa.SceneController" ReadOnly="-1" />
-            <Object ID="{C0394B12-4393-413A-B17B-B67DB9EEB5B9}" Name="properties" Flags="0x900" Class="sys://Schema/System/Text" DefaultValue="powerState" ReadOnly="-1" />
-          </Object>
-          <Object ID="{02F5573B-3721-4509-952B-55619100CDA8}" Name="Alexa.TemperatureController" Class="sys://Schema/System/Class" Virtual="-1" >
-            <Object ID="{98E54438-67B3-46EF-B3E7-86D2F3266811}" Class="sys://Schema/System/SuperClass" LinkObject="{3317BF5A-E61E-4E32-B6C8-5FD25B85C4E4}" />
-            <Object ID="{B8910671-7E0A-48EA-B29A-4473AEC941E7}" Name="interface" Flags="0x900" Class="sys://Schema/System/Text" DefaultValue="Alexa.TemperatureController" ReadOnly="-1" />
-            <Object ID="{06DDDD25-697D-48CF-9CEC-73CAC40CE78E}" Name="properties" Flags="0x900" Class="sys://Schema/System/Text" DefaultValue="lowerSetpoint,targetSetpoint,upperSetpoint,thermostatMode" ReadOnly="-1" />
-            <Object ID="{A1614C76-7D86-4E6D-B680-16FD78035C32}" Class="sys://Schema/System/SubClass" LinkObject="{1C399D51-E702-40B2-A0D3-E6BC46F45758}" />
-            <Object ID="{D3903523-A552-4F53-9FBF-474837ED0AA4}" Class="sys://Schema/System/SubClass" LinkObject="{F6842836-CE5A-4067-8D6A-340FEF4FCDDE}" />
-          </Object>
-          <Object ID="{4C305447-150E-4826-8D7C-A44A1181AFF0}" Name="Alexa.TemperatureSensor" Class="sys://Schema/System/Class" Virtual="-1" >
-            <Object ID="{BA916531-5AE4-4F24-88DB-E5602B6A42B1}" Class="sys://Schema/System/SuperClass" LinkObject="{3317BF5A-E61E-4E32-B6C8-5FD25B85C4E4}" />
-            <Object ID="{4E5CD496-92DE-41AA-94A2-6846D7EF0F0B}" Name="Alexa_TemperatureSensor" Flags="0x900" Class="sys://Schema/System/Text" DefaultValue="Alexa.TemperatureController" ReadOnly="-1" />
-            <Object ID="{F9464264-7A52-4AA7-A7F7-D419F3F8A238}" Name="properties" Flags="0x900" Class="sys://Schema/System/Text" DefaultValue="temperature" ReadOnly="-1" />
-            <Object ID="{3FDC9ECF-637B-43DB-8CBE-577B0A387036}" Class="sys://Schema/System/SubClass" LinkObject="{65C7B5C2-153D-4711-BAD7-D334FDB12338}" />
-          </Object>
-          <Object ID="{B09958FD-B3F5-404B-B4E7-97395CB8BC76}" Name="Alexa.PowerLevelController" Class="sys://Schema/System/Class" Virtual="-1" >
-            <Object ID="{C022CA84-C6AE-4A98-A4AC-2F56469CAF15}" Class="sys://Schema/System/SuperClass" LinkObject="{3317BF5A-E61E-4E32-B6C8-5FD25B85C4E4}" />
-            <Object ID="{A4A90FBD-363D-4D90-BFFE-15E268586557}" Name="interface" Flags="0x900" Class="sys://Schema/System/Text" DefaultValue="Alexa.PowerLevelController" ReadOnly="-1" />
-            <Object ID="{0337A72E-755B-4873-83B1-8F9CA022AB9F}" Name="properties" Flags="0x900" Class="sys://Schema/System/Text" DefaultValue="powerLevel" ReadOnly="-1" />
+          <Object ID="{1F5D079E-A373-499B-8130-F52DE07BD21F}" Name="Alexa.EndpointHealth" Class="sys://Schema/System/Class" Virtual="-1" >
+            <Object ID="{FB09CA09-13DA-4B9D-B350-03630E88D9BB}" Class="sys://Schema/System/SuperClass" LinkObject="{3317BF5A-E61E-4E32-B6C8-5FD25B85C4E4}" />
+            <Object ID="{79C09676-FF4A-44CA-A197-88D37ADF9115}" Name="interface" Flags="0x900" Class="sys://Schema/System/Text" DefaultValue="Alexa.EndpointHealth" ReadOnly="-1" />
+            <Object ID="{8FDC1F69-1E27-4405-9E59-F9E69E807B92}" Name="properties" Flags="0x900" Class="sys://Schema/System/Text" DefaultValue="connectivity" ReadOnly="-1" />
           </Object>
         </Object>
         <Object ID="{6F292FE9-8EDB-4BF3-9DC6-FD1856A283E8}" Name="Templates" Flags="0x120000" Class="sys://Schema/System/TemplateFolder" />
@@ -460,6 +648,7 @@ sub GenerateDiscoveryJson()
 		device.generateDiscoveryJson()
 	next
 end sub
+
 ]]>
           </Object>
         </Object>

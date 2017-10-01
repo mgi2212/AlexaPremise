@@ -46,19 +46,38 @@ namespace Alexa.Scene
         ControlResponse, 
         AlexaSetSceneControllerRequest>, IAlexaController
     {
-        public readonly AlexaScene PropertyHelpers = new AlexaScene();
+        public readonly AlexaScene PropertyHelpers;
         public readonly string @namespace = "Alexa.SceneController";
         public readonly string[] directiveNames = { "Activate", "Deactivate" };
+        public readonly string alexaProperty = "noproperty";
         public readonly string premiseProperty = "PowerState";
 
         public AlexaSetSceneController(AlexaSetSceneControllerRequest request)
             : base(request)
         {
+            PropertyHelpers = new AlexaScene();
         }
 
-        public AlexaSetSceneController(IPremiseObject endpoint)
+        public AlexaSetSceneController(string value, IPremiseObject endpoint)
             : base(endpoint)
         {
+            PropertyHelpers = new AlexaScene();
+        }
+
+        public AlexaSetSceneController()
+            : base()
+        {
+            PropertyHelpers = new AlexaScene();
+        }
+
+        public string GetAlexaProperty()
+        {
+            return "";
+        }
+
+        public string GetAssemblyTypeName()
+        {
+            return this.GetType().AssemblyQualifiedName;
         }
 
         public string GetNameSpace()
@@ -69,6 +88,20 @@ namespace Alexa.Scene
         public string[] GetDirectiveNames()
         {
             return directiveNames;
+        }
+
+        public bool HasAlexaProperty(string property)
+        {
+            return false;
+        }
+        public bool HasPremiseProperty(string property)
+        {
+            return false;
+        }
+
+        public string AssemblyTypeName()
+        {
+            return this.GetType().AssemblyQualifiedName;
         }
 
         public AlexaProperty GetPropertyState()

@@ -47,21 +47,40 @@ namespace Alexa.Power
         ControlResponse, 
         AlexaSetPowerStateControllerRequest>, IAlexaController
     {
-        public readonly AlexaPower PropertyHelpers = new AlexaPower();
+        public readonly AlexaPower PropertyHelpers;
         private readonly string[] directiveNames = { "TurnOn", "TurnOff" };
         private readonly string @namespace = "Alexa.PowerController";
-        private readonly string premiseProperty = "PowerState";
-        private readonly string alexaProperty = "powerState";
+        private readonly string[] premiseProperties = { "PowerState" };
+        public readonly string alexaProperty = "powerState";
 
         public AlexaSetPowerStateController(AlexaSetPowerStateControllerRequest request)
             : base(request)
         {
+            PropertyHelpers = new AlexaPower();
         }
 
         public AlexaSetPowerStateController(IPremiseObject endpoint)
             : base(endpoint)
         {
+            PropertyHelpers = new AlexaPower();
         }
+
+        public AlexaSetPowerStateController()
+            : base()
+        {
+            PropertyHelpers = new AlexaPower();
+        }
+
+        public string GetAlexaProperty()
+        {
+            return alexaProperty;
+        }
+
+        public string GetAssemblyTypeName()
+        {
+            return this.GetType().AssemblyQualifiedName;
+        }
+
         public string GetNameSpace()
         {
             return @namespace;
@@ -72,9 +91,30 @@ namespace Alexa.Power
             return directiveNames;
         }
 
+        public bool HasAlexaProperty(string property)
+        {
+            return (property == this.alexaProperty);
+        }
+
+        public bool HasPremiseProperty(string property)
+        {
+            foreach (string s in this.premiseProperties)
+            {
+                if (s == property)
+                    return true;
+            }
+            return false;
+        }
+
+
+        public string AssemblyTypeName()
+        {
+            return this.GetType().AssemblyQualifiedName;
+        }
+
         public AlexaProperty GetPropertyState()
         {
-            bool powerState = endpoint.GetValue<bool>(premiseProperty).GetAwaiter().GetResult();
+            bool powerState = endpoint.GetValue<bool>(premiseProperties[0]).GetAwaiter().GetResult();
             AlexaProperty property = new AlexaProperty
             {
                 @namespace = @namespace,
@@ -91,6 +131,8 @@ namespace Alexa.Power
             {
                 name = alexaProperty
             };
+
+            response.Event.header.@namespace = "Alexa";
 
             try
             {
@@ -111,9 +153,10 @@ namespace Alexa.Power
                     return;
                 }
 
-                this.endpoint.SetValue(premiseProperty, valueToSend).GetAwaiter().GetResult();
+                this.endpoint.SetValue(premiseProperties[0], valueToSend).GetAwaiter().GetResult();
                 property.timeOfSample = GetUtcTime();
                 this.response.context.properties.Add(property);
+                this.response.context.properties.AddRange(this.PropertyHelpers.FindRelatedProperties(endpoint, @namespace));
             }
             catch (Exception ex)
             {

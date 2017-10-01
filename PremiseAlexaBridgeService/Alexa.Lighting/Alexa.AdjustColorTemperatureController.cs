@@ -51,9 +51,9 @@ namespace Alexa.Lighting
     {
         private readonly string @namespace = "Alexa.ColorTemperatureController";
         private readonly string[] directiveNames = { "IncreaseColorTemperature", "DecreaseColorTemperature" };
-        private readonly string premiseProperty = "Temperature";
-        private readonly string alexaProperty = "colorTemperatureInKelvin";
-        public readonly AlexaLighting PropertyHelpers = new AlexaLighting();
+        private readonly string[] premiseProperties = { "Temperature" };
+        public readonly string alexaProperty = "colorTemperatureInKelvin";
+        public readonly AlexaLighting PropertyHelpers;
 
         // corresponds to warm white, soft white, white, daylight, cool white
         private int[] colorTable = { 2200, 2700, 4000, 5500, 7000 };
@@ -61,25 +61,62 @@ namespace Alexa.Lighting
         public AlexaAdjustColorTemperatureController(AlexaAdjustColorTemperatureControllerRequest request)
             : base(request)
         {
+            PropertyHelpers = new AlexaLighting();
         }
 
         public AlexaAdjustColorTemperatureController(IPremiseObject endpoint)
             : base(endpoint)
         {
+            PropertyHelpers = new AlexaLighting();
+        }
+
+        public AlexaAdjustColorTemperatureController()
+            : base()
+        {
+            PropertyHelpers = new AlexaLighting();
         }
 
         public string GetNameSpace()
         {
             return @namespace;
         }
+        
+        public string GetAssemblyTypeName()
+        {
+            return this.GetType().AssemblyQualifiedName;
+        }
+        
+        public string GetAlexaProperty()
+        {
+            return alexaProperty;
+        }
+
         public string [] GetDirectiveNames()
         {
             return directiveNames;
         }
+        public bool HasAlexaProperty(string property)
+        {
+            return (property == this.alexaProperty);
+        }
+        public bool HasPremiseProperty(string property)
+        {
+            foreach (string s in this.premiseProperties)
+            {
+                if (s == property)
+                    return true;
+            }
+            return false;
+        }
+
+        public string AssemblyTypeName()
+        {
+            return this.GetType().AssemblyQualifiedName;
+        }
 
         public AlexaProperty GetPropertyState()
         {
-            double ColorTemperature = this.endpoint.GetValue<double>(premiseProperty).GetAwaiter().GetResult();
+            double ColorTemperature = this.endpoint.GetValue<double>(premiseProperties[0]).GetAwaiter().GetResult();
             AlexaProperty property = new AlexaProperty
             {
                 @namespace = @namespace,
@@ -135,10 +172,12 @@ namespace Alexa.Lighting
                 name = alexaProperty
             };
 
+            response.Event.header.@namespace = "Alexa";
+
             try
             {
                 int valueToSend = 0;
-                int currentValue = (int)(endpoint.GetValue<Double>(premiseProperty).GetAwaiter().GetResult()).LimitToRange(1000, 10000);
+                int currentValue = (int)(endpoint.GetValue<Double>(premiseProperties[0]).GetAwaiter().GetResult()).LimitToRange(1000, 10000);
 
                 if (header.name == "IncreaseColorTemperature")
                 {
@@ -153,7 +192,7 @@ namespace Alexa.Lighting
                     base.ReportError(AlexaErrorTypes.INVALID_DIRECTIVE, "Operation not supported!");
                     return;
                 }
-                endpoint.SetValue(premiseProperty, valueToSend.ToString()).GetAwaiter().GetResult();
+                endpoint.SetValue(premiseProperties[0], valueToSend.ToString()).GetAwaiter().GetResult();
                 property.timeOfSample = GetUtcTime();
                 property.value = valueToSend;
                 response.context.properties.Add(property);

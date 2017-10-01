@@ -1,409 +1,318 @@
 ﻿'use strict';
-
-/**
- * This sample demonstrates a smart home skill using the publicly available API on Amazon's Alexa platform.
- * For more information about developing smart home skills, see
- *  https://developer.amazon.com/alexa/smart-home
- *
- * For details on the smart home API, please visit
- *  https://developer.amazon.com/public/solutions/alexa/alexa-skills-kit/docs/smart-home-skill-api-reference
- */
-
-/**
- * Mock data for devices to be discovered
- *
- * For more information on the discovered appliance response please see
- *  https://developer.amazon.com/public/solutions/alexa/alexa-skills-kit/docs/smart-home-skill-api-reference#discoverappliancesresponse
- */
-const USER_DEVICES = [
-    {
-        // This id needs to be unique across all devices discovered for a given manufacturer
-        applianceId: 'unique-id-for-non-dimmable-bulb-specific-to-user1',
-        // Company name that produces and sells the smart home device
-        manufacturerName: 'SmartHome Product Company',
-        // Model name of the device
-        modelName: 'NON-DIMMABLE BULB MODEL ABC',
-        // Version number of the product
-        version: '1.0',
-        // The name given by the user in your application. Examples include 'Bedroom light' etc
-        friendlyName: 'Smart light',
-        // Should describe the device type and the company/cloud provider.
-        // This value will be shown in the Alexa app
-        friendlyDescription: 'Smart light bulb from SmartHome Product Company',
-        // Boolean value to represent the status of the device at time of discovery
-        isReachable: true,
-        // List the actions the device can support from our API
-        // The action should be the name of the actions listed here
-        // https://developer.amazon.com/public/solutions/alexa/alexa-skills-kit/docs/smart-home-skill-api-reference#discoverappliancesresponse
-        actions: ['turnOn', 'turnOff'],
-        // not used at this time
-        additionalApplianceDetails: {
-            extraDetail1: 'optionalDetailForSkillAdapterToReferenceThisDevice',
-            extraDetail2: 'There can be multiple entries',
-            extraDetail3: 'but they should only be used for reference purposes.',
-            extraDetail4: 'This is not a suitable place to maintain current device state',
-        },
-    }, {
-        // This id needs to be unique across all devices discovered for a given manufacturer
-        applianceId: 'unique-id-for-dimmable-bulb-specific-to-user1',
-        // Company name that produces and sells the smart home device
-        manufacturerName: 'SmartHome Product Company',
-        // Model name of the device
-        modelName: 'DIMMABLE BULB MODEL XYZ',
-        // Version number of the product
-        version: '1.0',
-        // The name given by the user in your application. Examples include 'Bedroom light' etc
-        friendlyName: 'Dimmable light',
-        // Should describe the device type and the company/cloud provider.
-        // This value will be shown in the Alexa app
-        friendlyDescription: 'Dimmable light bulb from SmartHome Product Company',
-        // Boolean value to represent the status of the device at time of discovery
-        isReachable: true,
-        // List the actions the device can support from our API
-        // The action should be the name of the actions listed here
-        // https://developer.amazon.com/public/solutions/alexa/alexa-skills-kit/docs/smart-home-skill-api-reference#discoverappliancesresponse
-        actions: ['turnOn', 'turnOff', 'setPercentage', 'incrementPercentage', 'decrementPercentage'],
-        // not used at this time
-        additionalApplianceDetails: {
-        },
-    },
-];
-
-/**
- * Utility functions
- */
+var https = require('https');
+var http = require('http');
+var AWS = require("aws-sdk");
+var log = log;
 
 function log(title, msg) {
-    console.log(`[${title}] ${msg}`);
+    console.log(':' + title + ':');
+    console.log(msg);
 }
 
-/**
- * Generate a unique message ID
- *
- * TODO: UUID v4 is recommended as a message ID in production.
- */
-function generateMessageID() {
-    return '38A28869-DD5E-48CE-BBE5-A4DB78CECB28'; // Dummy
-}
+var my_client_secret = 'd9bd211cb8c9af7b8db1eb3ba52cc9b31fab94604cbf6804110788e79fbb535e';
+var my_client_id = 'amzn1.application-oa2-client.76f9bb6cb75a4eb18b9886f9c3d32631';
+var LWA_TOKEN_URI = "https://api.amazon.com/auth/o2/token";
+var LWA_HEADERS = {
+    "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8"
+};
 
-/**
- * Generate a response message
- *
- * @param {string} name - Directive name
- * @param {Object} payload - Any special payload required for the response
- * @returns {Object} Response object
- */
-function generateResponse(name, payload) {
-    return {
-        header: {
-            messageId: generateMessageID(),
-            name: name,
-            namespace: 'Alexa.ConnectedHome.Control',
-            payloadVersion: '2',
-        },
-        payload: payload,
-    };
-}
-
-/**
- * Mock functions to access device cloud.
- *
- * TODO: Pass a user access token and call cloud APIs in production.
- */
-
-function getDevicesFromPartnerCloud() {
-    /**
-     * For the purposes of this sample code, we will return:
-     * (1) Non-dimmable light bulb
-     * (2) Dimmable light bulb
-     */
-    return USER_DEVICES;
-}
-
-function isValidToken() {
-    /**
-     * Always returns true for sample code.
-     * You should update this method to your own access token validation.
-     */
-    return true;
-}
-
-function isDeviceOnline(applianceId) {
-    log('DEBUG', `isDeviceOnline (applianceId: ${applianceId})`);
-
-    /**
-     * Always returns true for sample code.
-     * You should update this method to your own validation.
-     */
-    return true;
-}
-
-function turnOn(applianceId) {
-    log('DEBUG', `turnOn (applianceId: ${applianceId})`);
-
-    // Call device cloud's API to turn on the device
-
-    return generateResponse('TurnOnConfirmation', {});
-}
-
-function turnOff(applianceId) {
-    log('DEBUG', `turnOff (applianceId: ${applianceId})`);
-
-    // Call device cloud's API to turn off the device
-
-    return generateResponse('TurnOffConfirmation', {});
-}
-
-function setPercentage(applianceId, percentage) {
-    log('DEBUG', `setPercentage (applianceId: ${applianceId}), percentage: ${percentage}`);
-
-    // Call device cloud's API to set percentage
-
-    return generateResponse('SetPercentageConfirmation', {});
-}
-
-function incrementPercentage(applianceId, delta) {
-    log('DEBUG', `incrementPercentage (applianceId: ${applianceId}), delta: ${delta}`);
-
-    // Call device cloud's API to set percentage delta
-
-    return generateResponse('IncrementPercentageConfirmation', {});
-}
-
-function decrementPercentage(applianceId, delta) {
-    log('DEBUG', `decrementPercentage (applianceId: ${applianceId}), delta: ${delta}`);
-
-    // Call device cloud's API to set percentage delta
-
-    return generateResponse('DecrementPercentageConfirmation', {});
-}
-
-/**
- * Main logic
- */
-
-/**
- * This function is invoked when we receive a "Discovery" message from Alexa Smart Home Skill.
- * We are expected to respond back with a list of appliances that we have discovered for a given customer.
- *
- * @param {Object} request - The full request object from the Alexa smart home service. This represents a DiscoverAppliancesRequest.
- *     https://developer.amazon.com/public/solutions/alexa/alexa-skills-kit/docs/smart-home-skill-api-reference#discoverappliancesrequest
- *
- * @param {function} callback - The callback object on which to succeed or fail the response.
- *     https://docs.aws.amazon.com/lambda/latest/dg/nodejs-prog-model-handler.html#nodejs-prog-model-handler-callback
- *     If successful, return <DiscoverAppliancesResponse>.
- *     https://developer.amazon.com/public/solutions/alexa/alexa-skills-kit/docs/smart-home-skill-api-reference#discoverappliancesresponse
- */
-function handleDiscovery(request, callback) {
-    log('DEBUG', `Discovery Request: ${JSON.stringify(request)}`);
-
-    /**
-     * Get the OAuth token from the request.
-     */
-    const userAccessToken = request.payload.accessToken.trim();
-
-    /**
-     * Generic stub for validating the token against your cloud service.
-     * Replace isValidToken() function with your own validation.
-     */
-    if (!userAccessToken || !isValidToken(userAccessToken)) {
-        const errorMessage = `Discovery Request [${request.header.messageId}] failed. Invalid access token: ${userAccessToken}`;
-        log('ERROR', errorMessage);
-        callback(new Error(errorMessage));
-    }
-
-    /**
-     * Assume access token is valid at this point.
-     * Retrieve list of devices from cloud based on token.
-     *
-     * For more information on a discovery response see
-     *  https://developer.amazon.com/public/solutions/alexa/alexa-skills-kit/docs/smart-home-skill-api-reference#discoverappliancesresponse
-     */
-    const response = {
-        header: {
-            messageId: generateMessageID(),
-            name: 'DiscoverAppliancesResponse',
-            namespace: 'Alexa.ConnectedHome.Discovery',
-            payloadVersion: '2',
-        },
-        payload: {
-            discoveredAppliances: getDevicesFromPartnerCloud(userAccessToken),
-        },
-    };
-
-    /**
-     * Log the response. These messages will be stored in CloudWatch.
-     */
-    log('DEBUG', `Discovery Response: ${JSON.stringify(response)}`);
-
-    /**
-     * Return result with successful message.
-     */
-    callback(null, response);
-}
-
-/**
- * A function to handle control events.
- * This is called when Alexa requests an action such as turning off an appliance.
- *
- * @param {Object} request - The full request object from the Alexa smart home service.
- * @param {function} callback - The callback object on which to succeed or fail the response.
- */
-function handleControl(request, callback) {
-    log('DEBUG', `Control Request: ${JSON.stringify(request)}`);
-
-    /**
-     * Get the access token.
-     */
-    const userAccessToken = request.payload.accessToken.trim();
-
-    /**
-     * Generic stub for validating the token against your cloud service.
-     * Replace isValidToken() function with your own validation.
-     *
-     * If the token is invliad, return InvalidAccessTokenError
-     *  https://developer.amazon.com/public/solutions/alexa/alexa-skills-kit/docs/smart-home-skill-api-reference#invalidaccesstokenerror
-     */
-    if (!userAccessToken || !isValidToken(userAccessToken)) {
-        log('ERROR', `Discovery Request [${request.header.messageId}] failed. Invalid access token: ${userAccessToken}`);
-        callback(null, generateResponse('InvalidAccessTokenError', {}));
-        return;
-    }
-
-    /**
-     * Grab the applianceId from the request.
-     */
-    const applianceId = request.payload.appliance.applianceId;
-
-    /**
-     * If the applianceId is missing, return UnexpectedInformationReceivedError
-     *  https://developer.amazon.com/public/solutions/alexa/alexa-skills-kit/docs/smart-home-skill-api-reference#unexpectedinformationreceivederror
-     */
-    if (!applianceId) {
-        log('ERROR', 'No applianceId provided in request');
-        const payload = { faultingParameter: `applianceId: ${applianceId}` };
-        callback(null, generateResponse('UnexpectedInformationReceivedError', payload));
-        return;
-    }
-
-    /**
-     * At this point the applianceId and accessToken are present in the request.
-     *
-     * Please review the full list of errors in the link below for different states that can be reported.
-     * If these apply to your device/cloud infrastructure, please add the checks and respond with
-     * accurate error messages. This will give the user the best experience and help diagnose issues with
-     * their devices, accounts, and environment
-     *  https://developer.amazon.com/public/solutions/alexa/alexa-skills-kit/docs/smart-home-skill-api-reference#error-messages
-     */
-    if (!isDeviceOnline(applianceId, userAccessToken)) {
-        log('ERROR', `Device offline: ${applianceId}`);
-        callback(null, generateResponse('TargetOfflineError', {}));
-        return;
-    }
-
-    let response;
-
-    switch (request.header.name) {
-        case 'TurnOnRequest':
-            response = turnOn(applianceId, userAccessToken);
-            break;
-
-        case 'TurnOffRequest':
-            response = turnOff(applianceId, userAccessToken);
-            break;
-
-        case 'SetPercentageRequest': {
-            const percentage = request.payload.percentageState.value;
-            if (!percentage) {
-                const payload = { faultingParameter: `percentageState: ${percentage}` };
-                callback(null, generateResponse('UnexpectedInformationReceivedError', payload));
-                return;
-            }
-            response = setPercentage(applianceId, userAccessToken, percentage);
-            break;
-        }
-
-        case 'IncrementPercentageRequest': {
-            const delta = request.payload.deltaPercentage.value;
-            if (!delta) {
-                const payload = { faultingParameter: `deltaPercentage: ${delta}` };
-                callback(null, generateResponse('UnexpectedInformationReceivedError', payload));
-                return;
-            }
-            response = incrementPercentage(applianceId, userAccessToken, delta);
-            break;
-        }
-
-        case 'DecrementPercentageRequest': {
-            const delta = request.payload.deltaPercentage.value;
-            if (!delta) {
-                const payload = { faultingParameter: `deltaPercentage: ${delta}` };
-                callback(null, generateResponse('UnexpectedInformationReceivedError', payload));
-                return;
-            }
-            response = decrementPercentage(applianceId, userAccessToken, delta);
-            break;
-        }
-
-        default: {
-            log('ERROR', `No supported directive name: ${request.header.name}`);
-            callback(null, generateResponse('UnsupportedOperationError', {}));
-            return;
-        }
-    }
-
-    log('DEBUG', `Control Confirmation: ${JSON.stringify(response)}`);
-
-    callback(null, response);
-}
-
-/**
- * Main entry point.
- * Incoming events from Alexa service through Smart Home API are all handled by this function.
- *
- * It is recommended to validate the request and response with Alexa Smart Home Skill API Validation package.
- *  https://github.com/alexa/alexa-smarthome-validation
- */
-exports.handler = (request, context, callback) => {
-    switch (request.header.namespace) {
-        /**
-         * The namespace of 'Alexa.ConnectedHome.Discovery' indicates a request is being made to the Lambda for
-         * discovering all appliances associated with the customer's appliance cloud account.
-         *
-         * For more information on device discovery, please see
-         *  https://developer.amazon.com/public/solutions/alexa/alexa-skills-kit/docs/smart-home-skill-api-reference#discovery-messages
-         */
-        case 'Alexa.ConnectedHome.Discovery':
-            handleDiscovery(request, callback);
-            break;
-
-        /**
-         * The namespace of "Alexa.ConnectedHome.Control" indicates a request is being made to control devices such as
-         * a dimmable or non-dimmable bulb. The full list of Control events sent to your lambda are described below.
-         *  https://developer.amazon.com/public/solutions/alexa/alexa-skills-kit/docs/smart-home-skill-api-reference#payload
-         */
-        case 'Alexa.ConnectedHome.Control':
-            handleControl(request, callback);
-            break;
-
-        /**
-         * The namespace of "Alexa.ConnectedHome.Query" indicates a request is being made to query devices about
-         * information like temperature or lock state. The full list of Query events sent to your lambda are described below.
-         *  https://developer.amazon.com/public/solutions/alexa/alexa-skills-kit/docs/smart-home-skill-api-reference#payload
-         *
-         * TODO: In this sample, query handling is not implemented. Implement it to retrieve temperature or lock state.
-         */
-        // case 'Alexa.ConnectedHome.Query':
-        //     handleQuery(request, callback);
-        //     break;
-
-        /**
-         * Received an unexpected message
-         */
-        default: {
-            const errorMessage = `No supported namespace: ${request.header.namespace}`;
-            log('ERROR', errorMessage);
-            callback(new Error(errorMessage));
-        }
+const healthyResponse = {
+    "header": {
+        "messageId": "",
+        "namespace": "Alexa.ConnectedHome.System",
+        "name": "HealthCheckResponse",
+        "payloadVersion": "2"
+    },
+    "payload": {
+        "isHealthy": true,
+        "description": "The system is currently healthy."
     }
 };
+
+exports.handler = function (event, context) {
+
+    var customer_endpoint = '';
+    log('event', JSON.stringify(event));
+
+    switch (event.directive.header.namespace) {
+
+        case 'Alexa':
+            if (event.directive.header.name === "ReportState") {
+                getCustomerProfile(event, context, "ReportState");
+            }
+            break;
+        case 'Alexa.Discovery':
+            getCustomerProfile(event, context, "Discovery");
+            break;
+        case 'Alexa.PowerController':
+            getCustomerProfile(event, context, "Control/SetPowerState");
+            break;
+        case 'Alexa.SceneController':
+            getCustomerProfile(event, context, "Control/Scene");
+            break;
+        case 'Alexa.BrightnessController':
+            if (event.directive.header.name === 'SetBrightness') {
+                getCustomerProfile(event, context, "Control/" + event.directive.header.name);
+            }
+            else if (event.directive.header.name === 'AdjustBrightness') {
+                getCustomerProfile(event, context, "Control/" + event.directive.header.name);
+            }
+            break;
+        case 'Alexa.ColorTemperatureController':
+        case 'Alexa.ColorController':
+            getCustomerProfile(event, context, "Control/" + event.directive.header.name);
+            break;
+        case 'Alexa.Authorization':
+            if (event.directive.header.name === 'AcceptGrant') {
+
+                var lwa_params = 'grant_type=authorization_code';
+                lwa_params += '&code=' + event.directive.payload.grant.code;
+                lwa_params += '&client_id=' + my_client_id;
+                lwa_params += '&client_secret=' + my_client_secret;
+
+                callLWA(lwa_params, event, context, customer_endpoint);
+            }
+            break;
+
+        default:
+            // Warning! Logging this in production might be a security problem.
+            log('Err', 'No supported namespace: ' + event.header.namespace);
+            context.fail('Command Not Supported.');
+            break;
+    }
+};
+
+function callLWA(data, event, context, customer_endpoint) {
+    // prepare request options
+    var post_options = {
+        host: 'api.amazon.com',
+        port: 443,
+        path: '/auth/o2/token',
+        method: 'POST',
+        headers: LWA_HEADERS
+    };
+
+
+    // Set up the request
+    var result = "";
+    var post_req = https.request(post_options, function (response) {
+
+        response.setEncoding('utf-8');
+
+        response.on('data', function (chunk) {
+            result += chunk;
+        });
+
+        response.on('end', function () {
+            var lwa_info = JSON.stringify(result);
+            log("lwa_info", lwa_info);
+            event.directive.payload.grant = JSON.parse(result);
+            event.directive.payload.grant.client_id = my_client_id;
+            event.directive.payload.grant.client_secret = my_client_secret;
+            event.directive.payload.grantee.localAccessToken = 't110ftc0d';
+            proxyEvent(event, context, "Authorization", customer_endpoint);
+        });
+
+        response.on('error', function (e) {
+            console.log('Err', e.message);
+            context.fail('Request to appliance cloud failed authorization.');
+        });
+    });
+    log("out to lwa", data);
+    post_req.write(data);
+    post_req.end();
+}
+
+function getCustomerProfile(event, context, command) {
+
+    // prepare request options
+    var get_options = {
+        host: 'api.amazon.com',
+        port: 443,
+        path: '/user/profile',
+        method: 'GET',
+        headers: {
+            'x-amz-access-token': getBearerToken(event),
+            'Accept': 'application/json',
+            'Accept-Language': 'en-US'
+        }
+    };
+
+    // Set up the request
+    var result = "";
+    var get_req = https.request(get_options, function (response) {
+
+        response.setEncoding('utf-8');
+
+        response.on('data', function (chunk) {
+            result += chunk;
+        });
+
+        response.on('end', function () {
+            log("customer_info", result);
+            var customer_info = JSON.parse(result);
+            getCustomerEndpoint(event, context, command, customer_info);
+        });
+
+        response.on('error', function (e) {
+            console.log('Err', e.message);
+            context.fail('Request to appliance cloud failed authorization.');
+        });
+    });
+
+    var get_data = "";
+    get_req.write(get_data);
+    get_req.end();
+}
+
+function getCustomerEndpoint(event, context, command, customer_info) {
+
+    var dynamodb = new AWS.DynamoDB();
+
+    var params = {
+        TableName: 'PremiseBridgeCustomer',
+        Key: {
+            "id": {
+                "S": customer_info.user_id
+            }
+        }
+    };
+
+    dynamodb.getItem(params, function (err, data) {
+
+        if (err) {
+            log('Database Error', err.stack);
+            return;
+        } else if (data.Item === undefined) {
+            log('getCustomerEndpointResponse', 'Record not found for ' + customer_info.user_id);
+            context.fail('Failed to find customer endpoint.');
+        } else {
+            proxyEvent(event, context, command, data.Item);
+        }
+    });
+}
+
+function proxyEvent(event, context, command, customer_endpoint) {
+
+    setLocalAccessToken(event, customer_endpoint);
+    var post_data = JSON.stringify(event, 'utf-8');
+
+    // prepare request options
+    var post_options = {
+        host: customer_endpoint.host.S,                     // REMOTE_CLOUD_HOSTNAME,
+        port: customer_endpoint.port.S,                     // REMOTE_CLOUD_PORT,
+        path: '/AlexaV3.svc/json/' + command + '/',
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Content-Length': post_data.length
+        }
+    };
+    log('Customer Endpoint', post_options);
+    log('Send Directive', post_data);
+
+    var result = "";
+    var post_req = http.request(post_options, function (response) {
+
+        response.setEncoding('utf-8');
+
+        response.on('data', function (chunk) {
+            result += chunk;
+        });
+
+        response.on('end', function () {
+
+            var jsonResult = JSON.parse(result);
+            cleanUpResponse(event, jsonResult);
+
+            log('Recv Response', JSON.stringify(jsonResult));
+
+            context.succeed(jsonResult);
+        });
+
+        response.on('error', function (e) {
+            console.log('Err', e.message);
+            context.fail('Request to appliance cloud failed.');
+        });
+    });
+
+    post_req.write(post_data);
+    post_req.end();
+}
+
+function cleanUpResponse(event, response) {
+
+    log('clean-up', response);
+    var clean = false;
+
+    switch (event.directive.header.namespace) {
+        case 'Alexa.PowerController':
+        case 'Alexa.BrightnessController':
+        case 'Alexa.ColorController':
+        case 'Alexa.ColorTemperatureController':
+            clean = true;
+            break;
+    }
+
+    if (clean === true) {
+        response.context.properties.forEach(function (prop) {
+            switch (prop.namespace) {
+                case 'Alexa.ColorController':
+                case 'Alexa.EndpointHealth':
+                    if (prop.value.hasOwnProperty('__type')) {
+                        delete prop.value.__type;
+                    }
+                    break;
+            }
+        });
+    }
+}
+
+function setLocalAccessToken(event, customer_endpoint) {
+
+    var local_access_token = customer_endpoint.access_token.S;
+
+    switch (event.directive.header.namespace) {
+        case 'Alexa':
+            if (event.directive.header.name === "ReportState") {
+                event.directive.endpoint.scope.localAccessToken = local_access_token;
+            }
+            break;
+        case 'Alexa.Discovery':
+            event.directive.payload.scope.localAccessToken = local_access_token;
+            break;
+        case 'Alexa.PowerController':
+        case 'Alexa.SceneController':
+        case 'Alexa.BrightnessController':
+        case 'Alexa.ColorController':
+        case 'Alexa.ColorTemperatureController':
+            event.directive.endpoint.scope.localAccessToken = local_access_token;
+            break;
+        default:
+            break;
+    }
+}
+
+function getBearerToken(event) {
+    var token = '';
+    switch (event.directive.header.namespace) {
+        case 'Alexa':
+            if (event.directive.header.name === "ReportState") {
+                token = event.directive.endpoint.scope.token;
+            }
+            break;
+        case 'Alexa.Discovery':
+            token = event.directive.payload.scope.token;
+            break;
+        case 'Alexa.PowerController':
+        case 'Alexa.SceneController':
+        case 'Alexa.BrightnessController':
+        case 'Alexa.ColorController':
+        case 'Alexa.ColorTemperatureController':
+            token = event.directive.endpoint.scope.token;
+            break;
+        default:
+            break;
+    }
+    return token;
+}

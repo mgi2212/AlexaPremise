@@ -1,5 +1,4 @@
 ﻿using Alexa.Controller;
-using Alexa.Power;
 using Alexa.SmartHomeAPI.V3;
 using PremiseAlexaBridgeService;
 using System;
@@ -48,22 +47,30 @@ namespace Alexa.Lighting
     public class AlexaAdjustBrightnessController : AlexaControllerBase<
         AlexaAdjustBrightnessPayload, 
         ControlResponse, 
-        AlexaAdjustBrightnessControllerRequest>, IAlexaController 
+        AlexaAdjustBrightnessControllerRequest>, IAlexaController
     {
-        public readonly AlexaLighting PropertyHelpers = new AlexaLighting();
+        public readonly AlexaLighting PropertyHelpers;
         private readonly string @namespace = "Alexa.BrightnessController";
         private readonly string[] directiveNames = { "AdjustBrightness" };
-        private readonly string premiseProperty = "Brightness";
-        private readonly string alexaProperty = "brightness";
+        private readonly string[] premiseProperties = { "Brightness" };
+        public readonly string alexaProperty = "brightness";
 
         public AlexaAdjustBrightnessController(AlexaAdjustBrightnessControllerRequest request)
             : base(request)
         {
+            PropertyHelpers = new AlexaLighting();
         }
 
         public AlexaAdjustBrightnessController(IPremiseObject endpoint)
             : base(endpoint)
         {
+            PropertyHelpers = new AlexaLighting();
+        }
+
+        public AlexaAdjustBrightnessController()
+            : base()
+        {
+            PropertyHelpers = new AlexaLighting();
         }
 
         public string GetNameSpace()
@@ -75,10 +82,34 @@ namespace Alexa.Lighting
             return directiveNames;
         }
 
+        public string GetAssemblyTypeName()
+        {
+            return this.GetType().AssemblyQualifiedName;
+        }
+
+        public string GetAlexaProperty()
+        {
+            return alexaProperty;
+        }
+
+        public bool HasAlexaProperty(string property)
+        {
+            return (property == this.alexaProperty);
+        }
+
+        public bool HasPremiseProperty(string property)
+        {
+            foreach (string s in this.premiseProperties)
+            {
+                if (s == property)
+                    return true;
+            }
+            return false;
+        }
 
         public AlexaProperty GetPropertyState()
         {
-            double brightness = this.endpoint.GetValue<double>(premiseProperty).GetAwaiter().GetResult();
+            double brightness = this.endpoint.GetValue<double>(premiseProperties[0]).GetAwaiter().GetResult();
             AlexaProperty property = new AlexaProperty
             {
                 @namespace = @namespace,
@@ -95,13 +126,14 @@ namespace Alexa.Lighting
             {
                 name = alexaProperty
             };
+            response.Event.header.@namespace = "Alexa";
 
             try
             {
                 double adjustValue = Math.Round(((double)payload.brightnessDelta / 100.00), 2).LimitToRange(-1.00, 1.00);
-                double currentValue = Math.Round(endpoint.GetValue<Double>(premiseProperty).GetAwaiter().GetResult(), 2);
+                double currentValue = Math.Round(endpoint.GetValue<Double>(premiseProperties[0]).GetAwaiter().GetResult(), 2);
                 double valueToSend = Math.Round(currentValue + adjustValue, 2).LimitToRange(0.00, 1.00);
-                endpoint.SetValue(premiseProperty, valueToSend.ToString()).GetAwaiter().GetResult();
+                endpoint.SetValue(premiseProperties[0], valueToSend.ToString()).GetAwaiter().GetResult();
                 property.timeOfSample = GetUtcTime();
                 property.value = (int)(valueToSend * 100);
                 response.context.properties.Add(property);

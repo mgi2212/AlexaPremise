@@ -3,10 +3,12 @@ using Alexa.SmartHomeAPI.V3;
 using PremiseAlexaBridgeService;
 using System.Collections.Generic;
 using SYSWebSockClient;
+using Alexa.Controller;
 using System;
 
 namespace Alexa.EndpointHealth
 {
+
     public class AlexaEndpointHealth  : IAlexaDeviceType
     {
         public List<AlexaProperty> FindRelatedProperties(IPremiseObject endpoint, string currentController)
@@ -63,7 +65,7 @@ namespace Alexa.EndpointHealth
                     switch (capability.@interface)
                     {
                         case "Alexa.EndpointHealth":
-                            subscription = endpoint.Subscribe("IsReachable", capability.@interface, callback).GetAwaiter().GetResult();
+                            subscription = endpoint.Subscribe("IsReachable", this.GetType().AssemblyQualifiedName, callback).GetAwaiter().GetResult();
                             break;
                         default:
                             break;

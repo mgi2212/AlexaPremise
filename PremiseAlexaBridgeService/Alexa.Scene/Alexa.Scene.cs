@@ -2,6 +2,7 @@
 using Alexa.SmartHomeAPI.V3;
 using PremiseAlexaBridgeService;
 using System.Collections.Generic;
+using Alexa.Controller;
 using SYSWebSockClient;
 using System;
 
@@ -9,6 +10,7 @@ namespace Alexa.Scene
 {
     public class AlexaScene  : IAlexaDeviceType
     {
+
         public List<AlexaProperty> FindRelatedProperties(IPremiseObject endpoint, string currentController)
         {
             List<AlexaProperty> relatedProperties = new List<AlexaProperty>();
@@ -29,7 +31,7 @@ namespace Alexa.Scene
                 {
                     case "Alexa.SceneController":
                         {
-                            AlexaSetSceneController controller = new AlexaSetSceneController(endpoint);
+                            AlexaSetSceneController controller = new AlexaSetSceneController("", endpoint);
                             property = controller.GetPropertyState();
                         }
                         break;
@@ -53,12 +55,13 @@ namespace Alexa.Scene
             {
                 IPremiseSubscription subscription = null;
 
-                if (capability.proactivelyReported) // scenes are a special cased
+                if (!capability.HasProperties()) // scenes are a special cased
                 {
                     switch (capability.@interface)
                     {
                         case "Alexa.SceneController":
-                            subscription = endpoint.Subscribe("PowerState", capability.@interface, callback).GetAwaiter().GetResult();
+                            Type type = this.GetType();
+                            subscription = endpoint.Subscribe("PowerState", this.GetType().AssemblyQualifiedName, callback).GetAwaiter().GetResult();
                             break;
                         default:
                             break;

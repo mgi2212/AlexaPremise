@@ -110,6 +110,7 @@ namespace Alexa.Discovery
         public readonly string @namespace = "Alexa.Discovery";
         public readonly string[] directiveNames = { "Discover" };
         public readonly string alexaProperty = "Discover.Response";
+        public readonly string[] premiseProperties = { "none" };
 
         public AlexaDiscoveryController(AlexaDiscoveryControllerRequest request)
             : base(request)
@@ -120,10 +121,24 @@ namespace Alexa.Discovery
             : base(endpoint)
         {
         }
+        public string GetAssemblyTypeName()
+        {
+            return this.GetType().AssemblyQualifiedName;
+        }
+
+        public AlexaDiscoveryController()
+            : base()
+        {
+        }
 
         public string GetNameSpace()
         {
             return @namespace;
+        }
+
+        public string GetAlexaProperty()
+        {
+            return alexaProperty;
         }
 
         public string[] GetDirectiveNames()
@@ -136,6 +151,24 @@ namespace Alexa.Discovery
             return null;
         }
 
+        public bool HasAlexaProperty(string property)
+        {
+            return (property == this.alexaProperty);
+        }
+        public bool HasPremiseProperty(string property)
+        {
+            foreach (string s in this.premiseProperties)
+            {
+                if (s == property)
+                    return true;
+            }
+            return false;
+        }
+
+        public string AssemblyTypeName()
+        {
+            return this.GetType().AssemblyQualifiedName;
+        }
 
         public void ProcessControllerDirective()
         {

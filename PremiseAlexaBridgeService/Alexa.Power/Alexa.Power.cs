@@ -5,6 +5,7 @@ using PremiseAlexaBridgeService;
 using System.Collections.Generic;
 using SYSWebSockClient;
 using System;
+using Alexa.Controller;
 
 namespace Alexa.Power
 {
@@ -71,7 +72,8 @@ namespace Alexa.Power
                     switch (capability.@interface)
                     {
                         case "Alexa.PowerController":
-                            subscription = endpoint.Subscribe("PowerState", capability.@interface, callback).GetAwaiter().GetResult();
+                            Type type = this.GetType();
+                            subscription = endpoint.Subscribe("PowerState", this.GetType().AssemblyQualifiedName, callback).GetAwaiter().GetResult();
                             break;
                         default:
                             break;

@@ -9,8 +9,10 @@ using System;
 using System.ServiceModel;
 using System.ServiceModel.Web;
 using System.Threading.Tasks;
+using System.Diagnostics;
 using SYSWebSockClient;
 using System.Linq;
+using System.Web.Script.Serialization;
 
 namespace PremiseAlexaBridgeService
 {
@@ -58,8 +60,6 @@ namespace PremiseAlexaBridgeService
 
     public class PremiseAlexaV3Service : PremiseAlexaBase, IPremiseAlexaV3Service
     {
-
-
 
         #region System
 
@@ -160,6 +160,9 @@ namespace PremiseAlexaBridgeService
             {
                 controller.ProcessControllerDirective();
             }
+
+            var json = new JavaScriptSerializer().Serialize(controller.Response);
+
             return controller.Response;
         }
 
@@ -336,7 +339,7 @@ namespace PremiseAlexaBridgeService
                     return response;
                 }
 
-                if (!CheckAccessToken(directive.endpoint.scope.token).GetAwaiter().GetResult())
+                if (!CheckAccessToken(directive.endpoint.scope.localAccessToken).GetAwaiter().GetResult())
                 {
                     response.context = null;
                     response.@event.payload = new AlexaErrorResponsePayload(AlexaErrorTypes.INVALID_AUTHORIZATION_CREDENTIAL, "Not authorized on local premise server.");
@@ -418,11 +421,13 @@ namespace PremiseAlexaBridgeService
                         {
                             case "Alexa.SceneController":
                                 {
-                                    AlexaSetSceneController controller = new AlexaSetSceneController(endpoint);
+                                    AlexaSetSceneController controller = new AlexaSetSceneController("", endpoint);
                                     AlexaProperty prop = controller.GetPropertyState();
                                     response.@event.header.name = (string)prop.value;
-                                    response.@event.payload.cause = new ChangeReportCause();
-                                    response.@event.payload.cause.type = "VOICE_INTERACTION";
+                                    response.@event.payload.cause = new ChangeReportCause
+                                    {
+                                        type = "VOICE_INTERACTION"
+                                    };
                                     response.@event.payload.timestamp = prop.timeOfSample;
                                 }
                                 break;
@@ -479,7 +484,7 @@ namespace PremiseAlexaBridgeService
 
             try
             {
-                if (!CheckAccessToken(directive.payload.grantee.token).GetAwaiter().GetResult())
+                if (!CheckAccessToken(directive.payload.grantee.localAccessToken).GetAwaiter().GetResult())
                 {
                     response.@event.payload = new AlexaErrorResponsePayload(AlexaErrorTypes.INVALID_AUTHORIZATION_CREDENTIAL, "Not authorized on local premise server.");
                     return response;
@@ -501,7 +506,12 @@ namespace PremiseAlexaBridgeService
                     return response;
                 }
 
-                PremiseServer.HomeObject.SetValue("AlexaAsyncAuthorizationCode", directive.payload.grant.code).GetAwaiter().GetResult();
+                PremiseServer.HomeObject.SetValue("AlexaAsyncAuthorizationCode", directive.payload.grant.access_token).GetAwaiter().GetResult();
+                PremiseServer.HomeObject.SetValue("AlexaAsyncAuthorizationRefreshToken", directive.payload.grant.refresh_token).GetAwaiter().GetResult();
+                DateTime expiry = DateTime.UtcNow.AddSeconds((double)directive.payload.grant.expires_in);
+                PremiseServer.HomeObject.SetValue("AlexaAsyncAuthorizationCodeExpiry", expiry.ToString()).GetAwaiter().GetResult();
+                PremiseServer.HomeObject.SetValue("AlexaAsyncAuthorizationClientId", directive.payload.grant.client_id).GetAwaiter().GetResult();
+                PremiseServer.HomeObject.SetValue("AlexaAsyncAuthorizationSecret", directive.payload.grant.client_secret).GetAwaiter().GetResult();
             }
             catch (Exception ex)
             {

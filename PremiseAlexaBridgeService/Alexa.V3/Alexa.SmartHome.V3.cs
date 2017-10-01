@@ -1,7 +1,12 @@
 ﻿using System.Collections.Generic;
+using System.Diagnostics;
 using System.Runtime.Serialization;
 using System.Linq;
-
+using Alexa.EndpointHealth;
+using Alexa.Lighting;
+/// <summary>
+/// Generic Data Contracts for Alexa.SmartHome V3 API
+/// </summary>
 namespace Alexa.SmartHomeAPI.V3
 {
 
@@ -102,6 +107,7 @@ namespace Alexa.SmartHomeAPI.V3
     #endregion
 
     #region Scope 
+
     [DataContract(Name = "scope")]
     public class Scope
     {
@@ -109,6 +115,13 @@ namespace Alexa.SmartHomeAPI.V3
         public string type { get; set; }
         [DataMember(Name = "token", EmitDefaultValue = true, Order = 2)]
         public string token { get; set; }
+        [DataMember(Name = "localAccessToken", EmitDefaultValue = false, Order = 3)]
+        public string localAccessToken { get; set; }
+
+        void OnSerializing(StreamingContext context)
+        {
+            this.localAccessToken = default(string); // will not be serialized
+        }
     }
 
     #endregion
@@ -173,12 +186,12 @@ namespace Alexa.SmartHomeAPI.V3
     {
         [DataMember(Name = "supported", EmitDefaultValue = false, IsRequired = false, Order = 1)]
         public List<SupportedProperty> supported { get; set; }
-        [DataMember(Name = "proactivelyReported", EmitDefaultValue = false, IsRequired = false, Order = 2)]
+        [DataMember(Name = "proactivelyReported", EmitDefaultValue = true, IsRequired = false, Order = 2)]
         public bool proactivelyReported { get; set; }
-        [DataMember(Name = "retrievable", EmitDefaultValue = false, IsRequired = false, Order = 3)]
+        [DataMember(Name = "retrievable",  EmitDefaultValue = true, IsRequired = false, Order = 3)]
         public bool retrievable { get; set; }
-        [DataMember(Name = "supportsDeactivation", EmitDefaultValue = false, IsRequired = false, Order = 4)]
-        public bool supportsDeactivation { get; set; }
+        //[DataMember(Name = "supportsDeactivation", EmitDefaultValue = false, IsRequired = false, Order = 4)]
+        //public bool supportsDeactivation { get; set; }
 
         public Properties()
         {
@@ -187,9 +200,9 @@ namespace Alexa.SmartHomeAPI.V3
 
         public Properties(bool asyncSupported, bool querySupported)
         {
-            // this.supported = new List<SupportedProperty>();
-            // this.proactivelyReported = asyncSupported;
-            // this.retrievable = querySupported;
+             this.supported = new List<SupportedProperty>();
+             this.proactivelyReported = asyncSupported;
+             this.retrievable = querySupported;
         }
 
     }
@@ -212,7 +225,7 @@ namespace Alexa.SmartHomeAPI.V3
         [OnSerializing]
         void OnSerializing(StreamingContext context)
         {
-            if (this.properties == null)
+            if (this.HasProperties() == false)
             {
                 this.properties = default(Properties); // will not be serialized
             }
@@ -232,9 +245,11 @@ namespace Alexa.SmartHomeAPI.V3
         }
     }
 
+
     #endregion
 
-    #region Exception
+    #region Exceptions and Errors
+
     public static class Faults
     {
         public const string Namespace = "Alexa.ConnectedHome.Control";
@@ -269,6 +284,22 @@ namespace Alexa.SmartHomeAPI.V3
         public const string UnsupportedOperationError = "UnsupportedOperationError";
         public const string UnsupportedTargetSettingError = "UnsupportedTargetSettingError";
         public const string UnexpectedInformationReceivedError = "UnexpectedInformationReceivedError";
+    }
+
+    public enum AlexaErrorTypes
+    {
+        ENDPOINT_UNREACHABLE,               // Indicates a directive targeting an endpoint that is currently unreachable or offline. For example, the endpoint might be turned off, disconnected from the customer's local area network, or connectivity between the endpoint and bridge or the endpoint and the device cloud might have been lost.
+        NO_SUCH_ENDPOINT,                   // Indicates an Endpoint that does not exist or no longer exists.
+        INVALID_VALUE,                      // Indicates a directive that attempts to set an invalid value for that endpoint. For example, use to indicate a request with an invalid heating mode, channel value or program value.
+        VALUE_OUT_OF_RANGE,                 // Indicates a directive that attempts to set a value that is outside the numerical range accepted for that endpoint. For example, use to respond to a request to set a percentage value over 100 percent. For temperature values, use TEMPERATURE_VALUE_OUT_OF_RANGE
+        TEMPERATURE_VALUE_OUT_OF_RANGE,     // Indicates a directive that attempts to set a value that outside the numeric temperature range accepted for that thermostat. For more thermostat-specific errors, see the error section of the Alexa.ThermostatController interface. Note that the namespace for thermostat-specific errors is Alexa.ThermostatController
+        INVALID_DIRECTIVE,                  // Indicates a directive that is invalid or malformed. For example, in the unlikely event an endpoint receives a request it does not support, you would return this error type.
+        FIRMWARE_OUT_OF_DATE,               // Indicates a directive could not be handled because the firmware for a bridge or an endpoint is out of date.
+        HARDWARE_MALFUNCTION,               // Indicates a directive could not be handled because a bridge or an endpoint has experienced a hardware malfunction.
+        RATE_LIMIT_EXCEEDED,                // Indicates the maximum rate at which an endpoint or bridge can process directives has been exceeded.
+        INVALID_AUTHORIZATION_CREDENTIAL,   // Indicates that the authorization credential provided by Alexa is invalid. For example, the OAuth2 access token is not valid for the customer's device cloud account.
+        EXPIRED_AUTHORIZATION_CREDENTIAL,   // Indicates that the authorization credential provided by Alexa has expired. For example, the OAuth2 access token for that customer has expired.
+        INTERNAL_ERROR                      // Indicates an error that cannot be accurately described as one of the other error types occurred while you were handling the directive. For example, a generic runtime exception occurred while handling a directive. Ideally, you will never send this error event, but instead send a more specific error type.
     }
 
     public class ErrorInfo
@@ -359,22 +390,18 @@ namespace Alexa.SmartHomeAPI.V3
     #region Control
     
     [DataContract]
-    public class ValidRangeInt
-    {
-        [DataMember(Name = "minimumValue")]
-        int minimumValue { get; set; }
-        [DataMember(Name = "maximumValue")]
-        int maximumValue { get; set; }
-    }
-
-    
-    [DataContract]
     public class ControlResponse
     {
         [DataMember(Name = "context", Order = 1, EmitDefaultValue = false)]
         public AlexaControlResponseContext context { get; set; }
         [DataMember(Name = "event", Order = 2)]
         public AlexaEventBody Event { get; set; }
+
+        void OnSerializing(StreamingContext context)
+        {
+            Debug.WriteLine("Serializing ControlResponse");
+            this.Event.header.@namespace = "Alexa";
+        }
 
         public ControlResponse()
         {
@@ -392,12 +419,15 @@ namespace Alexa.SmartHomeAPI.V3
             context = new AlexaControlResponseContext();
             Event = new AlexaEventBody(header, endpoint)
             {
-                header = header,
+                header = header
             };
         }
     }
 
+
     [DataContract]
+    [KnownType(typeof(AlexaEndpointHealthValue))]
+    [KnownType(typeof(AlexaColorValue))]
     public class AlexaProperty
     {
         [DataMember(Name = "namespace")]
@@ -405,11 +435,16 @@ namespace Alexa.SmartHomeAPI.V3
         [DataMember(Name = "name")]
         public string name { get; set; }
         [DataMember(Name = "value")]
-        public object value { get; set; }
+        public object value {get; set; }
         [DataMember(Name = "timeOfSample")]
         public string timeOfSample { get; set; }
         [DataMember(Name = "uncertaintyInMilliseconds")]
         public int uncertaintyInMilliseconds { get; set; }
+
+        void OnSerializing(StreamingContext context)
+        {
+            Debug.WriteLine("Serializing AlexaProperty");
+        }
 
         public AlexaProperty()
         {
@@ -431,11 +466,14 @@ namespace Alexa.SmartHomeAPI.V3
         public List<AlexaProperty> properties { get; set; }
         void OnSerializing(StreamingContext context)
         {
+            Debug.WriteLine("Serializing AlexaControlResponseContext");
+
             if ((this.properties == null) || (this.properties.Count == 0))
             {
                 this.properties = default(List<AlexaProperty>); // will not be serialized
             }
         }
+
         public AlexaControlResponseContext()
         {
             properties = new List<AlexaProperty>();
@@ -450,6 +488,12 @@ namespace Alexa.SmartHomeAPI.V3
         public ChangeReportCause cause { get; set; }
         [DataMember(Name = "timestamp", EmitDefaultValue = false)]
         public string timestamp { get; set; }
+
+        void OnSerializing(StreamingContext context)
+        {
+            Debug.WriteLine("Serializing AlexaResponsePayload");
+        }
+
     }
 
     [DataContract]
@@ -528,7 +572,7 @@ namespace Alexa.SmartHomeAPI.V3
 
     #endregion
 
-    #region Report State
+    #region Report State and Change Reports
 
     [DataContract]
     public class ReportStateRequest
@@ -609,7 +653,6 @@ namespace Alexa.SmartHomeAPI.V3
             properties = new List<AlexaProperty>();
             cause = new ChangeReportCause();
         }
-            
     }
 
     [DataContract]
@@ -652,11 +695,23 @@ namespace Alexa.SmartHomeAPI.V3
     [DataContract]
     public class AuthorizationGrant
     {
-        [DataMember(Name = "type")]
-        public string type { get; set; }
+        [DataMember(Name = "token_type")]
+        public string token_type { get; set; }
 
-        [DataMember(Name = "code")]
-        public string code { get; set; }
+        [DataMember(Name = "access_token")]
+        public string access_token { get; set; }
+
+        [DataMember(Name = "refresh_token")]
+        public string refresh_token { get; set; }
+
+        [DataMember(Name = "expires_in")]
+        public int expires_in { get; set; }
+
+        [DataMember(Name = "client_id")]
+        public string client_id { get; set; }
+
+        [DataMember(Name = "client_secret")]
+        public string client_secret { get; set; }
     }
 
     [DataContract]
@@ -667,6 +722,15 @@ namespace Alexa.SmartHomeAPI.V3
 
         [DataMember(Name = "token")]
         public string token { get; set; }
+
+        [DataMember(Name = "localAccessToken", EmitDefaultValue = false)]
+        public string localAccessToken { get; set; }
+
+        void OnSerializing(StreamingContext context)
+        {
+            localAccessToken = default(string);
+        }
+
     }
 
     [DataContract]
@@ -724,24 +788,4 @@ namespace Alexa.SmartHomeAPI.V3
 
     #endregion
 
-    #region Error
-
-        public enum AlexaErrorTypes
-        {
-            ENDPOINT_UNREACHABLE,               // Indicates a directive targeting an endpoint that is currently unreachable or offline. For example, the endpoint might be turned off, disconnected from the customer's local area network, or connectivity between the endpoint and bridge or the endpoint and the device cloud might have been lost.
-            NO_SUCH_ENDPOINT,                   // Indicates an Endpoint that does not exist or no longer exists.
-            INVALID_VALUE,                      // Indicates a directive that attempts to set an invalid value for that endpoint. For example, use to indicate a request with an invalid heating mode, channel value or program value.
-            VALUE_OUT_OF_RANGE,                 // Indicates a directive that attempts to set a value that is outside the numerical range accepted for that endpoint. For example, use to respond to a request to set a percentage value over 100 percent. For temperature values, use TEMPERATURE_VALUE_OUT_OF_RANGE
-            TEMPERATURE_VALUE_OUT_OF_RANGE,     // Indicates a directive that attempts to set a value that outside the numeric temperature range accepted for that thermostat. For more thermostat-specific errors, see the error section of the Alexa.ThermostatController interface. Note that the namespace for thermostat-specific errors is Alexa.ThermostatController
-            INVALID_DIRECTIVE,                  // Indicates a directive that is invalid or malformed. For example, in the unlikely event an endpoint receives a request it does not support, you would return this error type.
-            FIRMWARE_OUT_OF_DATE,               // Indicates a directive could not be handled because the firmware for a bridge or an endpoint is out of date.
-            HARDWARE_MALFUNCTION,               // Indicates a directive could not be handled because a bridge or an endpoint has experienced a hardware malfunction.
-            RATE_LIMIT_EXCEEDED,                // Indicates the maximum rate at which an endpoint or bridge can process directives has been exceeded.
-            INVALID_AUTHORIZATION_CREDENTIAL,   // Indicates that the authorization credential provided by Alexa is invalid. For example, the OAuth2 access token is not valid for the customer's device cloud account.
-            EXPIRED_AUTHORIZATION_CREDENTIAL,   // Indicates that the authorization credential provided by Alexa has expired. For example, the OAuth2 access token for that customer has expired.
-            INTERNAL_ERROR                      // Indicates an error that cannot be accurately described as one of the other error types occurred while you were handling the directive. For example, a generic runtime exception occurred while handling a directive. Ideally, you will never send this error event, but instead send a more specific error type.
-        }
-
-        #endregion
-
-    }
+}

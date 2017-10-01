@@ -6,7 +6,7 @@ namespace WcfNewtonsoftJsonSerializer
     {
         public override WebContentFormat GetMessageFormatForContentType( string contentType )
         {
-            return WebContentFormat.Raw;
+            return WebContentFormat.Json;
         }
     }
 }

@@ -148,13 +148,15 @@
     <Content Include="BaseClasses\PremiseAlexaBridgeService.svc" />
     <Content Include="Alexa.V3\PremiseAlexaBridgeService.V3.svc" />
     <Content Include="Alexa.V2\PremiseAlexaBridgeService.V2.svc" />
-    <Content Include="Web.config" />
+    <Content Include="Web.config">
+      <SubType>Designer</SubType>
+    </Content>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Alexa.Discovery\Alexa.DiscoveryController.cs" />
     <Compile Include="Alexa.HVAC\Alexa.HVAC.cs" />
     <Compile Include="Alexa.Lighting\Alexa.AdjustColorTemperatureController.cs" />
-    <Compile Include="Alexa.Lighting\Alexa.SetColorTemperatureController - Copy.cs" />
+    <Compile Include="Alexa.Lighting\Alexa.SetColorTemperatureController.cs" />
     <Compile Include="Alexa.Lighting\Alexa.SetColorController.cs" />
     <Compile Include="Alexa.Lighting\Alexa.Lighting.cs" />
     <Compile Include="Alexa.Power\Alexa.Power.cs" />
@@ -185,6 +187,7 @@
     <Compile Include="Alexa.V2\PremiseAlexaBridgeService.V2.svc.cs">
       <DependentUpon>PremiseAlexaBridgeService.V2.svc</DependentUpon>
     </Compile>
+    <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="ServerService\PremiseServerSingleton.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="BaseClasses\UtilityClasses.cs" />
@@ -205,6 +208,7 @@
     <Content Include="Alexa.Discovery\readme.md" />
     <Content Include="Alexa.Scene\readme.md" />
     <Content Include="Alexa.EndpointHealth\readme.md" />
+    <Content Include="App_Data\SmartHome V3 Json Schema.json" />
     <None Include="Properties\PublishProfiles\AD2.pubxml" />
     <None Include="Properties\PublishProfiles\cek.pubxml" />
     <None Include="Properties\PublishProfiles\CustomProfile.pubxml" />
@@ -223,10 +227,6 @@
     <ProjectReference Include="..\SYSWebSockClient\SYSWebSockClient.csproj">
       <Project>{4bacf0aa-a338-49f8-aaf4-9128dd79ec4a}</Project>
       <Name>SYSWebSockClient</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\WcfNewtonsoftJsonSerializer\WcfNewtonSoftJsonSerializer.csproj">
-      <Project>{89596d3a-391f-4b14-ae58-ab8931ba07cc}</Project>
-      <Name>WcfNewtonSoftJsonSerializer</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup />

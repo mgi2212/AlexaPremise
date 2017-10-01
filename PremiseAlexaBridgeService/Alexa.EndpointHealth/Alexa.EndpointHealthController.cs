@@ -44,33 +44,38 @@ namespace Alexa.EndpointHealth
     [DataContract]
     public class AlexaEndpointHealthValue
     {
-        [DataMember(Name = "state", IsRequired = true, Order = 1)]
-        public string state { get; set; }
-        [DataMember(Name = "lastcontact", IsRequired = true, Order = 2)]
-        public string lastcontact { get; set; }
+        [DataMember(Name = "value", IsRequired = true, Order = 1)]
+        public string value { get; set; }
 
-        public AlexaEndpointHealthValue(string stateValue, string timestamp)
+        public AlexaEndpointHealthValue()
         {
-            this.lastcontact = timestamp;
-            this.state = stateValue;
+
+        }
+
+        public AlexaEndpointHealthValue(string stateValue)
+        {
+            //this.lastcontact = timestamp;
+            this.value = stateValue;
         }
     }
 
     #endregion
 
+    /// <summary>
+    /// there is no web service endpoint associated with class its pupose 
+    /// is to be accessed internally by other controller requests, 
+    /// state report requests and change reports
+    /// </summary>
     public class AlexaEndpointHealthController : AlexaControllerBase<
-        AlexaEndpointHealthRequestPayload, 
-        ControlResponse, 
+        AlexaEndpointHealthRequestPayload,
+        ControlResponse,
         AlexaEndpointHealthControllerRequest>, IAlexaController
     {
         public readonly AlexaEndpointHealth PropertyHelpers = new AlexaEndpointHealth();
         public readonly string @namespace = "Alexa.EndpointHealth";
-        
-        // no service endpoint this class is accessed in other controller requests, state report requests and change reports
         public readonly string[] directiveNames = { };
-        public readonly string premiseProperty = "IsReachable";
-        private readonly string alexaProperty = "connectivity";
-
+        public readonly string[] premiseProperties = { "IsReachable" };
+        public readonly string alexaProperty = "connectivity";
 
         public AlexaEndpointHealthController(AlexaEndpointHealthControllerRequest request)
             : base(request)
@@ -82,6 +87,21 @@ namespace Alexa.EndpointHealth
         {
         }
 
+        public AlexaEndpointHealthController()
+            : base()
+        {
+        }
+
+        public string GetAlexaProperty()
+        {
+            return alexaProperty;
+        }
+
+        public string GetAssemblyTypeName()
+        {
+            return this.GetType().AssemblyQualifiedName;
+        }
+
         public string GetNameSpace()
         {
             return @namespace;
@@ -91,15 +111,36 @@ namespace Alexa.EndpointHealth
         {
             return directiveNames;
         }
+        public bool HasAlexaProperty(string property)
+        {
+            return (property == this.alexaProperty);
+        }
+
+        public bool HasPremiseProperty(string property)
+        {
+            foreach (string s in this.premiseProperties)
+            {
+                if (s == property)
+                    return true;
+            }
+            return false;
+        }
+
+
+        public string AssemblyTypeName()
+        {
+            return this.GetType().AssemblyQualifiedName;
+        }
 
         public AlexaProperty GetPropertyState()
         {
-            bool isReachable = endpoint.GetValue<bool>(premiseProperty).GetAwaiter().GetResult();
+            bool isReachable = endpoint.GetValue<bool>(premiseProperties[0]).GetAwaiter().GetResult();
             AlexaProperty property = new AlexaProperty
             {
                 @namespace = @namespace,
                 name = alexaProperty,
-                value = new AlexaEndpointHealthValue((isReachable == true ? "REACHABLE" : "UNREACHABLE"), GetUtcTime()),
+                timeOfSample = GetUtcTime(),
+                value = new AlexaEndpointHealthValue((isReachable == true ? "OK" : "UNREACHABLE")),
             };
             return property;
         }
