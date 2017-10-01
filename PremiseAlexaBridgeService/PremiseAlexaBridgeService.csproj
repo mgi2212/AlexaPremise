@@ -139,11 +139,11 @@
     <Reference Include="System.Xml.Linq" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="App_Data\alexa.txt" />
-    <Content Include="App_Data\Micro Service for DB Lambda.js" />
-    <Content Include="App_Data\Custom Skill Lambda.js" />
-    <Content Include="App_Data\Smart Home V3 Lambda.js" />
-    <Content Include="App_Data\Smart Home Lambda.js" />
+    <None Include="App_Data\alexa.txt" />
+    <None Include="App_Data\Micro Service for DB Lambda.js" />
+    <None Include="App_Data\Custom Skill Lambda.js" />
+    <None Include="App_Data\Smart Home V3 Lambda.js" />
+    <None Include="App_Data\Smart Home Lambda.js" />
     <Content Include="Alexa.Custom\PremiseAlexaBridgeService.Custom.svc" />
     <Content Include="BaseClasses\PremiseAlexaBridgeService.svc" />
     <Content Include="Alexa.V3\PremiseAlexaBridgeService.V3.svc" />
@@ -194,21 +194,21 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="packages.config" />
-    <Content Include="App_Data\Alexa.xdo" />
-    <Content Include="Alexa.AV\readme.md" />
-    <Content Include="Alexa.Cameras\readme.md" />
-    <Content Include="Alexa.Custom\readme.md" />
-    <Content Include="Alexa.HVAC\readme.md" />
-    <Content Include="Alexa.Lighting\readme.md" />
-    <Content Include="Alexa.Power\readme.md" />
-    <Content Include="Alexa.Security\readme.md" />
-    <Content Include="Alexa.V2\readme.md" />
-    <Content Include="Alexa.V3\readme.md" />
-    <Content Include="BaseClasses\readme.md" />
-    <Content Include="Alexa.Discovery\readme.md" />
-    <Content Include="Alexa.Scene\readme.md" />
-    <Content Include="Alexa.EndpointHealth\readme.md" />
-    <Content Include="App_Data\SmartHome V3 Json Schema.json" />
+    <None Include="App_Data\Alexa.xdo" />
+    <None Include="Alexa.AV\readme.md" />
+    <None Include="Alexa.Cameras\readme.md" />
+    <None Include="Alexa.Custom\readme.md" />
+    <None Include="Alexa.HVAC\readme.md" />
+    <None Include="Alexa.Lighting\readme.md" />
+    <None Include="Alexa.Power\readme.md" />
+    <None Include="Alexa.Security\readme.md" />
+    <None Include="Alexa.V2\readme.md" />
+    <None Include="Alexa.V3\readme.md" />
+    <None Include="BaseClasses\readme.md" />
+    <None Include="Alexa.Discovery\readme.md" />
+    <None Include="Alexa.Scene\readme.md" />
+    <None Include="Alexa.EndpointHealth\readme.md" />
+    <None Include="App_Data\SmartHome V3 Json Schema.json" />
     <None Include="Properties\PublishProfiles\AD2.pubxml" />
     <None Include="Properties\PublishProfiles\cek.pubxml" />
     <None Include="Properties\PublishProfiles\CustomProfile.pubxml" />
