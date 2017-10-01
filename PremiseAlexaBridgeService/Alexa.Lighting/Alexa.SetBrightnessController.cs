@@ -1,6 +1,5 @@
 ﻿using Alexa.Controller;
-using Alexa.Power;
-using Alexa.SmartHome.V3;
+using Alexa.SmartHomeAPI.V3;
 using PremiseAlexaBridgeService;
 using System;
 using System.Runtime.Serialization;
@@ -14,11 +13,11 @@ namespace Alexa.Lighting
     public class AlexaSetBrightnessControllerRequest
     {
         [DataMember(Name = "directive")]
-        public AlexaSetBrightnessControllerDirective directive { get; set; }
+        public AlexaSetBrightnessControllerRequestDirective directive { get; set; }
     }
 
     [DataContract]
-    public class AlexaSetBrightnessControllerDirective
+    public class AlexaSetBrightnessControllerRequestDirective
     {
         [DataMember(Name = "header")]
         public Header header { get; set; }
@@ -27,18 +26,18 @@ namespace Alexa.Lighting
         public DirectiveEndpoint endpoint { get; set; }
 
         [DataMember(Name = "payload")]
-        public AlexaSetBrightnessPayload payload { get; set; }
+        public AlexaSetBrightnessRequestPayload payload { get; set; }
 
-        public AlexaSetBrightnessControllerDirective()
+        public AlexaSetBrightnessControllerRequestDirective()
         {
             header = new Header();
             endpoint = new DirectiveEndpoint();
-            payload = new AlexaSetBrightnessPayload();
+            payload = new AlexaSetBrightnessRequestPayload();
         }
     }
 
     [DataContract]
-    public class AlexaSetBrightnessPayload
+    public class AlexaSetBrightnessRequestPayload
     {
         [DataMember(Name = "brightness")]
         public int brightness { get; set; }
@@ -46,32 +45,83 @@ namespace Alexa.Lighting
 
     #endregion
 
-    public class AlexaSetBrightnessController : AlexaControllerBase<AlexaSetBrightnessPayload, ControlResponse>, IAlexaController
+    public class AlexaSetBrightnessController : AlexaControllerBase<
+        AlexaSetBrightnessRequestPayload, 
+        ControlResponse, 
+        AlexaSetBrightnessControllerRequest>, IAlexaController
     {
-        public readonly string @namespace = "Alexa.BrightnessController";
-        public readonly string[] directiveNames = { "SetBrightness" };
-        public readonly string premiseProperty = "Brightness";
+        private readonly string @namespace = "Alexa.BrightnessController";
+        private readonly string[] directiveNames = { "SetBrightness" };
+        private readonly string[] premiseProperties = { "Brightness" };
         public readonly string alexaProperty = "brightness";
+        public readonly AlexaLighting PropertyHelpers;
 
         public AlexaSetBrightnessController(AlexaSetBrightnessControllerRequest request)
-            : base(request.directive.header, request.directive.endpoint, request.directive.payload)
+            : base(request)
         {
+            PropertyHelpers = new AlexaLighting();
         }
 
         public AlexaSetBrightnessController(IPremiseObject endpoint)
             : base(endpoint)
         {
+            PropertyHelpers = new AlexaLighting();
+        }
+        public AlexaSetBrightnessController()
+            : base()
+        {
+            PropertyHelpers = new AlexaLighting();
+        }
+
+        public string GetAlexaProperty()
+        {
+            return alexaProperty;
+        }
+
+        public string GetAssemblyTypeName()
+        {
+            return this.GetType().AssemblyQualifiedName;
+        }
+
+        public string GetNameSpace()
+        {
+            return @namespace;
+        }
+
+        public string [] GetDirectiveNames()
+        {
+            return directiveNames;
+        }
+        public bool HasAlexaProperty(string property)
+        {
+            return (property == this.alexaProperty);
+        }
+
+        public bool HasPremiseProperty(string property)
+        {
+            foreach (string s in this.premiseProperties)
+            {
+                if (s == property)
+                    return true;
+            }
+            return false;
+        }
+
+
+        public string AssemblyTypeName()
+        {
+            return this.GetType().AssemblyQualifiedName;
         }
 
         public AlexaProperty GetPropertyState()
         {
-            double brightness = this.endpoint.GetValue<double>(premiseProperty).GetAwaiter().GetResult();
+            double brightness = this.endpoint.GetValue<double>(premiseProperties[0]).GetAwaiter().GetResult();
             AlexaProperty property = new AlexaProperty
             {
                 @namespace = @namespace,
                 name = alexaProperty,
-                value = (int)(brightness * 100),
-                timeOfSample = DateTime.UtcNow.ToUniversalTime().ToString("yyyy-MM-dd'T'HH:mm:ss.ffZ")
+                value = (int)((brightness * 100)).LimitToRange(0,100),
+                timeOfSample = GetUtcTime()
             };
             return property;
         }
@@ -80,61 +130,23 @@ namespace Alexa.Lighting
         {
             AlexaProperty property = new AlexaProperty(header)
             {
-                name = "brightness"
+                name = alexaProperty
             };
+            response.Event.header.@namespace = "Alexa";
+
             try
             {
                 double setValue = (double)(payload.brightness / 100.00).LimitToRange(0.00, 1.000);
-                this.endpoint.SetValue(premiseProperty, setValue.ToString()).GetAwaiter().GetResult();
-                property.timeOfSample = DateTime.UtcNow.ToUniversalTime().ToString("yyyy-MM-dd'T'HH:mm:ss.ffZ");
-                property.value = (int)(setValue * 100);
+                this.endpoint.SetValue(premiseProperties[0], setValue.ToString()).GetAwaiter().GetResult();
+                property.timeOfSample = GetUtcTime();
+                property.value = ((int)(setValue * 100)).LimitToRange(0,100);
                 this.response.context.properties.Add(property);
+                this.Response.Event.header.name = "Response";
+                this.response.context.properties.AddRange(this.PropertyHelpers.FindRelatedProperties(endpoint, @namespace));
             }
             catch (Exception ex)
             {
-                base.ClearResponseContextAndEventPayload();
-                this.Response.Event.payload = new AlexaErrorResponsePayload(AlexaErrorTypes.INTERNAL_ERROR, ex.Message);
-            }
-
-            this.Response.Event.header.name = "Response";
-
-            // walk through related and supported controllers and report state
-            DiscoveryEndpoint discoveryEndpoint = PremiseServer.GetDiscoveryEndpoint(this.endpoint).GetAwaiter().GetResult();
-            if (discoveryEndpoint != null)
-            {
-                foreach (Capability capability in discoveryEndpoint.capabilities)
-                {
-                    switch (capability.@interface)
-                    {
-                        case "Alexa.BrightnessController": // already added
-                            break;
-
-                        case "Alexa.PowerController":
-                            {
-                                AlexaSetPowerStateController controller = new AlexaSetPowerStateController(this.endpoint);
-                                AlexaProperty powerState = controller.GetPropertyState();
-                                response.context.properties.Add(powerState);
-                            }
-                            break;
-
-                        case "Alexa.ColorController":
-                            {
-
-                            }
-                            // TODO
-                            break;
-
-                        case "Alexa.ColorTemperatureController":
-                            {
-
-                            }
-                            // TODO
-                            break;
-
-                        default:
-                            break;
-                    }
-                }
+                base.ReportError(AlexaErrorTypes.INTERNAL_ERROR, ex.Message);
             }
         }
     }

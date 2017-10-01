@@ -5,7 +5,7 @@ using System.Threading;
 
 namespace PremiseAlexaBridgeService
 {
-    internal class AlexaBlockingQueue<T> : IEnumerable<T>
+    public class AlexaBlockingQueue<T> : IEnumerable<T>
     {
         private int _count = 0;
         private Queue<T> _queue = new Queue<T>();

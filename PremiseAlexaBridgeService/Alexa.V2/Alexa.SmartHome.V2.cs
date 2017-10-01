@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Runtime.Serialization;
 
-namespace Alexa.SmartHome.V2
+namespace Alexa.SmartHomeAPI.V2
 {
 
     [DataContract(Namespace = "Alexa.ConnectedHome.Discovery")]

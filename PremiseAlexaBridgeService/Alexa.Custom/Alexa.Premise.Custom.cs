@@ -42,7 +42,7 @@ namespace Alexa.Premise.Custom
         // Skill Adapter Faults:
         // These errors occur when the request is valid but the skill adapter cannot complete the required task because
         // of a hardware issue or limitation.
-        public const string DriverInternalError = "DriverInternalError";
+        public const string DriverpublicError = "DriverpublicError";
         public const string DependentServiceUnavailableError = "DependentServiceUnavailableError";
         public const string TargetConnectivityUnstableError = "TargetConnectivityUnstableError";
         public const string TargetBridgeConnectivityUnstableError = "TargetBridgeConnectivityUnstableError";

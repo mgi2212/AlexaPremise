@@ -39,13 +39,13 @@ namespace ModelCheck
 
         private void queryButton_Click(object sender, EventArgs e)
         {
-            Alexa.SmartHome.V1.DiscoveryRequest request = new Alexa.SmartHome.V1.DiscoveryRequest();
+            Alexa.SmartHomeAPI.V1.DiscoveryRequest request = new Alexa.SmartHomeAPI.V1.DiscoveryRequest();
             request.payload.accessToken = accessToken.Text;
             string data = JsonConvert.SerializeObject(request);
 
             var dataToDeserialize = jsonData(string.Format(@"https://{0}:{1}/Alexa.svc/json/Discovery/", hostText.Text, portText.Text), data);
 
-            var items = JsonConvert.DeserializeObject<Alexa.SmartHome.V1.DiscoveryResponse>(dataToDeserialize);
+            var items = JsonConvert.DeserializeObject<Alexa.SmartHomeAPI.V1.DiscoveryResponse>(dataToDeserialize);
 
             if (items.payload.discoveredAppliances == null)
             {
@@ -128,7 +128,7 @@ namespace ModelCheck
 
             try
             { 
-                Alexa.SmartHome.V1.Appliance appliance = new Alexa.SmartHome.V1.Appliance();
+                Alexa.SmartHomeAPI.V1.Appliance appliance = new Alexa.SmartHomeAPI.V1.Appliance();
 
                 string idText = listView.SelectedItems[0].SubItems[0].Text;
                 appliance.applianceId = Guid.Parse(idText).ToString("D");
@@ -138,12 +138,12 @@ namespace ModelCheck
 
                 string command = (e.ClickedItem.Name == turnItemOn.Name) ? "TURN_ON" :  "TURN_OFF";
 
-                Alexa.SmartHome.V1.ControlSwitchOnOffRequest request = new Alexa.SmartHome.V1.ControlSwitchOnOffRequest(accessToken.Text, appliance, command);
+                Alexa.SmartHomeAPI.V1.ControlSwitchOnOffRequest request = new Alexa.SmartHomeAPI.V1.ControlSwitchOnOffRequest(accessToken.Text, appliance, command);
                 string data = JsonConvert.SerializeObject(request);
 
                 var dataToDeserialize = jsonData(string.Format(@"https://{0}:{1}/Alexa.svc/json/Control/", hostText.Text, portText.Text), data);
 
-                var response = JsonConvert.DeserializeObject<Alexa.SmartHome.V1.ControlResponse>(dataToDeserialize);
+                var response = JsonConvert.DeserializeObject<Alexa.SmartHomeAPI.V1.ControlResponse>(dataToDeserialize);
 
                 commandStatus.Text = string.Format("OnOffRequest: Success = {0}", response.payload.success);
             }

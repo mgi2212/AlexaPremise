@@ -1,25 +1,22 @@
 ﻿using Alexa.Controller;
-using Alexa.Lighting;
-using Alexa.SmartHome.V3;
-using PremiseAlexaBridgeService;
+using Alexa.SmartHomeAPI.V3;
 using System;
 using System.Runtime.Serialization;
 using SYSWebSockClient;
 
 namespace Alexa.Power
 {
-
     #region PowerState Data Contracts
 
     [DataContract]
     public class AlexaSetPowerStateControllerRequest
     {
         [DataMember(Name = "directive")]
-        public AlexaSetPowerStateControllerDirective directive { get; set; }
+        public AlexaSetPowerStateControllerRequestDirective directive { get; set; }
     }
 
     [DataContract]
-    public class AlexaSetPowerStateControllerDirective
+    public class AlexaSetPowerStateControllerRequestDirective
     {
         [DataMember(Name = "header")]
         public Header header { get; set; }
@@ -28,51 +25,102 @@ namespace Alexa.Power
         public DirectiveEndpoint endpoint { get; set; }
 
         [DataMember(Name = "payload")]
-        public AlexaSetPowerStatePayload payload { get; set; }
+        public AlexaSetPowerStateRequestPayload payload { get; set; }
 
-        public AlexaSetPowerStateControllerDirective()
+        public AlexaSetPowerStateControllerRequestDirective()
         {
             header = new Header();
             endpoint = new DirectiveEndpoint();
-            payload = new AlexaSetPowerStatePayload();
+            payload = new AlexaSetPowerStateRequestPayload();
         }
     }
 
-    public class AlexaSetPowerStatePayload : object
+    public class AlexaSetPowerStateRequestPayload 
     {
 
     }
 
     #endregion
 
-    public class AlexaSetPowerStateController : AlexaControllerBase<AlexaSetPowerStatePayload, ControlResponse>, IAlexaController
-        {
-
-        public readonly string @namespace = "Alexa.PowerController";
-        public readonly string[] directiveNames = { "TurnOn", "TurnOff" };
-        public readonly string premiseProperty = "PowerState";
+    public class AlexaSetPowerStateController : AlexaControllerBase<
+        AlexaSetPowerStateRequestPayload, 
+        ControlResponse, 
+        AlexaSetPowerStateControllerRequest>, IAlexaController
+    {
+        public readonly AlexaPower PropertyHelpers;
+        private readonly string[] directiveNames = { "TurnOn", "TurnOff" };
+        private readonly string @namespace = "Alexa.PowerController";
+        private readonly string[] premiseProperties = { "PowerState" };
         public readonly string alexaProperty = "powerState";
 
         public AlexaSetPowerStateController(AlexaSetPowerStateControllerRequest request)
-            : base(request.directive.header, request.directive.endpoint, request.directive.payload)
+            : base(request)
         {
+            PropertyHelpers = new AlexaPower();
         }
 
         public AlexaSetPowerStateController(IPremiseObject endpoint)
             : base(endpoint)
         {
+            PropertyHelpers = new AlexaPower();
+        }
 
+        public AlexaSetPowerStateController()
+            : base()
+        {
+            PropertyHelpers = new AlexaPower();
+        }
+
+        public string GetAlexaProperty()
+        {
+            return alexaProperty;
+        }
+
+        public string GetAssemblyTypeName()
+        {
+            return this.GetType().AssemblyQualifiedName;
+        }
+
+        public string GetNameSpace()
+        {
+            return @namespace;
+        }
+
+        public string [] GetDirectiveNames()
+        {
+            return directiveNames;
+        }
+
+        public bool HasAlexaProperty(string property)
+        {
+            return (property == this.alexaProperty);
+        }
+
+        public bool HasPremiseProperty(string property)
+        {
+            foreach (string s in this.premiseProperties)
+            {
+                if (s == property)
+                    return true;
+            }
+            return false;
+        }
+
+
+        public string AssemblyTypeName()
+        {
+            return this.GetType().AssemblyQualifiedName;
         }
 
         public AlexaProperty GetPropertyState()
         {
-            bool powerState = endpoint.GetValue<bool>(premiseProperty).GetAwaiter().GetResult();
+            bool powerState = endpoint.GetValue<bool>(premiseProperties[0]).GetAwaiter().GetResult();
             AlexaProperty property = new AlexaProperty
             {
                 @namespace = @namespace,
                 name = alexaProperty,
                 value = (powerState == true ? "ON" : "OFF"),
-                timeOfSample = DateTime.UtcNow.ToUniversalTime().ToString("yyyy-MM-dd'T'HH:mm:ss.ffZ")
+                timeOfSample = GetUtcTime()
             };
             return property;
         }
@@ -84,64 +132,39 @@ namespace Alexa.Power
                 name = alexaProperty
             };
 
+            response.Event.header.@namespace = "Alexa";
+
             try
             {
+                string valueToSend;
                 if (header.name == "TurnOff")
                 {
-                    endpoint.SetValue(premiseProperty, "False").GetAwaiter().GetResult();
-                    property.timeOfSample = DateTime.UtcNow.ToUniversalTime().ToString("yyyy-MM-dd'T'HH:mm:ss.ffZ");
+                    valueToSend = "False";
                     property.value = "OFF";
-                    response.context.properties.Add(property);
                 }
                 else if (header.name == "TurnOn")
                 {
-                    endpoint.SetValue(premiseProperty, "True").GetAwaiter().GetResult();
-                    property.timeOfSample = DateTime.UtcNow.ToUniversalTime().ToString("yyyy-MM-dd'T'HH:mm:ss.ffZ");
+                    valueToSend = "True";
                     property.value = "ON";
-                    response.context.properties.Add(property);
                 }
+                else
+                {
+                    base.ReportError(AlexaErrorTypes.INVALID_DIRECTIVE, "Operation not supported!");
+                    return;
+                }
+
+                this.endpoint.SetValue(premiseProperties[0], valueToSend).GetAwaiter().GetResult();
+                property.timeOfSample = GetUtcTime();
+                this.response.context.properties.Add(property);
+                this.response.context.properties.AddRange(this.PropertyHelpers.FindRelatedProperties(endpoint, @namespace));
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
-                base.ClearResponseContextAndEventPayload();
-                this.Response.Event.payload = new AlexaErrorResponsePayload(AlexaErrorTypes.INTERNAL_ERROR, ex.Message);
+                base.ReportError(AlexaErrorTypes.INTERNAL_ERROR, ex.Message);
                 return;
             }
 
             this.Response.Event.header.name = "Response";
-
-            // walk through remaining supported controllers and report state
-            DiscoveryEndpoint discoveryEndpoint = PremiseServer.GetDiscoveryEndpoint(endpoint).GetAwaiter().GetResult();
-            if (discoveryEndpoint != null)
-            {
-                foreach (Capability capability in discoveryEndpoint.capabilities)
-                {
-                    switch (capability.@interface)
-                    {
-                        case "Alexa.PowerController": // already added
-                            break;
-
-                        case "Alexa.BrightnessController":
-                            {
-                                AlexaSetBrightnessController controller = new AlexaSetBrightnessController(endpoint);
-                                AlexaProperty brightness = controller.GetPropertyState();
-                                response.context.properties.Add(brightness);
-                            }
-                            break;
-
-                        case "Alexa.ColorController":
-                            // TODO
-                            break;
-
-                        case "Alexa.ColorTemperatureController":
-                            // TODO
-                            break;
-
-                        default:
-                            break;
-                    }
-                }
-            }
         }
     }
 }

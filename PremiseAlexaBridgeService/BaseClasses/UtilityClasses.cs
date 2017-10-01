@@ -6,7 +6,7 @@ using System.Web;
 namespace PremiseAlexaBridgeService
 {
 
-    internal static class TemperatureMode
+    public static class TemperatureMode
     {
         public static string ModeToString(int mode)
         {
@@ -21,7 +21,7 @@ namespace PremiseAlexaBridgeService
         }
     }
 
-    internal static class RoomMode
+    public static class RoomMode
     {
         public static string ModeToString(int mode)
         {
@@ -50,7 +50,7 @@ namespace PremiseAlexaBridgeService
 
 
 
-    internal class Temperature
+    public class Temperature
     {
         private const double cAbsTempC = 273.15;//absolute temperature in Celcius
         private const double cAbsTempF = 459.67;//absolute temperature in Fahrenheit

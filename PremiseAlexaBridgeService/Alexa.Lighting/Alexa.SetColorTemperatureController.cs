@@ -7,16 +7,17 @@ using SYSWebSockClient;
 
 namespace Alexa.Lighting
 {
-    #region Adjust Brightness Data Contracts
+    #region SetColorTemperature Data Contracts
 
-    public class AlexaAdjustBrightnessControllerRequest
+    [DataContract]
+    public class AlexaSetColorTemperatureControllerRequest
     {
         [DataMember(Name = "directive")]
-        public AlexaAdjustBrightnessControllerDirective directive { get; set; }
+        public AlexaSetColorTemperatureControllerRequestDirective directive { get; set; }
     }
 
     [DataContract]
-    public class AlexaAdjustBrightnessControllerDirective
+    public class AlexaSetColorTemperatureControllerRequestDirective
     {
         [DataMember(Name = "header")]
         public Header header { get; set; }
@@ -25,61 +26,57 @@ namespace Alexa.Lighting
         public DirectiveEndpoint endpoint { get; set; }
 
         [DataMember(Name = "payload")]
-        public AlexaAdjustBrightnessPayload payload { get; set; }
+        public AlexaSetColorTemperatureRequestPayload payload { get; set; }
 
-        public AlexaAdjustBrightnessControllerDirective()
+        public AlexaSetColorTemperatureControllerRequestDirective()
         {
             header = new Header();
             endpoint = new DirectiveEndpoint();
-            payload = new AlexaAdjustBrightnessPayload();
+            payload = new AlexaSetColorTemperatureRequestPayload();
         }
     }
-     
+
     [DataContract]
-    public class AlexaAdjustBrightnessPayload
+    public class AlexaSetColorTemperatureRequestPayload
     {
-        [DataMember(Name = "brightnessDelta")]
-        public int brightnessDelta { get; set; }
+        [DataMember(Name = "colorTemperatureInKelvin")]
+        public int colorTemperatureInKelvin { get; set; }
     }
 
-    #endregion 
+    #endregion
 
-    public class AlexaAdjustBrightnessController : AlexaControllerBase<
-        AlexaAdjustBrightnessPayload, 
+    public class AlexaSetColorTemperatureController : AlexaControllerBase<
+        AlexaSetColorTemperatureRequestPayload, 
         ControlResponse, 
-        AlexaAdjustBrightnessControllerRequest>, IAlexaController
+        AlexaSetColorTemperatureControllerRequest>, IAlexaController
     {
+        private readonly string @namespace = "Alexa.ColorTemperatureController";
+        private readonly string[] directiveNames = { "SetColorTemperature" };
+        private readonly string[] premiseProperties = { "Temperature" };
+        public readonly string alexaProperty = "colorTemperatureInKelvin";
         public readonly AlexaLighting PropertyHelpers;
-        private readonly string @namespace = "Alexa.BrightnessController";
-        private readonly string[] directiveNames = { "AdjustBrightness" };
-        private readonly string[] premiseProperties = { "Brightness" };
-        public readonly string alexaProperty = "brightness";
 
-        public AlexaAdjustBrightnessController(AlexaAdjustBrightnessControllerRequest request)
+        public AlexaSetColorTemperatureController(AlexaSetColorTemperatureControllerRequest request)
             : base(request)
         {
             PropertyHelpers = new AlexaLighting();
         }
 
-        public AlexaAdjustBrightnessController(IPremiseObject endpoint)
+        public AlexaSetColorTemperatureController(IPremiseObject endpoint)
             : base(endpoint)
         {
             PropertyHelpers = new AlexaLighting();
         }
 
-        public AlexaAdjustBrightnessController()
+        public AlexaSetColorTemperatureController()
             : base()
         {
             PropertyHelpers = new AlexaLighting();
         }
 
-        public string GetNameSpace()
+        public string GetAlexaProperty()
         {
-            return @namespace;
-        }
-        public string [] GetDirectiveNames()
-        {
-            return directiveNames;
+            return alexaProperty;
         }
 
         public string GetAssemblyTypeName()
@@ -87,9 +84,14 @@ namespace Alexa.Lighting
             return this.GetType().AssemblyQualifiedName;
         }
 
-        public string GetAlexaProperty()
+        public string GetNameSpace()
         {
-            return alexaProperty;
+            return @namespace;
+        }
+
+        public string [] GetDirectiveNames()
+        {
+            return directiveNames;
         }
 
         public bool HasAlexaProperty(string property)
@@ -107,14 +109,19 @@ namespace Alexa.Lighting
             return false;
         }
 
+        public string AssemblyTypeName()
+        {
+            return this.GetType().AssemblyQualifiedName;
+        }
+
         public AlexaProperty GetPropertyState()
         {
-            double brightness = this.endpoint.GetValue<double>(premiseProperties[0]).GetAwaiter().GetResult();
+            double ColorTemperature = this.endpoint.GetValue<double>(premiseProperties[0]).GetAwaiter().GetResult();
             AlexaProperty property = new AlexaProperty
             {
                 @namespace = @namespace,
                 name = alexaProperty,
-                value = (int)((brightness * 100)).LimitToRange(0, 100),
+                value = ((int)ColorTemperature).LimitToRange(1000,10000),
                 timeOfSample = GetUtcTime()
             };
             return property;
@@ -126,18 +133,17 @@ namespace Alexa.Lighting
             {
                 name = alexaProperty
             };
+
             response.Event.header.@namespace = "Alexa";
+
 
             try
             {
-                double adjustValue = Math.Round(((double)payload.brightnessDelta / 100.00), 2).LimitToRange(-1.00, 1.00);
-                double currentValue = Math.Round(endpoint.GetValue<Double>(premiseProperties[0]).GetAwaiter().GetResult(), 2);
-                double valueToSend = Math.Round(currentValue + adjustValue, 2).LimitToRange(0.00, 1.00);
-                endpoint.SetValue(premiseProperties[0], valueToSend.ToString()).GetAwaiter().GetResult();
+                int setValue = payload.colorTemperatureInKelvin.LimitToRange(1000, 10000);
+                this.endpoint.SetValue(premiseProperties[0], setValue.ToString()).GetAwaiter().GetResult();
                 property.timeOfSample = GetUtcTime();
-                property.value = (int)(valueToSend * 100);
-                response.context.properties.Add(property);
-
+                property.value = setValue;
+                this.response.context.properties.Add(property);
                 this.Response.Event.header.name = "Response";
                 this.response.context.properties.AddRange(this.PropertyHelpers.FindRelatedProperties(endpoint, @namespace));
             }

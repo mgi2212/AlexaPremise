@@ -22,7 +22,7 @@ exports.handler = function (event, context) {
     switch (event.header.namespace) {
 
         case 'Alexa.ConnectedHome.System':
-            if (event.header.name == 'HealthCheckRequest') {
+            if (event.header.name === 'HealthCheckRequest') {
                 log('HealthCheckRequest', event);
                 healthyResponse.header.messageId = event.header.messageId;
                 context.succeed(JSON.parse(healthyResponse));
@@ -133,7 +133,7 @@ function proxyEvent(event, context, command, customer_endpoint) {
         path: customer_endpoint.app_path.S + command + '/', // path: REMOTE_CLOUD_BASE_PATH + command + '/',
         method: 'POST',
         headers: {
-            'Content-Type': 'application/json',
+            'Content-Type': 'text/plain',                   // Endpoint uses newtonsoft deserialization which requires a raw post
             'Content-Length': post_data.length
         }
     };
