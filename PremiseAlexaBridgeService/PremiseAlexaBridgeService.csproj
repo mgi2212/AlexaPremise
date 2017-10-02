@@ -146,11 +146,12 @@
     <None Include="App_Data\Smart Home Lambda.js" />
     <Content Include="Alexa.Custom\PremiseAlexaBridgeService.Custom.svc" />
     <Content Include="BaseClasses\PremiseAlexaBridgeService.svc" />
-    <Content Include="Alexa.V3\PremiseAlexaBridgeService.V3.svc" />
-    <Content Include="Alexa.V2\PremiseAlexaBridgeService.V2.svc" />
+    <Content Include="Alexa.V3\Alexa.svc" />
+    <Content Include="Alexa.V2\Alexa.svc" />
     <Content Include="Web.config">
       <SubType>Designer</SubType>
     </Content>
+    <Content Include="webAppSettings.config" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Alexa.Discovery\Alexa.DiscoveryController.cs" />
@@ -169,7 +170,7 @@
     <Compile Include="Alexa.Lighting\Alexa.SetBrightnessController.cs" />
     <Compile Include="BaseClasses\Alexa.ControllerBase.cs" />
     <Compile Include="Alexa.Power\Alexa.SetPowerStateController.cs" />
-    <Compile Include="Alexa.V2\Alexa.SmartHome.V2.cs" />
+    <Compile Include="Alexa.V2\Alexa.cs" />
     <Compile Include="Alexa.Custom\Alexa.Premise.Custom.cs" />
     <Compile Include="Alexa.V3\Alexa.SmartHome.V3.cs" />
     <Compile Include="Alexa.V2\Alexa.ConnectedHome.V2.cs" />
@@ -181,11 +182,11 @@
     <Compile Include="BaseClasses\PremiseAlexaBridgeService.svc.cs">
       <DependentUpon>PremiseAlexaBridgeService.svc</DependentUpon>
     </Compile>
-    <Compile Include="Alexa.V3\PremiseAlexaBridgeService.V3.svc.cs">
-      <DependentUpon>PremiseAlexaBridgeService.V3.svc</DependentUpon>
+    <Compile Include="Alexa.V3\Alexa.svc.cs">
+      <DependentUpon>Alexa.svc</DependentUpon>
     </Compile>
-    <Compile Include="Alexa.V2\PremiseAlexaBridgeService.V2.svc.cs">
-      <DependentUpon>PremiseAlexaBridgeService.V2.svc</DependentUpon>
+    <Compile Include="Alexa.V2\Alexa.svc.cs">
+      <DependentUpon>Alexa.svc</DependentUpon>
     </Compile>
     <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="ServerService\PremiseServerSingleton.cs" />
@@ -221,7 +222,6 @@
     <None Include="Web.Release.config">
       <DependentUpon>Web.config</DependentUpon>
     </None>
-    <Content Include="webAppSettings.config" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\SYSWebSockClient\SYSWebSockClient.csproj">
