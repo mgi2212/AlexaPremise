@@ -145,9 +145,13 @@
     <None Include="App_Data\Smart Home V3 Lambda.js" />
     <None Include="App_Data\Smart Home Lambda.js" />
     <Content Include="Alexa.Custom\PremiseAlexaBridgeService.Custom.svc" />
-    <Content Include="BaseClasses\PremiseAlexaBridgeService.svc" />
-    <Content Include="Alexa.V3\Alexa.svc" />
-    <Content Include="Alexa.V2\Alexa.svc" />
+    <Content Include="PremiseAlexaBridgeService.svc" />
+    <Content Include="Alexa.V3\Alexa.svc">
+      <BrowseToURL>~/V3/Alexa.svc</BrowseToURL>
+    </Content>
+    <Content Include="Alexa.V2\Alexa.svc">
+      <BrowseToURL>~/V2/Alexa.svc</BrowseToURL>
+    </Content>
     <Content Include="Web.config">
       <SubType>Designer</SubType>
     </Content>
@@ -179,7 +183,7 @@
       <DependentUpon>PremiseAlexaBridgeService.Custom.svc</DependentUpon>
     </Compile>
     <Compile Include="BaseClasses\IAlexaDeviceType.cs" />
-    <Compile Include="BaseClasses\PremiseAlexaBridgeService.svc.cs">
+    <Compile Include="PremiseAlexaBridgeService.svc.cs">
       <DependentUpon>PremiseAlexaBridgeService.svc</DependentUpon>
     </Compile>
     <Compile Include="Alexa.V3\Alexa.svc.cs">
@@ -215,7 +219,7 @@
     <None Include="Properties\PublishProfiles\CustomProfile.pubxml" />
     <None Include="Properties\PublishProfiles\Kindel.pubxml" />
     <None Include="Properties\PublishProfiles\PremiseTest.pubxml" />
-    <Content Include="ServerService\readme.md" />
+    <None Include="ServerService\readme.md" />
     <None Include="Web.Debug.config">
       <DependentUpon>Web.config</DependentUpon>
     </None>

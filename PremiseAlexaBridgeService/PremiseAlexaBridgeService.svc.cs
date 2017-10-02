@@ -35,11 +35,10 @@ namespace PremiseAlexaBridgeService
 
     public class PreWarmCache : System.Web.Hosting.IProcessHostPreloadClient
     {
-        PremiseServer ServiceInstance;
-
         public void Preload(string[] parameters)
         {
-            ServiceInstance = PremiseServer.Instance;
+            Task t = Task.Run(() => PremiseServer.WarmUpCache());
+
         }
     }
 
@@ -49,8 +48,6 @@ namespace PremiseAlexaBridgeService
 
     public class PremiseAlexaBase
     {
-        private PremiseServer ServiceInstance = PremiseServer.Instance;
-
         #region Utility
 
         public static async Task InformLastContact(string command)

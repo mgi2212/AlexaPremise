@@ -95,8 +95,6 @@ namespace PremiseAlexaBridgeService
                 }
             }
 
-            //PremiseServer.HomeObject.SetValue("AlexaAsyncUpdateCount", "0");
-
             Task.Run(() =>
             {
                 BackgroundTaskManager.Run(() =>
@@ -126,6 +124,15 @@ namespace PremiseAlexaBridgeService
             _sysClient.Disconnect();
             _homeObject = null;
             _rootObject = null;
+        }
+
+        internal static async void WarmUpCache()
+        {
+            if (CheckStatus())
+            {
+                await GetEndpoints();
+            }
+
         }
 
         private static bool CheckStatus()
@@ -291,8 +298,6 @@ namespace PremiseAlexaBridgeService
                         {
                             deviceType.SubcribeToSupportedProperties(endpoint, discoveryEndpoint, callback);
                         }
-                        //AlexaPower.SubcribeToSupportedProperties(endpoint, discoveryEndpoint, callback);
-                        //AlexaLighting.SubcribeToSupportedProperties(endpoint, discoveryEndpoint, callback);
                     }
                 }
             }
