@@ -1,0 +1,28 @@
+POST http://localhost:3000/AlexaV3.svc/json/Control/Scene/
+Content-Type: text/plain
+Host: localhost
+
+{
+  "directive": {
+    "header": {
+      "messageId": "1bd5d003-31b9-476f-ad03-71d471922820",
+      "correlationToken": "dFMb0z+PgpgdDmluhJ1LddFvSqZ/jCc8ptlAKulUj90jSqg==",
+      "namespace": "Alexa.SceneController",
+      "name": "Deactivate",
+      "payloadVersion": "3"
+    },
+    "endpoint": {
+      "endpointId": "42F0C877-9581-43AA-80BE-43FB03BFFA86",
+      "cookie": {},
+      "scope":{
+            "type":"BearerToken",
+            "token":"t110ftc0d"
+      }
+    },
+    "payload": {
+    }
+  }
+}
+
+
+

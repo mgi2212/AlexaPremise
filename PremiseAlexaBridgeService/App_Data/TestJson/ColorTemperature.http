@@ -1,0 +1,26 @@
+POST http://localhost:51124/AlexaV3.svc/json/Control/SetPowerState/
+Content-Type: text/plain
+Host: localhost
+
+{
+  "directive": {
+    "header": {
+      "namespace": "Alexa.ColorTemperatureController",
+      "name": "IncreaseColorTemperature",
+      "payloadVersion": "3",
+      "messageId": "B12B536E-B6E7-4E38-AF18-D43BC34FA869",
+      "correlationToken": "dFMb0z+PgpgdDmluhJ1LddFvSqZ/jCc8ptlAKulUj90jSqg=="
+    },
+    "endpoint": {
+      "scope": {
+        "type": "BearerToken",
+        "token": "t110ftc0d"
+      },
+      "endpointId": "9AB03900-D923-47B9-BE7F-833892A388B9",
+      "cookie": {
+          "path": "sys://Home/House/First/Den/Mood"
+      }
+    },
+    "payload": {}
+  }
+}

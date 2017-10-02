@@ -209,6 +209,16 @@
     <None Include="Alexa.Security\readme.md" />
     <None Include="Alexa.V2\readme.md" />
     <None Include="Alexa.V3\readme.md" />
+    <None Include="App_Data\TestJson\AdjustBrightnessController.http" />
+    <None Include="App_Data\TestJson\AdjustColorTemperature.http" />
+    <None Include="App_Data\TestJson\Authrorization.http" />
+    <None Include="App_Data\TestJson\BrightnessController.http" />
+    <None Include="App_Data\TestJson\ColorTemperature.http" />
+    <None Include="App_Data\TestJson\Discovery.http" />
+    <None Include="App_Data\TestJson\PowerStateController.http" />
+    <None Include="App_Data\TestJson\ReportState.http" />
+    <None Include="App_Data\TestJson\SceneController.http" />
+    <None Include="App_Data\TestJson\SetColorController.http" />
     <None Include="BaseClasses\readme.md" />
     <None Include="Alexa.Discovery\readme.md" />
     <None Include="Alexa.Scene\readme.md" />

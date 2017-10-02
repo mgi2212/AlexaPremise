@@ -1,0 +1,29 @@
+POST http://localhost:3000/V3/Alexa.svc/json/ReportState/
+Content-Type: application/json
+Host: localhost
+
+{
+  "directive": {
+    "header": {
+      "messageId": "abc-123-def-456",
+      "correlationToken": "abcdef-123456",
+      "namespace": "Alexa",
+      "name": "ReportState",
+      "payloadVersion": "3"
+    },
+    "endpoint": {
+      "endpointId": "9AB03900-D923-47B9-BE7F-833892A388B9",
+      "cookie": {},
+      "scope":{
+            "type":"BearerToken",
+            "token":"some-token",
+            "localAccessToken": "t110ftc0d"
+      }
+    },
+    "payload": {
+    }
+  }
+}
+
+
+

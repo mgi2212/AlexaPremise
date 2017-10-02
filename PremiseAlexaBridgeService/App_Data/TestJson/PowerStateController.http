@@ -1,0 +1,29 @@
+POST http://localhost:3000/AlexaV3.svc/json/Control/SetPowerState/
+Content-Type: application/json
+Host: localhost
+
+{
+  "directive": {
+    "header": {
+      "namespace": "Alexa.PowerController",
+      "name": "TurnOff",
+      "payloadVersion": "3",
+      "messageId": "F37B5D53-4710-45BE-8E17-872E7E42878D",
+      "correlationToken": "dFMb0z+PgpgdDmluhJ1LddFvSqZ/jCc8ptlAKulUj90jSqg=="
+    },
+    "endpoint": {
+      "scope": {
+        "type": "BearerToken",
+        "token": "some-token",
+        "localAccessToken": "t110ftc0d"
+      },
+      "endpointId": "9AB03900-D923-47B9-BE7F-833892A388B9",
+      "cookie": {
+          "path": "sys://Home/House/First/Den/TrackA"
+      }
+    },
+    "payload": {}
+  }
+}
+
+

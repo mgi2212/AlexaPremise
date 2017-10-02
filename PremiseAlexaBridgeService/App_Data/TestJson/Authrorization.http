@@ -1,0 +1,29 @@
+POST http://localhost:51124/AlexaV3.svc/json/Authorization/
+Content-Type: application/json
+Host: localhost
+
+{
+  "directive": {
+    "header": {
+      "namespace": "Alexa.Authorization",
+      "name": "AcceptGrant",
+      "messageId": "5f8a426e-01e4-4cc9-8b79-65f8bd0fd8a4",
+      "correlationToken": "dFMb0z+PgpsdfjhluhJ1LddFvSqZ/jCc8ptlAKulUj90jSqg==",
+      "payloadVersion": "3"
+    },
+    "payload": {
+      "grant": {
+        "access_token": "Atza|IwEBIIVGSe9zNfkhSMYDFXTfhobWlzdOrguVvQ9nHb_qVW3uSY-tqqihA6SmYCsTIdzJyyUCil-4L2ZdKem1TPaNa3pPXVMSLTP3J8zP1jey5dlTeQNovRIUHZS-AuXU7dLhJiC964Qecwymnz-M0qj1ltXPR0VVJHfQ2F6hcHJf9ydDfb7g2C0Ct2zQ5mtrwbUhiec3PCxRKH05q1X6EA6sl1LaV8VFNxv5qXUsaA1XDBxPktQGpqgCQxKtjGf7Dfx9g4Es9BH-lVkbPMMNOEqOibunUBY267CY4ZFpRyDDuMfywCXmIIXlP4aQrAVGiIt_O_96pLMlrG8ce3hpXFOdCbA8",
+        "refresh_token": "Atzr|IwEBIHLuPWN3uPLgBWUWf8FzhczJaiaKicMcJTso48GxS4nAxNhbRaG-kEZ5DXYvq9B85F1SrFAE7SC4v89P5XoMmNfAT9u1R12FCrvYDiVg5JXqDEfkpwprHSBojP20s7TJBREnjsiIaOZhANLqi8H18PUEwwDtv8CSioiwhHrJk19JECkQl6OZ0Ny2P6-QxcoaDsGiVNICrBuyJlXc20wTh-mAD4joZPGJaNaFrHfxPPDYUCcsWA3hZHKS4TsnpOaU2ksd2Hr3NMSveZ4UE0hHyH_pwVz98qXJfNwPcIqdxsU3hmi4bgliXYyq8typfvfs6YJuMnMSq6QkougYz851R0xc",
+        "token_type": "bearer",
+        "expires_in": 900
+      },
+      "grantee": {
+        "type": "BearerToken",
+        "token": "some-token",
+        "localAccessToken": "t110ftc0d"
+      }
+    }
+  }
+}
+
