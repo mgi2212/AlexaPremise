@@ -1,0 +1,33 @@
+POST http://localhost:51124/AlexaV3.svc/json/Control/SetColor/
+Content-Type: application/json
+Host: localhost
+
+{
+  "directive": {
+    "header": {
+      "namespace": "Alexa.ColorController",
+      "name": "SetColor",
+      "payloadVersion": "3",
+      "messageId": "B12B536E-B6E7-4E38-AF18-D43BC34FA869",
+      "correlationToken": "dFMb0z+PgpgdDmluhJ1LddFvSqZ/jCc8ptlAKulUj90jSqg=="
+    },
+    "endpoint": {
+      "scope": {
+            "type":"BearerToken",
+            "token":"some-token",
+            "localAccessToken": "t110ftc0d"
+      },
+      "endpointId": "9B40217D-7664-4613-A2BF-967F700CEAF8",
+      "cookie": {
+          "path": "sys://Home/House/First/Den/ColorLight"
+      }
+    },
+    "payload": {
+            "color": {
+                "hue": 350.5,
+                "saturation": 0.7138,
+                "brightness": 0.5234
+            }        
+    }
+  }
+}
