@@ -349,7 +349,7 @@ namespace PremiseAlexaBridgeService
                 changeReport.@event.header.payloadVersion = "3";
                 changeReport.@event.endpoint.scope.type = "BearerToken";
                 changeReport.@event.endpoint.scope.token = authCode;
-                changeReport.@event.endpoint.endpointId = premiseId.ToString("B");
+                changeReport.@event.endpoint.endpointId = premiseId.ToString("D").ToUpper();
                 changeReport.@event.endpoint.cookie = discoveryEndpoint.cookie;
                 changeReport.@event.payload.change.cause.type = "PHYSICAL_INTERACTION";
 
