@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using SYSWebSockClient;
 using System;
 using Alexa.Controller;
+using Alexa.Lighting;
 
 namespace Alexa.Power
 {
@@ -42,7 +43,26 @@ namespace Alexa.Power
                             property = controller.GetPropertyState();
                         }
                         break;
+                    case "Alexa.BrightnessController":
+                        {
+                            AlexaSetBrightnessController controller = new AlexaSetBrightnessController(endpoint);
+                            property = controller.GetPropertyState();
+                        }
+                        break;
 
+                    case "Alexa.ColorController":
+                        {
+                            AlexaSetColorController controller = new AlexaSetColorController(endpoint);
+                            property = controller.GetPropertyState();
+                        }
+                        break;
+
+                    case "Alexa.ColorTemperatureController":
+                        {
+                            AlexaSetColorTemperatureController controller = new AlexaSetColorTemperatureController(endpoint);
+                            property = controller.GetPropertyState();
+                        }
+                        break;
                     default:
                         break;
                 }
