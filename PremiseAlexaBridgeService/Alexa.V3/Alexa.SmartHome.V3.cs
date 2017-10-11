@@ -4,6 +4,7 @@ using System.Runtime.Serialization;
 using System.Linq;
 using Alexa.EndpointHealth;
 using Alexa.Lighting;
+using Alexa.HVAC;
 /// <summary>
 /// Generic Data Contracts for Alexa.SmartHome V3 API
 /// </summary>
@@ -425,9 +426,12 @@ namespace Alexa.SmartHomeAPI.V3
     }
 
 
-    [DataContract]
+    [DataContract] 
     [KnownType(typeof(AlexaEndpointHealthValue))]
-    [KnownType(typeof(AlexaColorValue))]
+    [KnownType(typeof(AlexaColorValue))] 
+    [KnownType(typeof(AlexaTemperatureSensorResponsePayload))]
+    [KnownType(typeof(AlexaSetThermostatModePayloadValue))] 
+    [KnownType(typeof(AlexaSetTargetTemperatureRequestPayload))] 
     public class AlexaProperty
     {
         [DataMember(Name = "namespace")]

@@ -1,13 +1,12 @@
 ﻿using Alexa.EndpointHealth;
-using Alexa.Lighting;
 using Alexa.Power;
 using Alexa.SmartHomeAPI.V3;
 using PremiseAlexaBridgeService;
 using System;
 using System.Collections.Generic;
 using SYSWebSockClient;
-using Alexa.Controller;
-namespace Alexa
+
+namespace Alexa.Lighting
 {
     public class AlexaLighting : IAlexaDeviceType
     {

@@ -16,6 +16,8 @@ namespace PremiseAlexaBridgeService
                 return "HEAT";
             if (mode == 2)
                 return "COOL";
+            if (mode == 4)
+                return "OFF";
 
             return "ERROR";
         }
@@ -68,7 +70,7 @@ namespace PremiseAlexaBridgeService
         public double Fahrenheit
         {
             get { return Math.Round(_Kelvin * 9 / 5 - cAbsTempF, 2); }
-            set { _Kelvin = (value + cAbsTempC) * 5 / 9; }
+            set { _Kelvin = (value + cAbsTempF) * 5 / 9; }
         }
         public double Kelvin
         {

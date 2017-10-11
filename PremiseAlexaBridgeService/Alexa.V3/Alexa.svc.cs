@@ -52,6 +52,15 @@ namespace PremiseAlexaBridgeService
         ControlResponse SetColor(AlexaSetColorControllerRequest request);
 
         [OperationContract]
+        ControlResponse SetTargetTemperature(AlexaSetTargetTemperatureControllerRequest request);
+
+        [OperationContract]
+        ControlResponse AdjustTargetTemperature(AlexaAdjustTargetTemperatureControllerRequest request);
+
+        [OperationContract]
+        ControlResponse SetThermostatMode(AlexaSetThermostatModeControllerRequest request);
+
+        [OperationContract]
         ReportStateResponse ReportState(ReportStateRequest request);
 
         [OperationContract]
@@ -280,6 +289,59 @@ namespace PremiseAlexaBridgeService
 
         #endregion
 
+        #region Thermostat
+
+        /// <summary>
+        /// Control Requests are processed here
+        /// </summary>
+        /// <param name="request", type="AlexaSetTargetTemperatureControllerRequest"></param>
+        /// <returns>ControlResponse</returns>
+        [WebInvoke(Method = "POST", RequestFormat = WebMessageFormat.Json, ResponseFormat = WebMessageFormat.Json, BodyStyle = WebMessageBodyStyle.Bare, UriTemplate = "/Control/AdjustTargetTemperature/")]
+        public ControlResponse AdjustTargetTemperature(AlexaAdjustTargetTemperatureControllerRequest request)
+        {
+            AlexaAdjustTargetTemperatureController controller = new AlexaAdjustTargetTemperatureController(request);
+            if (controller.ValidateDirective(controller.GetDirectiveNames(), controller.GetNameSpace()))
+            {
+                controller.ProcessControllerDirective();
+            }
+            return controller.Response;
+        }
+
+
+        /// <summary>
+        /// Control Requests are processed here
+        /// </summary>
+        /// <param name="request", type="AlexaSetTargetTemperatureControllerRequest"></param>
+        /// <returns>ControlResponse</returns>
+        [WebInvoke(Method = "POST", RequestFormat = WebMessageFormat.Json, ResponseFormat = WebMessageFormat.Json, BodyStyle = WebMessageBodyStyle.Bare, UriTemplate = "/Control/SetTargetTemperature/")]
+        public ControlResponse SetTargetTemperature(AlexaSetTargetTemperatureControllerRequest request)
+        {
+            SetTargetTemperatureController controller = new SetTargetTemperatureController(request);
+            if (controller.ValidateDirective(controller.GetDirectiveNames(), controller.GetNameSpace()))
+            {
+                controller.ProcessControllerDirective();
+            }
+            return controller.Response;
+        }
+
+        /// <summary>
+        /// Control Requests are processed here
+        /// </summary>
+        /// <param name="request", type="AlexaSetThermostatModeControllerRequest"></param>
+        /// <returns>ControlResponse</returns>
+        [WebInvoke(Method = "POST", RequestFormat = WebMessageFormat.Json, ResponseFormat = WebMessageFormat.Json, BodyStyle = WebMessageBodyStyle.Bare, UriTemplate = "/Control/SetThermostatMode/")]
+        public ControlResponse SetThermostatMode(AlexaSetThermostatModeControllerRequest request)
+        {
+            AlexaSetThermostatModeController controller = new AlexaSetThermostatModeController(request);
+            if (controller.ValidateDirective(controller.GetDirectiveNames(), controller.GetNameSpace()))
+            {
+                controller.ProcessControllerDirective();
+            }
+            return controller.Response;
+        }
+
+        #endregion
+
         #endregion
 
         #region Report State
@@ -406,9 +468,9 @@ namespace PremiseAlexaBridgeService
                     var related = deviceType.FindRelatedProperties(endpoint, "");
                     foreach (AlexaProperty property in related)
                     {
-                        if (!response.context.propertiesInternal.ContainsKey(property.@namespace))
+                        if (!response.context.propertiesInternal.ContainsKey(property.@namespace + "." + property.name))
                         {
-                            response.context.propertiesInternal.Add(property.@namespace, property);
+                            response.context.propertiesInternal.Add(property.@namespace + "." + property.name, property);
                         }
                     }
                 }
