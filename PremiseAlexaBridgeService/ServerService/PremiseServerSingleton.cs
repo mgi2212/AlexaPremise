@@ -349,7 +349,7 @@ namespace PremiseAlexaBridgeService
                 changeReport.@event.header.payloadVersion = "3";
                 changeReport.@event.endpoint.scope.type = "BearerToken";
                 changeReport.@event.endpoint.scope.token = authCode;
-                changeReport.@event.endpoint.endpointId = premiseId.ToString("B");
+                changeReport.@event.endpoint.endpointId = premiseId.ToString("D").ToUpper();
                 changeReport.@event.endpoint.cookie = discoveryEndpoint.cookie;
                 changeReport.@event.payload.change.cause.type = "PHYSICAL_INTERACTION";
 
@@ -542,7 +542,7 @@ namespace PremiseAlexaBridgeService
         }
 
         public static Dictionary<string, Subscription> DeDupeDictionary { get => deDupeDictionary; set => deDupeDictionary = value; }
-                
+
         private static void RefreshAsyncToken()
         {
             WebRequest refreshRequest = WebRequest.Create(PremiseServer.AlexaEventTokenRefreshEndpoint);
@@ -600,7 +600,7 @@ namespace PremiseAlexaBridgeService
                     string expiry = PremiseServer.HomeObject.GetValue<string>("AlexaAsyncAuthorizationCodeExpiry").GetAwaiter().GetResult();
                     int asyncUpdateCount = PremiseServer.HomeObject.GetValue<int>("AlexaAsyncUpdateCount").GetAwaiter().GetResult();
 
-                    DateTime expiryDateTime = new DateTime(); 
+                    DateTime expiryDateTime = new DateTime();
                     if (DateTime.TryParse(expiry, out expiryDateTime))
                     {
                         if (DateTime.Compare(DateTime.UtcNow, expiryDateTime) >= 0)

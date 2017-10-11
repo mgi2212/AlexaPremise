@@ -1,11 +1,10 @@
-﻿using Alexa;
-using Alexa.EndpointHealth;
+﻿using Alexa.EndpointHealth;
+using Alexa.Lighting;
 using Alexa.SmartHomeAPI.V3;
 using PremiseAlexaBridgeService;
+using System;
 using System.Collections.Generic;
 using SYSWebSockClient;
-using System;
-using Alexa.Controller;
 
 namespace Alexa.Power
 {
@@ -39,6 +38,27 @@ namespace Alexa.Power
                     case "Alexa.EndpointHealth":
                         {
                             AlexaEndpointHealthController controller = new AlexaEndpointHealthController(endpoint);
+                            property = controller.GetPropertyState();
+                        }
+                        break;
+
+                    case "Alexa.BrightnessController":
+                        {
+                            AlexaSetBrightnessController controller = new AlexaSetBrightnessController(endpoint);
+                            property = controller.GetPropertyState();
+                        }
+                        break;
+
+                    case "Alexa.ColorController":
+                        {
+                            AlexaSetColorController controller = new AlexaSetColorController(endpoint);
+                            property = controller.GetPropertyState();
+                        }
+                        break;
+
+                    case "Alexa.ColorTemperatureController":
+                        {
+                            AlexaSetColorTemperatureController controller = new AlexaSetColorTemperatureController(endpoint);
                             property = controller.GetPropertyState();
                         }
                         break;
@@ -87,5 +107,5 @@ namespace Alexa.Power
             return subscriptions;
         }
     }
- }
+}
 

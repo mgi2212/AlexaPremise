@@ -159,7 +159,11 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Alexa.Discovery\Alexa.DiscoveryController.cs" />
+    <Compile Include="Alexa.HVAC\Alexa.AdjustTargetTemperatureController.cs" />
+    <Compile Include="Alexa.HVAC\Alexa.SetThermostatModeController.cs" />
+    <Compile Include="Alexa.HVAC\Alexa.TemperatureSensor.cs" />
     <Compile Include="Alexa.HVAC\Alexa.HVAC.cs" />
+    <Compile Include="Alexa.HVAC\Alexa.SetTargetTemperatureController.cs" />
     <Compile Include="Alexa.Lighting\Alexa.AdjustColorTemperatureController.cs" />
     <Compile Include="Alexa.Lighting\Alexa.SetColorTemperatureController.cs" />
     <Compile Include="Alexa.Lighting\Alexa.SetColorController.cs" />

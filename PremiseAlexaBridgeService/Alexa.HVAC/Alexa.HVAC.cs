@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using SYSWebSockClient;
 using Alexa.Controller;
+using Alexa.EndpointHealth;
 
 namespace Alexa.HVAC
 {
@@ -24,13 +25,40 @@ namespace Alexa.HVAC
             }
             foreach (Capability capability in discoveryEndpoint.capabilities)
             {
-                if (capability.@interface == currentController)
-                    continue;
+                //if (capability.@interface == currentController)
+                //    continue;
 
                 AlexaProperty property = null;
 
                 switch (capability.@interface)
                 {
+                    case "Alexa.EndpointHealth":
+                        {
+                            AlexaEndpointHealthController controller = new AlexaEndpointHealthController(endpoint);
+                            property = controller.GetPropertyState();
+                        }
+                        break;
+
+                    case "Alexa.TemperatureSensor":
+                        {
+                            AlexaTemperatureSensor controller = new AlexaTemperatureSensor(endpoint);
+                            property = controller.GetPropertyState();
+                        }
+                        break;
+                    case "Alexa.ThermostatController":
+                        {
+                            AlexaSetThermostatModeController mode = new AlexaSetThermostatModeController(endpoint);
+                            property = mode.GetPropertyState();
+                            if (property != null)
+                            {
+                                relatedProperties.Add(property);
+                            }
+                            property = null;
+
+                            SetTargetTemperatureController temperature = new SetTargetTemperatureController(endpoint);
+                            relatedProperties.AddRange(temperature.GetPropertyStates());
+                        }
+                        break;
                     default:
                         break;
                 }
