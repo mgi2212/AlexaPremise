@@ -156,14 +156,14 @@ json = ""
             </Object>
             <Object ID="{02F5573B-3721-4509-952B-55619100CDA8}" Name="Alexa.ThermostatController" Class="sys://Schema/System/Class" Virtual="-1" >
               <Object ID="{98E54438-67B3-46EF-B3E7-86D2F3266811}" Class="sys://Schema/System/SuperClass" LinkObject="{3317BF5A-E61E-4E32-B6C8-5FD25B85C4E4}" />
-              <Object ID="{B8910671-7E0A-48EA-B29A-4473AEC941E7}" Name="interface" Flags="0x900" Class="sys://Schema/System/Text" DefaultValue="Alexa.TemperatureController" ReadOnly="-1" />
+              <Object ID="{B8910671-7E0A-48EA-B29A-4473AEC941E7}" Name="interface" Flags="0x900" Class="sys://Schema/System/Text" DefaultValue="Alexa.ThermostatController" ReadOnly="-1" />
               <Object ID="{06DDDD25-697D-48CF-9CEC-73CAC40CE78E}" Name="properties" Flags="0x900" Class="sys://Schema/System/Text" DefaultValue="lowerSetpoint,targetSetpoint,upperSetpoint,thermostatMode" ReadOnly="-1" />
               <Object ID="{A1614C76-7D86-4E6D-B680-16FD78035C32}" Class="sys://Schema/System/SubClass" LinkObject="{1C399D51-E702-40B2-A0D3-E6BC46F45758}" />
               <Object ID="{D3903523-A552-4F53-9FBF-474837ED0AA4}" Class="sys://Schema/System/SubClass" LinkObject="{F6842836-CE5A-4067-8D6A-340FEF4FCDDE}" />
             </Object>
             <Object ID="{4C305447-150E-4826-8D7C-A44A1181AFF0}" Name="Alexa.TemperatureSensor" Class="sys://Schema/System/Class" Virtual="-1" >
               <Object ID="{BA916531-5AE4-4F24-88DB-E5602B6A42B1}" Class="sys://Schema/System/SuperClass" LinkObject="{3317BF5A-E61E-4E32-B6C8-5FD25B85C4E4}" />
-              <Object ID="{4E5CD496-92DE-41AA-94A2-6846D7EF0F0B}" Name="Alexa_TemperatureSensor" Flags="0x900" Class="sys://Schema/System/Text" DefaultValue="Alexa.TemperatureController" ReadOnly="-1" />
+              <Object ID="{4E5CD496-92DE-41AA-94A2-6846D7EF0F0B}" Name="Alexa_TemperatureSensor" Flags="0x900" Class="sys://Schema/System/Text" DefaultValue="Alexa.TemperatureSensor" ReadOnly="-1" />
               <Object ID="{F9464264-7A52-4AA7-A7F7-D419F3F8A238}" Name="properties" Flags="0x900" Class="sys://Schema/System/Text" DefaultValue="temperature" ReadOnly="-1" />
               <Object ID="{3FDC9ECF-637B-43DB-8CBE-577B0A387036}" Class="sys://Schema/System/SubClass" LinkObject="{65C7B5C2-153D-4711-BAD7-D334FDB12338}" />
             </Object>
@@ -551,8 +551,8 @@ end if
             <Object ID="{B51289C5-A483-4FCE-8C6E-88B8115793D6}" Name="AlexaAsyncAuthorizationCode" Flags="0x2" Class="sys://Schema/System/Text" />
             <Object ID="{0ACA49C6-F4A8-4456-9D22-02008D5FFC04}" Name="AlexaAsyncAuthorizationRefreshToken" Flags="0x2" Class="sys://Schema/System/Text" />
             <Object ID="{470526F9-CD38-4E1C-85FE-2ACEAB3BD37A}" Name="AlexaAsyncAuthorizationCodeExpiry" Class="sys://Schema/System/Text" />
-            <Object ID="{66801F08-1126-4863-BCB8-D63F845ADD62}" Name="AlexaAsyncAuthorizationClientId" Flags="0x2" Class="sys://Schema/System/Text" DefaultValue="" />
-            <Object ID="{4CB14A20-1E8A-4017-8C21-2162C8D45C06}" Name="AlexaAsyncAuthorizationSecret" Flags="0x2" Class="sys://Schema/System/Text" DefaultValue="" />
+            <Object ID="{66801F08-1126-4863-BCB8-D63F845ADD62}" Name="AlexaAsyncAuthorizationClientId" Flags="0x2" Class="sys://Schema/System/Text" />
+            <Object ID="{4CB14A20-1E8A-4017-8C21-2162C8D45C06}" Name="AlexaAsyncAuthorizationSecret" Flags="0x2" Class="sys://Schema/System/Text" />
             <Object ID="{7E3A5983-0C34-49AC-A156-59BCBA16EEEF}" Name="AlexaAsyncUpdateCount" Flags="0x900" Class="sys://Schema/System/Number" />
             <Object ID="{8944A9A9-5BBC-499C-8F5D-93DF139E7276}" Name="AccessToken" Flags="0x900" Class="sys://Schema/System/Text" />
             <Object ID="{98931CAB-FD97-4246-B75A-2CE43E7E4341}" Name="LastRefreshed" Flags="0x900" Class="sys://Schema/System/DateTime" DefaultValue="8/30/2015 3:11:44 PM" />
