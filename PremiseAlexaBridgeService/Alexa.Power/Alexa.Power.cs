@@ -19,6 +19,7 @@ namespace Alexa.Power
             {
                 return relatedProperties;
             }
+
             foreach (Capability capability in discoveryEndpoint.capabilities)
             {
                 if (capability.@interface == currentController)
