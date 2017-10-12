@@ -507,6 +507,8 @@ namespace PremiseAlexaBridgeService
                 response.@event.payload = new AlexaErrorResponsePayload(AlexaErrorTypes.INTERNAL_ERROR, ex.Message);
                 return response;
             }
+
+            response.@event.header.name = "StateReport";
             return response;
         }
         #endregion
