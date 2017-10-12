@@ -360,6 +360,8 @@ namespace PremiseAlexaBridgeService
                   .Where(x => interfaceType.IsAssignableFrom(x) && !x.IsInterface && !x.IsAbstract)
                   .Select(x => Activator.CreateInstance(x));
 
+                string causeKey = "";
+
                 foreach (IAlexaDeviceType deviceType in all)
                 {
                     var related = deviceType.FindRelatedProperties(endpoint, "");
@@ -369,16 +371,22 @@ namespace PremiseAlexaBridgeService
                         {
                             continue;
                         }
+                        string propKey = prop.@namespace + "." + prop.name;
 
                         dynamic controller = Controllers[prop.name];
                         // filter for the property that triggered the actual change, unless it is the beloved SceneController.
                         if ((controller.HasPremiseProperty(sub.propertyName)) && (changeReport.@event.payload.change.properties.Count == 0))
                         {
+                            causeKey = propKey;
                             changeReport.@event.payload.change.properties.Add(prop);
+                            if (changeReport.context.propertiesInternal.ContainsKey(causeKey))
+                            {
+                                changeReport.context.propertiesInternal.Remove(causeKey);
+                            }
                         }
-                        else if (!changeReport.context.propertiesInternal.ContainsKey(prop.@namespace))
+                        else if ((!changeReport.context.propertiesInternal.ContainsKey(propKey)) && (propKey != causeKey))
                         {
-                            changeReport.context.propertiesInternal.Add(prop.@namespace, prop);
+                            changeReport.context.propertiesInternal.Add(propKey, prop);
                         }
                     }
                 }
