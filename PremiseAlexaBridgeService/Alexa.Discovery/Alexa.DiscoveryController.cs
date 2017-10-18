@@ -2,6 +2,7 @@
 using Alexa.SmartHomeAPI.V3;
 using PremiseAlexaBridgeService;
 using System;
+using System.Linq;
 using System.Runtime.Serialization;
 using System.Collections.Generic;
 using SYSWebSockClient;
@@ -109,7 +110,7 @@ namespace Alexa.Discovery
     {
         public readonly string @namespace = "Alexa.Discovery";
         public readonly string[] directiveNames = { "Discover" };
-        public readonly string alexaProperty = "Discover.Response";
+       private readonly string[] alexaProperties = { "Discover.Response" };
         public readonly string[] premiseProperties = { "none" };
 
         public AlexaDiscoveryController(AlexaDiscoveryControllerRequest request)
@@ -136,9 +137,9 @@ namespace Alexa.Discovery
             return @namespace;
         }
 
-        public string GetAlexaProperty()
+        public string[] GetAlexaProperties()
         {
-            return alexaProperty;
+            return alexaProperties;
         }
 
         public string[] GetDirectiveNames()
@@ -153,7 +154,7 @@ namespace Alexa.Discovery
 
         public bool HasAlexaProperty(string property)
         {
-            return (property == this.alexaProperty);
+            return (this.alexaProperties.Contains(property));
         }
         public bool HasPremiseProperty(string property)
         {
@@ -188,7 +189,7 @@ namespace Alexa.Discovery
                 response.Event.payload.endpoints.Clear();
             }
 
-            this.Response.Event.header.name = alexaProperty;
+            this.Response.Event.header.name = alexaProperties[0];
         }
     }
 }

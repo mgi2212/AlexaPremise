@@ -1,6 +1,6 @@
 ﻿'use strict';
 var https = require('https');
-var http = require('http');
+var http = require('http');     // used for debugging
 var AWS = require("aws-sdk");
 var log = log;
 
@@ -9,8 +9,8 @@ function log(title, msg) {
     console.log(msg);
 }
 
-var my_client_secret = 'd9bd211cb8c9af7b8db1eb3ba52cc9b31fab94604cbf6804110788e79fbb535e';
-var my_client_id = 'amzn1.application-oa2-client.76f9bb6cb75a4eb18b9886f9c3d32631';
+var skill_client_secret = 'd9bd211cb8c9af7b8db1eb3ba52cc9b31fab94604cbf6804110788e79fbb535e';
+var skill_client_id = 'amzn1.application-oa2-client.76f9bb6cb75a4eb18b9886f9c3d32631';
 var LWA_TOKEN_URI = "https://api.amazon.com/auth/o2/token";
 var LWA_HEADERS = {
     "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8"
@@ -31,7 +31,6 @@ const healthyResponse = {
 
 exports.handler = function (event, context) {
 
-    var customer_endpoint = '';
     log('event', JSON.stringify(event));
 
     switch (event.directive.header.namespace) {
@@ -51,12 +50,10 @@ exports.handler = function (event, context) {
             getCustomerProfile(event, context, "Control/Scene");
             break;
         case 'Alexa.BrightnessController':
-            if (event.directive.header.name === 'SetBrightness') {
-                getCustomerProfile(event, context, "Control/" + event.directive.header.name);
-            }
-            else if (event.directive.header.name === 'AdjustBrightness') {
-                getCustomerProfile(event, context, "Control/" + event.directive.header.name);
-            }
+            getCustomerProfile(event, context, "Control/" + event.directive.header.name);
+            break;
+        case 'Alexa.ThermostatController':
+            getCustomerProfile(event, context, "Control/" + event.directive.header.name);
             break;
         case 'Alexa.ColorTemperatureController':
         case 'Alexa.ColorController':
@@ -67,22 +64,22 @@ exports.handler = function (event, context) {
 
                 var lwa_params = 'grant_type=authorization_code';
                 lwa_params += '&code=' + event.directive.payload.grant.code;
-                lwa_params += '&client_id=' + my_client_id;
-                lwa_params += '&client_secret=' + my_client_secret;
+                lwa_params += '&client_id=' + skill_client_id;
+                lwa_params += '&client_secret=' + skill_client_secret;
 
-                callLWA(lwa_params, event, context, customer_endpoint);
+                callLWA(lwa_params, event, context);
             }
             break;
 
         default:
             // Warning! Logging this in production might be a security problem.
-            log('Err', 'No supported namespace: ' + event.header.namespace);
+            log('Err', 'No supported namespace: ' + event.directive.header.namespace);
             context.fail('Command Not Supported.');
             break;
     }
 };
 
-function callLWA(data, event, context, customer_endpoint) {
+function callLWA(data, event, context) {
     // prepare request options
     var post_options = {
         host: 'api.amazon.com',
@@ -91,7 +88,6 @@ function callLWA(data, event, context, customer_endpoint) {
         method: 'POST',
         headers: LWA_HEADERS
     };
-
 
     // Set up the request
     var result = "";
@@ -107,10 +103,11 @@ function callLWA(data, event, context, customer_endpoint) {
             var lwa_info = JSON.stringify(result);
             log("lwa_info", lwa_info);
             event.directive.payload.grant = JSON.parse(result);
-            event.directive.payload.grant.client_id = my_client_id;
-            event.directive.payload.grant.client_secret = my_client_secret;
-            event.directive.payload.grantee.localAccessToken = 't110ftc0d';
-            proxyEvent(event, context, "Authorization", customer_endpoint);
+            event.directive.payload.grant.client_id = skill_client_id;
+            event.directive.payload.grant.client_secret = skill_client_secret;
+
+            getCustomerProfile(event, context, "Authorization");
+
         });
 
         response.on('error', function (e) {
@@ -118,7 +115,7 @@ function callLWA(data, event, context, customer_endpoint) {
             context.fail('Request to appliance cloud failed authorization.');
         });
     });
-    log("out to lwa", data);
+    //log("out to lwa", data);
     post_req.write(data);
     post_req.end();
 }
@@ -201,18 +198,29 @@ function proxyEvent(event, context, command, customer_endpoint) {
     var post_options = {
         host: customer_endpoint.host.S,                     // REMOTE_CLOUD_HOSTNAME,
         port: customer_endpoint.port.S,                     // REMOTE_CLOUD_PORT,
-        path: '/AlexaV3.svc/json/' + command + '/',
+        path: '/V3/Alexa.svc/jsons/' + command + '/',
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
             'Content-Length': post_data.length
         }
     };
-    log('Customer Endpoint', post_options);
-    log('Send Directive', post_data);
+
+    //log('Customer Endpoint', post_options);
+    //log('Send Directive', post_data);
 
     var result = "";
-    var post_req = http.request(post_options, function (response) {
+    var protocol;
+
+    // for debugging!
+    if ((post_options.host === 'alexa.quigleys.us') && (post_options.port === 3000)) {
+        protocol = http;
+    }
+    else {
+        protocol = https;
+    }
+
+    var post_req = protocol.request(post_options, function (response) { // changes to http when debugging
 
         response.setEncoding('utf-8');
 
@@ -221,11 +229,12 @@ function proxyEvent(event, context, command, customer_endpoint) {
         });
 
         response.on('end', function () {
+            //log('raw response', result);
 
             var jsonResult = JSON.parse(result);
             cleanUpResponse(event, jsonResult);
 
-            log('Recv Response', JSON.stringify(jsonResult));
+            log('Response', JSON.stringify(jsonResult));
 
             context.succeed(jsonResult);
         });
@@ -242,7 +251,8 @@ function proxyEvent(event, context, command, customer_endpoint) {
 
 function cleanUpResponse(event, response) {
 
-    log('clean-up', response);
+    //log('clean-up', response);
+    //log('directive', event.directive.header.namespace);
     var clean = false;
 
     switch (event.directive.header.namespace) {
@@ -250,8 +260,14 @@ function cleanUpResponse(event, response) {
         case 'Alexa.BrightnessController':
         case 'Alexa.ColorController':
         case 'Alexa.ColorTemperatureController':
+        case 'Alexa.ThermostatController':
+        case 'Alexa.TemperatureSensor':
             clean = true;
             break;
+    }
+
+    if (event.directive.header.name === 'ReportState') {
+        clean = true;
     }
 
     if (clean === true) {
@@ -259,8 +275,11 @@ function cleanUpResponse(event, response) {
             switch (prop.namespace) {
                 case 'Alexa.ColorController':
                 case 'Alexa.EndpointHealth':
+                case 'Alexa.ThermostatController':
+                case 'Alexa.TemperatureSensor':
                     if (prop.value.hasOwnProperty('__type')) {
                         delete prop.value.__type;
+                        //log('delete', prop);
                     }
                     break;
             }
@@ -286,7 +305,12 @@ function setLocalAccessToken(event, customer_endpoint) {
         case 'Alexa.BrightnessController':
         case 'Alexa.ColorController':
         case 'Alexa.ColorTemperatureController':
+        case 'Alexa.ThermostatController':
+        case 'Alexa.TemperatureSensor':
             event.directive.endpoint.scope.localAccessToken = local_access_token;
+            break;
+        case 'Alexa.Authorization':
+            event.directive.payload.grantee.localAccessToken = local_access_token;
             break;
         default:
             break;
@@ -309,7 +333,12 @@ function getBearerToken(event) {
         case 'Alexa.BrightnessController':
         case 'Alexa.ColorController':
         case 'Alexa.ColorTemperatureController':
+        case 'Alexa.ThermostatController':
+        case 'Alexa.TemperatureSensor':
             token = event.directive.endpoint.scope.token;
+            break;
+        case 'Alexa.Authorization':
+            token = event.directive.payload.grantee.token;
             break;
         default:
             break;

@@ -1,6 +1,6 @@
 ﻿using Alexa.Controller;
 using Alexa.SmartHomeAPI.V3;
-using System;
+using System.Linq;
 using System.Runtime.Serialization;
 using SYSWebSockClient;
 
@@ -75,7 +75,7 @@ namespace Alexa.EndpointHealth
         public readonly string @namespace = "Alexa.EndpointHealth";
         public readonly string[] directiveNames = { };
         public readonly string[] premiseProperties = { "IsReachable" };
-        public readonly string alexaProperty = "connectivity";
+       private readonly string[] alexaProperties = { "connectivity" };
 
         public AlexaEndpointHealthController(AlexaEndpointHealthControllerRequest request)
             : base(request)
@@ -92,9 +92,9 @@ namespace Alexa.EndpointHealth
         {
         }
 
-        public string GetAlexaProperty()
+        public string[] GetAlexaProperties()
         {
-            return alexaProperty;
+            return alexaProperties;
         }
 
         public string GetAssemblyTypeName()
@@ -113,7 +113,7 @@ namespace Alexa.EndpointHealth
         }
         public bool HasAlexaProperty(string property)
         {
-            return (property == this.alexaProperty);
+            return (this.alexaProperties.Contains(property));
         }
 
         public bool HasPremiseProperty(string property)
@@ -138,7 +138,7 @@ namespace Alexa.EndpointHealth
             AlexaProperty property = new AlexaProperty
             {
                 @namespace = @namespace,
-                name = alexaProperty,
+                name = alexaProperties[0],
                 timeOfSample = GetUtcTime(),
                 value = new AlexaEndpointHealthValue((isReachable == true ? "OK" : "UNREACHABLE")),
             };

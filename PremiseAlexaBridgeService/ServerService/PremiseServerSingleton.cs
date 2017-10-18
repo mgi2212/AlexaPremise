@@ -89,9 +89,12 @@ namespace PremiseAlexaBridgeService
             // needed to insure we report the actual property that changed 
             foreach (dynamic controller in all)
             {
-                if (!Controllers.ContainsKey(controller.alexaProperty))
+                foreach (string alexaProperty in controller.GetAlexaProperties())
                 {
-                    Controllers.Add(controller.alexaProperty, controller);
+                    if (!Controllers.ContainsKey(alexaProperty))
+                    {
+                        Controllers.Add(alexaProperty, controller);
+                    }
                 }
             }
 

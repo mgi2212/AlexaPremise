@@ -86,6 +86,61 @@ namespace Alexa.HVAC
                 {
                     switch (capability.@interface)
                     {
+                        case "Alexa.TemperatureSensor":
+                            {
+                                string index = discoveryEndpoint.endpointId + ".Temperature." + capability.@interface;
+                                if ((subscription != null) && (!subscriptions.ContainsKey(index)))
+                                {
+                                    subscription = endpoint.Subscribe("Temperature", capability.@interface, callback).GetAwaiter().GetResult();
+                                    subscriptions.Add(index, subscription);
+                                }
+                            }
+                            break;
+                        case "Alexa.ThermostatController":
+                            {
+                                Type type = this.GetType();
+
+                                string index = discoveryEndpoint.endpointId + ".HeatingSetPoint." + capability.@interface;
+                                if (!subscriptions.ContainsKey(index))
+                                {
+                                    subscription = endpoint.Subscribe("HeatingSetPoint", this.GetType().AssemblyQualifiedName, callback).GetAwaiter().GetResult();
+                                    if (subscription != null)
+                                    {
+                                        subscriptions.Add(index, subscription);
+                                    }
+                                }
+
+                                index = discoveryEndpoint.endpointId + ".CoolingSetPoint." + capability.@interface;
+                                if (!subscriptions.ContainsKey(index))
+                                {
+                                    subscription = endpoint.Subscribe("CoolingSetPoint", this.GetType().AssemblyQualifiedName, callback).GetAwaiter().GetResult();
+                                    if (subscription != null)
+                                    {
+                                        subscriptions.Add(index, subscription);
+                                    }
+                                }
+
+                                index = discoveryEndpoint.endpointId + ".CurrentSetPoint." + capability.@interface;
+                                if (!subscriptions.ContainsKey(index))
+                                {
+                                    subscription = endpoint.Subscribe("CurrentSetPoint", this.GetType().AssemblyQualifiedName, callback).GetAwaiter().GetResult();
+                                    if (subscription != null)
+                                    {
+                                        subscriptions.Add(index, subscription);
+                                    }
+                                }
+
+                                index = discoveryEndpoint.endpointId + ".TemperatureMode." + capability.@interface;
+                                if (!subscriptions.ContainsKey(index))
+                                {
+                                    subscription = endpoint.Subscribe("TemperatureMode", this.GetType().AssemblyQualifiedName, callback).GetAwaiter().GetResult();
+                                    if (subscription != null)
+                                    {
+                                        subscriptions.Add(index, subscription);
+                                    }
+                                }
+                            }
+                            break;
                         default:
                             break;
                     }
