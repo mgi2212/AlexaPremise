@@ -190,6 +190,9 @@ namespace Alexa.Discovery
             }
 
             this.Response.Event.header.name = alexaProperties[0];
+            PremiseServer.HomeObject.SetValue("LastRefreshed", DateTime.Now.ToString()).GetAwaiter().GetResult();
+            PremiseServer.HomeObject.SetValue("HealthDescription", string.Format("Reported Devices and Scenes = {0}", response.Event.payload.endpoints.Count)).GetAwaiter().GetResult();
+            PremiseServer.HomeObject.SetValue("Health", "True").GetAwaiter().GetResult();
         }
     }
 }
