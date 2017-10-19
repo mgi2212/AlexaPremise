@@ -11,6 +11,6 @@ namespace Alexa.Controller
         bool HasAlexaProperty(string property);
         bool HasPremiseProperty(string property);
         string GetAssemblyTypeName();
-        string GetAlexaProperty();
+        string[] GetAlexaProperties();
     }
 }

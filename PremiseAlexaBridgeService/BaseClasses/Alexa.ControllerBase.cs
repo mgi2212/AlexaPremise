@@ -325,7 +325,7 @@ namespace Alexa.Controller
 
             #endregion
 
-            InformLastContact(header.name).GetAwaiter().GetResult();
+            InformLastContact(string.Format("{0}: {1}", header?.name, this.RequestDirectiveEndpoint?.cookie?.path)).GetAwaiter().GetResult();
 
             return true;
         }

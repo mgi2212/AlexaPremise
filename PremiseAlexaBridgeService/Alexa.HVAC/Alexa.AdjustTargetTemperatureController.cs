@@ -2,6 +2,7 @@
 using Alexa.SmartHomeAPI.V3;
 using PremiseAlexaBridgeService;
 using System;
+using System.Linq;
 using System.Runtime.Serialization;
 using SYSWebSockClient;
 
@@ -53,7 +54,7 @@ namespace Alexa.HVAC
         private readonly string @namespace = "Alexa.ThermostatController";
         private readonly string[] directiveNames = { "AdjustTargetTemperature" };
         private readonly string[] premiseProperties = { "Temperature" };
-        public readonly string alexaProperty = "targetSetpoint";
+       private readonly string[] alexaProperties = { "targetSetpoint" };
         public readonly AlexaHVAC PropertyHelpers;
 
         public AlexaAdjustTargetTemperatureController(AlexaAdjustTargetTemperatureControllerRequest request)
@@ -74,9 +75,9 @@ namespace Alexa.HVAC
             PropertyHelpers = new AlexaHVAC();
         }
 
-        public string GetAlexaProperty()
+        public string[] GetAlexaProperties()
         {
-            return alexaProperty;
+            return alexaProperties;
         }
 
         public string GetAssemblyTypeName()
@@ -96,7 +97,7 @@ namespace Alexa.HVAC
 
         public bool HasAlexaProperty(string property)
         {
-            return (property == this.alexaProperty);
+            return (this.alexaProperties.Contains(property));
         }
 
         public bool HasPremiseProperty(string property)

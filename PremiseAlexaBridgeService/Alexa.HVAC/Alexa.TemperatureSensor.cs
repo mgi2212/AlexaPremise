@@ -68,7 +68,7 @@ namespace Alexa.HVAC
         private readonly string @namespace = "Alexa.TemperatureSensor";
         private readonly string[] directiveNames = { "ReportState"};
         private readonly string[] premiseProperties = { "Temperature" };
-        public readonly string alexaProperty = "temperature";
+       private readonly string[] alexaProperties = { "temperature" };
         public readonly AlexaHVAC PropertyHelpers;
 
         public AlexaTemperatureSensor(AlexaTemperatureSensorRequest request)
@@ -99,9 +99,9 @@ namespace Alexa.HVAC
             return this.GetType().AssemblyQualifiedName;
         }
         
-        public string GetAlexaProperty()
+        public string[] GetAlexaProperties()
         {
-            return alexaProperty;
+            return alexaProperties;
         }
 
         public string [] GetDirectiveNames()
@@ -110,7 +110,7 @@ namespace Alexa.HVAC
         }
         public bool HasAlexaProperty(string property)
         {
-            return (property == this.alexaProperty);
+            return (this.alexaProperties.Contains(property));
         }
         public bool HasPremiseProperty(string property)
         {
@@ -136,7 +136,7 @@ namespace Alexa.HVAC
             AlexaProperty property = new AlexaProperty
             {
                 @namespace = @namespace,
-                name = alexaProperty,
+                name = alexaProperties[0],
                 value = new AlexaTemperatureSensorResponsePayload(Math.Round(temp.Fahrenheit,1), "FAHRENHEIT"),
                 timeOfSample = GetUtcTime()
             };

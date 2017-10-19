@@ -1,6 +1,7 @@
 ﻿using Alexa.Controller;
 using Alexa.SmartHomeAPI.V3;
 using System;
+using System.Linq;
 using System.Runtime.Serialization;
 using SYSWebSockClient;
 
@@ -51,7 +52,7 @@ namespace Alexa.Power
         private readonly string[] directiveNames = { "TurnOn", "TurnOff" };
         private readonly string @namespace = "Alexa.PowerController";
         private readonly string[] premiseProperties = { "PowerState" };
-        public readonly string alexaProperty = "powerState";
+       private readonly string[] alexaProperties = { "powerState" };
 
         public AlexaSetPowerStateController(AlexaSetPowerStateControllerRequest request)
             : base(request)
@@ -71,9 +72,9 @@ namespace Alexa.Power
             PropertyHelpers = new AlexaPower();
         }
 
-        public string GetAlexaProperty()
+        public string[] GetAlexaProperties()
         {
-            return alexaProperty;
+            return alexaProperties;
         }
 
         public string GetAssemblyTypeName()
@@ -93,7 +94,7 @@ namespace Alexa.Power
 
         public bool HasAlexaProperty(string property)
         {
-            return (property == this.alexaProperty);
+            return ( this.alexaProperties.Contains(property));
         }
 
         public bool HasPremiseProperty(string property)
@@ -118,7 +119,7 @@ namespace Alexa.Power
             AlexaProperty property = new AlexaProperty
             {
                 @namespace = @namespace,
-                name = alexaProperty,
+                name = alexaProperties[0],
                 value = (powerState == true ? "ON" : "OFF"),
                 timeOfSample = GetUtcTime()
             };
@@ -129,7 +130,7 @@ namespace Alexa.Power
         {
             AlexaProperty property = new AlexaProperty(header)
             {
-                name = alexaProperty
+                name = alexaProperties[0]
             };
 
             response.Event.header.@namespace = "Alexa";

@@ -509,6 +509,7 @@ namespace PremiseAlexaBridgeService
             }
 
             response.@event.header.name = "StateReport";
+            InformLastContact(string.Format("StateReport: {0}", response?.@event?.endpoint?.cookie?.path)).GetAwaiter().GetResult();
             return response;
         }
         #endregion

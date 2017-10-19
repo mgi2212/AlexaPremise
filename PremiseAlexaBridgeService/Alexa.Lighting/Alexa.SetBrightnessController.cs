@@ -2,6 +2,7 @@
 using Alexa.SmartHomeAPI.V3;
 using PremiseAlexaBridgeService;
 using System;
+using System.Linq;
 using System.Runtime.Serialization;
 using SYSWebSockClient;
 
@@ -53,7 +54,7 @@ namespace Alexa.Lighting
         private readonly string @namespace = "Alexa.BrightnessController";
         private readonly string[] directiveNames = { "SetBrightness" };
         private readonly string[] premiseProperties = { "Brightness" };
-        public readonly string alexaProperty = "brightness";
+       private readonly string[] alexaProperties = { "brightness" };
         public readonly AlexaLighting PropertyHelpers;
 
         public AlexaSetBrightnessController(AlexaSetBrightnessControllerRequest request)
@@ -73,9 +74,9 @@ namespace Alexa.Lighting
             PropertyHelpers = new AlexaLighting();
         }
 
-        public string GetAlexaProperty()
+        public string[] GetAlexaProperties()
         {
-            return alexaProperty;
+            return alexaProperties;
         }
 
         public string GetAssemblyTypeName()
@@ -94,7 +95,7 @@ namespace Alexa.Lighting
         }
         public bool HasAlexaProperty(string property)
         {
-            return (property == this.alexaProperty);
+            return (this.alexaProperties.Contains(property));
         }
 
         public bool HasPremiseProperty(string property)
@@ -119,7 +120,7 @@ namespace Alexa.Lighting
             AlexaProperty property = new AlexaProperty
             {
                 @namespace = @namespace,
-                name = alexaProperty,
+                name = alexaProperties[0],
                 value = (int)((brightness * 100)).LimitToRange(0,100),
                 timeOfSample = GetUtcTime()
             };
@@ -130,7 +131,7 @@ namespace Alexa.Lighting
         {
             AlexaProperty property = new AlexaProperty(header)
             {
-                name = alexaProperty
+                name = alexaProperties[0]
             };
             response.Event.header.@namespace = "Alexa";
 
