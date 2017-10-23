@@ -1,6 +1,6 @@
-POST http://localhost:51124/AlexaV3.svc/json/Discovery/
+POST http://yourhost:port/V3/Alexa.svc/json/Discovery/
 Content-Type: application/json
-Host: localhost
+Host: yourhost
 
 {
   "directive": {
@@ -14,7 +14,7 @@ Host: localhost
       "scope": {
         "type": "BearerToken",
         "token": "some-token",
-        "localAccessToken": "t110ftc0d"
+        "localAccessToken": "your-token"
       }
     }
   }

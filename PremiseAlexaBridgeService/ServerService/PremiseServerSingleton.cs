@@ -1,24 +1,23 @@
 ﻿using Alexa;
 using Alexa.Controller;
-using Alexa.Scene;
 using Alexa.RegisteredTasks;
+using Alexa.Scene;
 using Alexa.SmartHomeAPI.V3;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using Nito.AsyncEx;
 using System;
 using System.Collections.Generic;
 using System.Configuration;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Net;
 using System.Net.WebSockets;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using SYSWebSockClient;
-using System.Linq;
-using Newtonsoft.Json.Linq;
-using System.Runtime.Serialization;
 
 namespace PremiseAlexaBridgeService
 {
@@ -589,10 +588,10 @@ namespace PremiseAlexaBridgeService
                 Debug.WriteLine("token_type={0}", json["token_type"].ToString());
                 Debug.WriteLine("expirse_in={0}", json["expires_in"].ToString());
 
-                PremiseServer.HomeObject.SetValue("AlexaAsyncAuthorizationCode", json["access_token"].ToString()).GetAwaiter().GetResult();
-                PremiseServer.HomeObject.SetValue("AlexaAsyncAuthorizationRefreshToken", json["refresh_token"].ToString()).GetAwaiter().GetResult();
+                HomeObject.SetValue("AlexaAsyncAuthorizationCode", json["access_token"].ToString()).GetAwaiter().GetResult();
+                HomeObject.SetValue("AlexaAsyncAuthorizationRefreshToken", json["refresh_token"].ToString()).GetAwaiter().GetResult();
                 DateTime expiry = DateTime.UtcNow.AddSeconds((double)json["expires_in"]);
-                PremiseServer.HomeObject.SetValue("AlexaAsyncAuthorizationCodeExpiry", expiry.ToString()).GetAwaiter().GetResult();
+                HomeObject.SetValue("AlexaAsyncAuthorizationCodeExpiry", expiry.ToString()).GetAwaiter().GetResult();
 
                 Debug.WriteLine("refresh response:" + responseString);
             }
@@ -639,7 +638,7 @@ namespace PremiseAlexaBridgeService
                     Debug.WriteLine("response:" + response.ToString());
 
                     asyncUpdateCount++;
-                    PremiseServer.HomeObject.SetValue("AlexaAsyncUpdateCount", asyncUpdateCount.ToString());
+                    HomeObject.SetValue("AlexaAsyncUpdateCount", asyncUpdateCount.ToString());
                 }
                 catch (Exception ex)
                 {

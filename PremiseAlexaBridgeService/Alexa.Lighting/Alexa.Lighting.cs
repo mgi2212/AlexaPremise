@@ -10,9 +10,6 @@ namespace Alexa.Lighting
 {
     public class AlexaLighting : IAlexaDeviceType
     {
-
-        //Dictionary<string, IAlexaController> Controllers = new Dictionary<string, IAlexaController>();
-
         #region Related Properties
         /// <summary>
         /// Add all capabilites here exclusively related to this device type. Yes, this differs from the method below by design.
@@ -100,7 +97,7 @@ namespace Alexa.Lighting
             {
                 IPremiseSubscription subscription = null;
 
-                if (capability.HasProperties() == false) 
+                if (capability.HasProperties() == false)
                 {
                     continue;
                 }

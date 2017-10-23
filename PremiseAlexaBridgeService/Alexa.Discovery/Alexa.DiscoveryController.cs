@@ -104,13 +104,13 @@ namespace Alexa.Discovery
     #endregion
 
     public class AlexaDiscoveryController : AlexaControllerBase<
-        DiscoveryControllerRequestDirectivePayload, 
-        DiscoveryControllerResponse, 
+        DiscoveryControllerRequestDirectivePayload,
+        DiscoveryControllerResponse,
         AlexaDiscoveryControllerRequest>, IAlexaController
     {
         public readonly string @namespace = "Alexa.Discovery";
         public readonly string[] directiveNames = { "Discover" };
-       private readonly string[] alexaProperties = { "Discover.Response" };
+        private readonly string[] alexaProperties = { "Discover.Response" };
         public readonly string[] premiseProperties = { "none" };
 
         public AlexaDiscoveryController(AlexaDiscoveryControllerRequest request)
@@ -184,7 +184,7 @@ namespace Alexa.Discovery
                     });
                 }
             }
-            catch 
+            catch
             {
                 response.Event.payload.endpoints.Clear();
             }

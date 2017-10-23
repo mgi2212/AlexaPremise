@@ -1,6 +1,6 @@
-POST http://localhost:3000/V3/Alexa.svc/json/ReportState/
+POST http://yourhost:port/V3/Alexa.svc/json/ReportState/
 Content-Type: application/json
-Host: localhost
+Host: yourhost
 
 {
   "directive": {
@@ -12,18 +12,16 @@ Host: localhost
       "payloadVersion": "3"
     },
     "endpoint": {
-      "endpointId": "9AB03900-D923-47B9-BE7F-833892A388B9",
+      "endpointId": "CD6AD6C0-6FA6-488A-8A37-8A32E8BF04CA",
       "cookie": {},
       "scope":{
             "type":"BearerToken",
             "token":"some-token",
-            "localAccessToken": "t110ftc0d"
+            "localAccessToken": "your-token"
       }
     },
     "payload": {
     }
   }
 }
-
-
 

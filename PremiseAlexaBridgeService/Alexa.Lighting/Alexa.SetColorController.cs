@@ -65,7 +65,7 @@ namespace Alexa.Lighting
         private readonly string @namespace = "Alexa.ColorController";
         private readonly string[] directiveNames = { "SetColor" };
         private readonly string[] premiseProperties = { "Hue", "Saturation", "Brightness" };
-       private readonly string[] alexaProperties = { "color" };
+        private readonly string[] alexaProperties = { "color" };
         public readonly AlexaLighting PropertyHelpers;
 
         public AlexaSetColorController(AlexaSetColorControllerRequest request)
@@ -137,7 +137,7 @@ namespace Alexa.Lighting
                         colorValue.hue = Math.Round(endpoint.GetValue<double>(premiseProperty).GetAwaiter().GetResult().LimitToRange(0.0, 360.0), 4);
                         break;
                     case "Saturation":
-                        colorValue.saturation = Math.Round(endpoint.GetValue<double>(premiseProperty).GetAwaiter().GetResult().LimitToRange(0.0, 1.0),4);
+                        colorValue.saturation = Math.Round(endpoint.GetValue<double>(premiseProperty).GetAwaiter().GetResult().LimitToRange(0.0, 1.0), 4);
                         break;
                     case "Brightness":
                         colorValue.brightness = Math.Round(endpoint.GetValue<double>(premiseProperty).GetAwaiter().GetResult().LimitToRange(0.0, 1.0), 4);

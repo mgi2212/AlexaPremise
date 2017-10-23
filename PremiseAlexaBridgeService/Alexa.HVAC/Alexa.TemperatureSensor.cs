@@ -43,7 +43,7 @@ namespace Alexa.HVAC
     }
 
     [DataContract]
-    public class AlexaTemperatureSensorResponsePayload 
+    public class AlexaTemperatureSensorResponsePayload
     {
         [DataMember(Name = "value")]
         public double value;
@@ -66,9 +66,9 @@ namespace Alexa.HVAC
         AlexaTemperatureSensorRequest>, IAlexaController
     {
         private readonly string @namespace = "Alexa.TemperatureSensor";
-        private readonly string[] directiveNames = { "ReportState"};
+        private readonly string[] directiveNames = { "ReportState" };
         private readonly string[] premiseProperties = { "Temperature" };
-       private readonly string[] alexaProperties = { "temperature" };
+        private readonly string[] alexaProperties = { "temperature" };
         public readonly AlexaHVAC PropertyHelpers;
 
         public AlexaTemperatureSensor(AlexaTemperatureSensorRequest request)
@@ -93,18 +93,18 @@ namespace Alexa.HVAC
         {
             return @namespace;
         }
-        
+
         public string GetAssemblyTypeName()
         {
             return this.GetType().AssemblyQualifiedName;
         }
-        
+
         public string[] GetAlexaProperties()
         {
             return alexaProperties;
         }
 
-        public string [] GetDirectiveNames()
+        public string[] GetDirectiveNames()
         {
             return directiveNames;
         }
@@ -137,7 +137,7 @@ namespace Alexa.HVAC
             {
                 @namespace = @namespace,
                 name = alexaProperties[0],
-                value = new AlexaTemperatureSensorResponsePayload(Math.Round(temp.Fahrenheit,1), "FAHRENHEIT"),
+                value = new AlexaTemperatureSensorResponsePayload(Math.Round(temp.Fahrenheit, 1), "FAHRENHEIT"),
                 timeOfSample = GetUtcTime()
             };
             return property;

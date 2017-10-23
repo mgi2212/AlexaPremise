@@ -8,7 +8,7 @@ using System;
 
 namespace Alexa.Scene
 {
-    public class AlexaScene  : IAlexaDeviceType
+    public class AlexaScene : IAlexaDeviceType
     {
 
         public List<AlexaProperty> FindRelatedProperties(IPremiseObject endpoint, string currentController)
@@ -75,5 +75,5 @@ namespace Alexa.Scene
             return subscriptions;
         }
     }
- }
+}
 

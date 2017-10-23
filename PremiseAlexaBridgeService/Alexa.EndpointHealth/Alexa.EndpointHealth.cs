@@ -9,7 +9,7 @@ using System;
 namespace Alexa.EndpointHealth
 {
 
-    public class AlexaEndpointHealth  : IAlexaDeviceType
+    public class AlexaEndpointHealth : IAlexaDeviceType
     {
         public List<AlexaProperty> FindRelatedProperties(IPremiseObject endpoint, string currentController)
         {
@@ -60,7 +60,7 @@ namespace Alexa.EndpointHealth
                     continue;
                 }
 
-                if (capability.properties.proactivelyReported) 
+                if (capability.properties.proactivelyReported)
                 {
                     switch (capability.@interface)
                     {
@@ -79,5 +79,5 @@ namespace Alexa.EndpointHealth
             return subscriptions;
         }
     }
- }
+}
 

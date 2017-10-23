@@ -1,18 +1,16 @@
 ﻿using Alexa;
+using Alexa.Discovery;
+using Alexa.HVAC;
 using Alexa.Lighting;
 using Alexa.Power;
-using Alexa.HVAC;
 using Alexa.Scene;
-using Alexa.Discovery;
 using Alexa.SmartHomeAPI.V3;
 using System;
+using System.Linq;
 using System.ServiceModel;
 using System.ServiceModel.Web;
-using System.Threading.Tasks;
-using System.Diagnostics;
-using SYSWebSockClient;
-using System.Linq;
 using System.Web.Script.Serialization;
+using SYSWebSockClient;
 
 namespace PremiseAlexaBridgeService
 {
@@ -43,7 +41,7 @@ namespace PremiseAlexaBridgeService
         ControlResponse SetScene(AlexaSetSceneControllerRequest request);
 
         [OperationContract]
-        ControlResponse AdjustColorTemperature (AlexaAdjustColorTemperatureControllerRequest request);
+        ControlResponse AdjustColorTemperature(AlexaAdjustColorTemperatureControllerRequest request);
 
         [OperationContract]
         ControlResponse SetColorTemperature(AlexaSetColorTemperatureControllerRequest request);
@@ -90,7 +88,7 @@ namespace PremiseAlexaBridgeService
             };
 
             if (PremiseServer.HomeObject == null)
-            { 
+            {
                 response.header.@namespace = Faults.Namespace;
                 response.header.name = Faults.DependentServiceUnavailableError;
                 response.payload.exception = new ExceptionResponsePayload()
@@ -477,27 +475,24 @@ namespace PremiseAlexaBridgeService
 
                 foreach (Capability capability in discoveryEndpoint.capabilities)
                 {
-                    //if ((capability.HasProperties() == false))
-                    //{
-                        switch (capability.@interface)  // scenes are special cased
-                        {
-                            case "Alexa.SceneController":
+                    switch (capability.@interface)  // scenes are special cased
+                    {
+                        case "Alexa.SceneController":
+                            {
+                                AlexaSetSceneController controller = new AlexaSetSceneController("", endpoint);
+                                AlexaProperty prop = controller.GetPropertyState();
+                                response.@event.header.name = (string)prop.value;
+                                response.@event.payload.cause = new ChangeReportCause
                                 {
-                                    AlexaSetSceneController controller = new AlexaSetSceneController("", endpoint);
-                                    AlexaProperty prop = controller.GetPropertyState();
-                                    response.@event.header.name = (string)prop.value;
-                                    response.@event.payload.cause = new ChangeReportCause
-                                    {
-                                        type = "VOICE_INTERACTION"
-                                    };
-                                    response.@event.payload.timestamp = prop.timeOfSample;
-                                }
-                                break;
+                                    type = "VOICE_INTERACTION"
+                                };
+                                response.@event.payload.timestamp = prop.timeOfSample;
+                            }
+                            break;
 
-                            default:
-                                break;
-                        }
-                    //}
+                        default:
+                            break;
+                    }
                 }
 
             }

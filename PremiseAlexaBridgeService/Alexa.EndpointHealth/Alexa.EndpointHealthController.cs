@@ -38,7 +38,7 @@ namespace Alexa.EndpointHealth
     [DataContract]
     public class AlexaEndpointHealthRequestPayload : object
     {
-        
+
     }
 
     [DataContract]
@@ -75,7 +75,7 @@ namespace Alexa.EndpointHealth
         public readonly string @namespace = "Alexa.EndpointHealth";
         public readonly string[] directiveNames = { };
         public readonly string[] premiseProperties = { "IsReachable" };
-       private readonly string[] alexaProperties = { "connectivity" };
+        private readonly string[] alexaProperties = { "connectivity" };
 
         public AlexaEndpointHealthController(AlexaEndpointHealthControllerRequest request)
             : base(request)

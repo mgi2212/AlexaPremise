@@ -16,7 +16,7 @@ namespace Alexa.SmartHomeAPI.V2
         public AdditionalApplianceDetails additionalApplianceDetails { get; set; }
     }
 
-    
+
     #region Discovery
 
     public enum AlexaApplianceTypes
@@ -58,19 +58,21 @@ namespace Alexa.SmartHomeAPI.V2
         public string applianceId
         {
             get { return _applianceId; }
-            set { _applianceId = value != null && value.Length > 256 ? value.Substring(0, 256) : value;}
+            set { _applianceId = value != null && value.Length > 256 ? value.Substring(0, 256) : value; }
         }
 
         [DataMember(Name = "friendlyDescription", EmitDefaultValue = false, Order = 4)]
         private string _friendlyDescription;
-        public string friendlyDescription {
+        public string friendlyDescription
+        {
             get { return _friendlyDescription; }
             set { _friendlyDescription = value != null && value.Length > 128 ? value.Substring(0, 128) : value; }
         }
 
         [DataMember(Name = "friendlyName", EmitDefaultValue = false, Order = 5)]
-        private string _friendlyName; 
-        public string friendlyName {
+        private string _friendlyName;
+        public string friendlyName
+        {
             get { return _friendlyName; }
             set { _friendlyName = value != null && value.Length > 128 ? value.Substring(0, 128) : value; }
         }
@@ -80,21 +82,24 @@ namespace Alexa.SmartHomeAPI.V2
 
         [DataMember(Name = "manufacturerName", EmitDefaultValue = false, Order = 7)]
         private string _manufacturerName;
-        public string manufacturerName {
+        public string manufacturerName
+        {
             get { return _manufacturerName; }
             set { _manufacturerName = value != null && value.Length > 128 ? value.Substring(0, 128) : value; }
         }
 
         [DataMember(Name = "modelName", EmitDefaultValue = false, Order = 8)]
         private string _modelName;
-        public string modelName {
+        public string modelName
+        {
             get { return _modelName; }
             set { _modelName = value != null && value.Length > 128 ? value.Substring(0, 128) : value; }
         }
 
         [DataMember(Name = "version", EmitDefaultValue = false, Order = 9)]
         private string _version;
-        public string version {
+        public string version
+        {
             get { return _version; }
             set { _version = value != null && value.Length > 128 ? value.Substring(0, 128) : value; }
         }
@@ -105,7 +110,8 @@ namespace Alexa.SmartHomeAPI.V2
         // If present in on the Premise object, will end up as the first entry in appliancetypes[]
         [DataMember(Name = "applianceType", EmitDefaultValue = false, Order = 11)]
         private string _applianceType;
-        public string applianceType {
+        public string applianceType
+        {
             get { return _applianceType; }
             set { _applianceType = value != null && value.Length > 128 ? value.Substring(0, 128) : value; }
         }
@@ -209,7 +215,7 @@ namespace Alexa.SmartHomeAPI.V2
         public ExceptionResponsePayload exception { get; set; }
 
         [DataMember(Name = "achievedState", EmitDefaultValue = false, Order = 3)]
-        public AchievedState achievedState{ get; set; }
+        public AchievedState achievedState { get; set; }
 
     }
 
@@ -223,7 +229,7 @@ namespace Alexa.SmartHomeAPI.V2
     {
         [DataMember(Name = "value", EmitDefaultValue = false, Order = 1)]
         public double value;
-        [DataMember(Name = "scale", EmitDefaultValue = false, Order = 2 )]
+        [DataMember(Name = "scale", EmitDefaultValue = false, Order = 2)]
         public string scale;
     }
 

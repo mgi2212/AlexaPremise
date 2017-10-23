@@ -47,14 +47,14 @@ namespace Alexa.Lighting
     #endregion
 
     public class AlexaSetColorTemperatureController : AlexaControllerBase<
-        AlexaSetColorTemperatureRequestPayload, 
-        ControlResponse, 
+        AlexaSetColorTemperatureRequestPayload,
+        ControlResponse,
         AlexaSetColorTemperatureControllerRequest>, IAlexaController
     {
         private readonly string @namespace = "Alexa.ColorTemperatureController";
         private readonly string[] directiveNames = { "SetColorTemperature" };
         private readonly string[] premiseProperties = { "Temperature" };
-       private readonly string[] alexaProperties = { "colorTemperatureInKelvin" };
+        private readonly string[] alexaProperties = { "colorTemperatureInKelvin" };
         public readonly AlexaLighting PropertyHelpers;
 
         public AlexaSetColorTemperatureController(AlexaSetColorTemperatureControllerRequest request)
@@ -90,7 +90,7 @@ namespace Alexa.Lighting
             return @namespace;
         }
 
-        public string [] GetDirectiveNames()
+        public string[] GetDirectiveNames()
         {
             return directiveNames;
         }
@@ -122,7 +122,7 @@ namespace Alexa.Lighting
             {
                 @namespace = @namespace,
                 name = alexaProperties[0],
-                value = ((int)ColorTemperature).LimitToRange(1000,10000),
+                value = ((int)ColorTemperature).LimitToRange(1000, 10000),
                 timeOfSample = GetUtcTime()
             };
             return property;

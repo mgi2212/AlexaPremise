@@ -12,7 +12,7 @@ namespace PremiseAlexaBridgeService
     /// Version 2
     /// </summary>
 
-    [ServiceContract(Name="PremiseAlexaService", Namespace ="https://PremiseAlexa.com")]
+    [ServiceContract(Name = "PremiseAlexaService", Namespace = "https://PremiseAlexa.com")]
     public interface IPremiseAlexaService
     {
         [OperationContract]
@@ -54,7 +54,7 @@ namespace PremiseAlexaBridgeService
             //SYSClient client = new SYSClient();
 
             if (PremiseServer.HomeObject == null)
-            { 
+            {
                 response.header.@namespace = Faults.Namespace;
                 response.header.name = Faults.DependentServiceUnavailableError;
                 response.payload.exception = new ExceptionResponsePayload()
@@ -179,7 +179,7 @@ namespace PremiseAlexaBridgeService
             #region ConnectToPremise
 
             if (PremiseServer.HomeObject == null)
-            { 
+            {
                 response.header.@namespace = Faults.Namespace;
                 response.header.name = Faults.DependentServiceUnavailableError;
                 response.payload.exception = new ExceptionResponsePayload()
@@ -261,7 +261,7 @@ namespace PremiseAlexaBridgeService
                     friendlyName = ((string)sysAppliance.FriendlyName).Trim(),
                     friendlyDescription = ((string)sysAppliance.FriendlyDescription).Trim(), // Dan: Premise should be source of truth
                     applianceTypes = new List<string>()
-              
+
                 };
 
                 var premiseObject = await PremiseServer.HomeObject.GetObject(objectId);
@@ -303,7 +303,7 @@ namespace PremiseAlexaBridgeService
                 }
 
                 string typeName = sysAppliance.OTYPENAME;
-                bool isSceneTrigger = typeName.StartsWith("AlexaVirtual"); 
+                bool isSceneTrigger = typeName.StartsWith("AlexaVirtual");
 
                 // Deal with empty FriendlyDescription
                 if (string.IsNullOrEmpty(appliance.friendlyDescription))
@@ -338,12 +338,14 @@ namespace PremiseAlexaBridgeService
                         applianceType = AlexaApplianceTypes.LIGHT;
                         hasDimmer = await premiseObject.IsOfType("{DEB24C93-9143-4030-86FF-29C7626BC9E3}");  // dimmer
                         hasColor = (sysAppliance.Hue != null);  // note change this to isOfType   // color
-                    } else
+                    }
+                    else
                     {
                         if (await premiseObject.IsOfType("{35ED9728-21C0-4868-BEFE-BCBA38D4C4B3}"))  // thermostat
                         {
                             applianceType = AlexaApplianceTypes.THERMOSTAT;
-                        } else if (await premiseObject.IsOfType("{68BF174A-8984-4214-AC09-2975A4CEBEAA}")) // camera
+                        }
+                        else if (await premiseObject.IsOfType("{68BF174A-8984-4214-AC09-2975A4CEBEAA}")) // camera
                         {
                             applianceType = AlexaApplianceTypes.CAMERA;
 
@@ -352,7 +354,8 @@ namespace PremiseAlexaBridgeService
                         //    applianceType = AlexaApplianceTypes.FAN;
                         //}
                     }
-                } else
+                }
+                else
                 {
                     applianceType = AlexaApplianceTypes.SCENE_TRIGGER;
                 }
@@ -435,14 +438,14 @@ namespace PremiseAlexaBridgeService
 
                 if (appliance.applianceTypes.Count == 0) // catches the case of a type override by Premise.
                 {
-                    appliance.applianceTypes.Add( applianceType.ToString());
+                    appliance.applianceTypes.Add(applianceType.ToString());
                 }
 
                 appliances.Add(appliance);
                 if (++count >= PremiseServer.AlexaDeviceLimit)
                     break;
             }
-            
+
             await PremiseServer.HomeObject.SetValue("LastRefreshed", DateTime.Now.ToString());
             await PremiseServer.HomeObject.SetValue("HealthDescription", string.Format("Reported={0},Names Generated={1}, Descriptions Generated={2}", count, generatedNameCount, generatedDescriptionCount));
             await PremiseServer.HomeObject.SetValue("Health", "True");
@@ -514,7 +517,7 @@ namespace PremiseAlexaBridgeService
             #region ConnectToPremise
 
             if (PremiseServer.HomeObject == null)
-            { 
+            {
                 response.header.@namespace = Faults.Namespace;
                 response.header.name = Faults.DependentServiceUnavailableError;
                 response.payload.exception = new ExceptionResponsePayload()
@@ -582,7 +585,7 @@ namespace PremiseAlexaBridgeService
                         deviceType = DeviceType.ColorLight;
                         break;
                     case "SETCOLORTEMPERATUREREQUEST":
-                        requestType = ControlRequestType.SetColorTemperatureRequest ;
+                        requestType = ControlRequestType.SetColorTemperatureRequest;
                         deviceType = DeviceType.ColorLight;
                         break;
                     case "INCREMENTCOLORTEMPERATUREREQUEST":

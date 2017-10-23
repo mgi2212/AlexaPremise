@@ -1,6 +1,6 @@
-POST http://localhost:51124/AlexaV3.svc/json/Control/AdjustColorTemperature/
+POST POST http://yourhost:port/V3/Alexa.svc/json/Control/AdjustColorTemperature/
 Content-Type: text/plain
-Host: localhost
+Host: yourhost
 
 {
   "directive": {
@@ -14,7 +14,7 @@ Host: localhost
     "endpoint": {
       "scope": {
         "type": "BearerToken",
-        "token": "t110ftc0d"
+        "token": "your-token"
       },
       "endpointId": "9B40217D-7664-4613-A2BF-967F700CEAF8",
       "cookie": {

@@ -1,6 +1,6 @@
-POST http://localhost:3000/AlexaV3.svc/json/Control/SetPowerState/
+POST http://yourhost:port/V3/Alexa.svc/json/Control/SetPowerState/
 Content-Type: application/json
-Host: localhost
+Host: yourhost
 
 {
   "directive": {
@@ -15,7 +15,7 @@ Host: localhost
       "scope": {
         "type": "BearerToken",
         "token": "some-token",
-        "localAccessToken": "t110ftc0d"
+        "localAccessToken": "your-token"
       },
       "endpointId": "9AB03900-D923-47B9-BE7F-833892A388B9",
       "cookie": {

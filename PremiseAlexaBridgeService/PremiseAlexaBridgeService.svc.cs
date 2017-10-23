@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-
 namespace PremiseAlexaBridgeService
 {
 
@@ -30,7 +29,6 @@ namespace PremiseAlexaBridgeService
                 if (!self.Contains(item))
                     self.Add(item);
         }
-
     }
 
     public class PreWarmCache : System.Web.Hosting.IProcessHostPreloadClient

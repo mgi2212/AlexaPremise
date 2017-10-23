@@ -148,7 +148,7 @@ namespace Alexa.SmartHomeAPI.V3
     [DataContract]
     public class Context
     {
-        internal Dictionary<string, AlexaProperty> propertiesInternal {get; set; }
+        internal Dictionary<string, AlexaProperty> propertiesInternal { get; set; }
 
         [DataMember(Name = "properties", EmitDefaultValue = false)]
         public List<AlexaProperty> properties
@@ -189,7 +189,7 @@ namespace Alexa.SmartHomeAPI.V3
         public List<SupportedProperty> supported { get; set; }
         [DataMember(Name = "proactivelyReported", EmitDefaultValue = true, IsRequired = false, Order = 2)]
         public bool proactivelyReported { get; set; }
-        [DataMember(Name = "retrievable",  EmitDefaultValue = true, IsRequired = false, Order = 3)]
+        [DataMember(Name = "retrievable", EmitDefaultValue = true, IsRequired = false, Order = 3)]
         public bool retrievable { get; set; }
         //[DataMember(Name = "supportsDeactivation", EmitDefaultValue = false, IsRequired = false, Order = 4)]
         //public bool supportsDeactivation { get; set; }
@@ -201,9 +201,9 @@ namespace Alexa.SmartHomeAPI.V3
 
         public Properties(bool asyncSupported, bool querySupported)
         {
-             this.supported = new List<SupportedProperty>();
-             this.proactivelyReported = asyncSupported;
-             this.retrievable = querySupported;
+            this.supported = new List<SupportedProperty>();
+            this.proactivelyReported = asyncSupported;
+            this.retrievable = querySupported;
         }
 
     }
@@ -389,7 +389,7 @@ namespace Alexa.SmartHomeAPI.V3
     #endregion
 
     #region Control
-    
+
     [DataContract]
     public class ControlResponse
     {
@@ -426,12 +426,12 @@ namespace Alexa.SmartHomeAPI.V3
     }
 
 
-    [DataContract] 
+    [DataContract]
     [KnownType(typeof(AlexaEndpointHealthValue))]
-    [KnownType(typeof(AlexaColorValue))] 
+    [KnownType(typeof(AlexaColorValue))]
     [KnownType(typeof(AlexaTemperatureSensorResponsePayload))]
-    [KnownType(typeof(AlexaSetThermostatModePayloadValue))] 
-    [KnownType(typeof(AlexaSetTargetTemperatureRequestPayload))] 
+    [KnownType(typeof(AlexaSetThermostatModePayloadValue))]
+    [KnownType(typeof(AlexaSetTargetTemperatureRequestPayload))]
     public class AlexaProperty
     {
         [DataMember(Name = "namespace")]
@@ -439,7 +439,7 @@ namespace Alexa.SmartHomeAPI.V3
         [DataMember(Name = "name")]
         public string name { get; set; }
         [DataMember(Name = "value")]
-        public object value {get; set; }
+        public object value { get; set; }
         [DataMember(Name = "timeOfSample")]
         public string timeOfSample { get; set; }
         [DataMember(Name = "uncertaintyInMilliseconds")]

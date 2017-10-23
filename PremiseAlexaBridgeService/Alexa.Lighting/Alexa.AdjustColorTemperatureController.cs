@@ -52,7 +52,7 @@ namespace Alexa.Lighting
         private readonly string @namespace = "Alexa.ColorTemperatureController";
         private readonly string[] directiveNames = { "IncreaseColorTemperature", "DecreaseColorTemperature" };
         private readonly string[] premiseProperties = { "Temperature" };
-       private readonly string[] alexaProperties = {"colorTemperatureInKelvin"};
+        private readonly string[] alexaProperties = { "colorTemperatureInKelvin" };
         public readonly AlexaLighting PropertyHelpers;
 
         // corresponds to warm white, soft white, white, daylight, cool white
@@ -80,18 +80,18 @@ namespace Alexa.Lighting
         {
             return @namespace;
         }
-        
+
         public string GetAssemblyTypeName()
         {
             return this.GetType().AssemblyQualifiedName;
         }
-        
+
         public string[] GetAlexaProperties()
         {
             return alexaProperties;
         }
 
-        public string [] GetDirectiveNames()
+        public string[] GetDirectiveNames()
         {
             return directiveNames;
         }
@@ -154,8 +154,8 @@ namespace Alexa.Lighting
         public int GetPreviousColor(int current)
         {
             current = GetNearestValue(current);
-            int x = 0;  
-            for (x = colorTable.Count() - 1; x >= 0; x--) 
+            int x = 0;
+            for (x = colorTable.Count() - 1; x >= 0; x--)
             {
                 if (current == colorTable[x])
                     break;

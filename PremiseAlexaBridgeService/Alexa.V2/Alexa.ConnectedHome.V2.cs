@@ -182,7 +182,7 @@ namespace Alexa.SmartHomeAPI.V2
         [DataMember(Name = "payload")]
         public DiscoveryResponsePayload payload;
 
-        public DiscoveryResponse ()
+        public DiscoveryResponse()
         {
             header = new Header
             {
@@ -203,7 +203,7 @@ namespace Alexa.SmartHomeAPI.V2
     }
 
     #endregion
-        
+
     #region Control
 
     public enum QueryRequestType
@@ -324,7 +324,7 @@ namespace Alexa.SmartHomeAPI.V2
             payload = new ApplianceQueryResponsePayload();
         }
     }
-    
+
     #endregion
 
 }

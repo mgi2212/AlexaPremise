@@ -1,6 +1,6 @@
-POST http://localhost:51124/AlexaV3.svc/json/Authorization/
+POST http://yourhost:port/V3/Alexa.svc/json/Authorization/
 Content-Type: application/json
-Host: localhost
+Host: yourhost
 
 {
   "directive": {
@@ -13,15 +13,15 @@ Host: localhost
     },
     "payload": {
       "grant": {
-        "access_token": "Atza|IwEBIIVGSe9zNfkhSMYDFXTfhobWlzdOrguVvQ9nHb_qVW3uSY-tqqihA6SmYCsTIdzJyyUCil-4L2ZdKem1TPaNa3pPXVMSLTP3J8zP1jey5dlTeQNovRIUHZS-AuXU7dLhJiC964Qecwymnz-M0qj1ltXPR0VVJHfQ2F6hcHJf9ydDfb7g2C0Ct2zQ5mtrwbUhiec3PCxRKH05q1X6EA6sl1LaV8VFNxv5qXUsaA1XDBxPktQGpqgCQxKtjGf7Dfx9g4Es9BH-lVkbPMMNOEqOibunUBY267CY4ZFpRyDDuMfywCXmIIXlP4aQrAVGiIt_O_96pLMlrG8ce3hpXFOdCbA8",
-        "refresh_token": "Atzr|IwEBIHLuPWN3uPLgBWUWf8FzhczJaiaKicMcJTso48GxS4nAxNhbRaG-kEZ5DXYvq9B85F1SrFAE7SC4v89P5XoMmNfAT9u1R12FCrvYDiVg5JXqDEfkpwprHSBojP20s7TJBREnjsiIaOZhANLqi8H18PUEwwDtv8CSioiwhHrJk19JECkQl6OZ0Ny2P6-QxcoaDsGiVNICrBuyJlXc20wTh-mAD4joZPGJaNaFrHfxPPDYUCcsWA3hZHKS4TsnpOaU2ksd2Hr3NMSveZ4UE0hHyH_pwVz98qXJfNwPcIqdxsU3hmi4bgliXYyq8typfvfs6YJuMnMSq6QkougYz851R0xc",
+        "access_token": "Atza|IwEBIIVGSe9...",
+        "refresh_token": "Atzr|IwEBIHLuPW...",
         "token_type": "bearer",
         "expires_in": 900
       },
       "grantee": {
         "type": "BearerToken",
         "token": "some-token",
-        "localAccessToken": "t110ftc0d"
+        "localAccessToken": "your-token"
       }
     }
   }

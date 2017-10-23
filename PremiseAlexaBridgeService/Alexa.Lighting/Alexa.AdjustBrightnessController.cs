@@ -35,7 +35,7 @@ namespace Alexa.Lighting
             payload = new AlexaAdjustBrightnessPayload();
         }
     }
-     
+
     [DataContract]
     public class AlexaAdjustBrightnessPayload
     {
@@ -46,15 +46,15 @@ namespace Alexa.Lighting
     #endregion 
 
     public class AlexaAdjustBrightnessController : AlexaControllerBase<
-        AlexaAdjustBrightnessPayload, 
-        ControlResponse, 
+        AlexaAdjustBrightnessPayload,
+        ControlResponse,
         AlexaAdjustBrightnessControllerRequest>, IAlexaController
     {
         public readonly AlexaLighting PropertyHelpers;
         private readonly string @namespace = "Alexa.BrightnessController";
         private readonly string[] directiveNames = { "AdjustBrightness" };
         private readonly string[] premiseProperties = { "Brightness" };
-       private readonly string[] alexaProperties = { "brightness" };
+        private readonly string[] alexaProperties = { "brightness" };
 
         public AlexaAdjustBrightnessController(AlexaAdjustBrightnessControllerRequest request)
             : base(request)
@@ -78,7 +78,7 @@ namespace Alexa.Lighting
         {
             return @namespace;
         }
-        public string [] GetDirectiveNames()
+        public string[] GetDirectiveNames()
         {
             return directiveNames;
         }

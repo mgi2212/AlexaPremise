@@ -36,7 +36,7 @@ namespace Alexa.Power
         }
     }
 
-    public class AlexaSetPowerStateRequestPayload 
+    public class AlexaSetPowerStateRequestPayload
     {
 
     }
@@ -44,15 +44,15 @@ namespace Alexa.Power
     #endregion
 
     public class AlexaSetPowerStateController : AlexaControllerBase<
-        AlexaSetPowerStateRequestPayload, 
-        ControlResponse, 
+        AlexaSetPowerStateRequestPayload,
+        ControlResponse,
         AlexaSetPowerStateControllerRequest>, IAlexaController
     {
         public readonly AlexaPower PropertyHelpers;
         private readonly string[] directiveNames = { "TurnOn", "TurnOff" };
         private readonly string @namespace = "Alexa.PowerController";
         private readonly string[] premiseProperties = { "PowerState" };
-       private readonly string[] alexaProperties = { "powerState" };
+        private readonly string[] alexaProperties = { "powerState" };
 
         public AlexaSetPowerStateController(AlexaSetPowerStateControllerRequest request)
             : base(request)
@@ -87,14 +87,14 @@ namespace Alexa.Power
             return @namespace;
         }
 
-        public string [] GetDirectiveNames()
+        public string[] GetDirectiveNames()
         {
             return directiveNames;
         }
 
         public bool HasAlexaProperty(string property)
         {
-            return ( this.alexaProperties.Contains(property));
+            return (this.alexaProperties.Contains(property));
         }
 
         public bool HasPremiseProperty(string property)

@@ -25,7 +25,7 @@ exports.handler = (event, context, callback) => {
     var command = JSON.parse(event.body);
 
     switch (command.function) {
-        case 'updateItem': 
+        case 'updateItem':
             var updateParams = {
                 TableName: 'PremiseBridgeCustomer',
                 Key: {
@@ -42,8 +42,8 @@ exports.handler = (event, context, callback) => {
             };
             dynamo.updateItem(updateParams, done);
             break;
-                
-        case 'deleteItem': 
+
+        case 'deleteItem':
             var deleteParams = {
                 TableName: 'PremiseBridgeCustomer',
                 Key: {
@@ -52,8 +52,8 @@ exports.handler = (event, context, callback) => {
             };
             dynamo.deleteItem(deleteParams, done);
             break;
-                
-        case 'getItem': 
+
+        case 'getItem':
             var getParams = {
                 TableName: 'PremiseBridgeCustomer',
                 Key: {
@@ -62,8 +62,8 @@ exports.handler = (event, context, callback) => {
             };
             dynamo.getItem(getParams, done);
             break;
-                
-        case 'putItem': 
+
+        case 'putItem':
             var putParams = {
                 TableName: 'PremiseBridgeCustomer',
                 Item: {
@@ -77,7 +77,7 @@ exports.handler = (event, context, callback) => {
             dynamo.putItem(putParams, done);
             break;
 
-        default: 
+        default:
             done(new Error(`Unsupported db function "${event.body.Function}"`));
             break;
     }
