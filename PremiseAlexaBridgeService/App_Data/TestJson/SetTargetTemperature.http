@@ -1,0 +1,32 @@
+POST http://yourhost:port/V3/Alexa.svc/json/Control/SetTargetTemperature/
+Content-Type: application/json
+Host: yourhost
+
+{
+  "directive": {
+    "header": {
+      "namespace": "Alexa.ThermostatController",
+      "name": "SetTargetTemperature",
+      "payloadVersion": "3",
+      "messageId": "1233CC6C-EB28-4DC2-917D-5205CF9488EE",
+      "correlationToken": "dFMb0z+PgpgdDmluhJ1LddFvSqZ/jCc8ptlAKulUj90jSqg=="
+    },
+    "endpoint": {
+      "scope": {
+        "type": "BearerToken",
+        "token": "some-access-token",
+        "localAccessToken": "your-token"
+      },
+      "endpointId": "0EE3CC6C-EB28-4DC2-917D-5205CF9488EE",
+      "cookie": {}
+    },
+    "payload": {
+            "targetSetpoint": {
+                "value": 68,
+                "scale": "FAHRENHEIT"
+            }
+    }
+  }
+}
+
+

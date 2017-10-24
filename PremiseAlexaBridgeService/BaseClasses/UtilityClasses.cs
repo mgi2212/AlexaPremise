@@ -74,7 +74,7 @@ namespace PremiseAlexaBridgeService
         }
         public double Kelvin
         {
-            get { return Math.Round(_Kelvin,2); }
+            get { return Math.Round(_Kelvin, 2); }
             set { _Kelvin = value; }
         }
     }

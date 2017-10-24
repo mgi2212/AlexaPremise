@@ -1,6 +1,6 @@
-POST http://localhost:3000/AlexaV3.svc/json/Control/AdjustBrightness/
+POST http://yourhost:port/V3/Alexa.svc/json/Control/AdjustBrightness/
 Content-Type: text/plain
-Host: localhost
+Host: yourhost
 
 {
   "directive": {
@@ -14,7 +14,7 @@ Host: localhost
     "endpoint": {
       "scope": {
         "type": "BearerToken",
-        "token": "t110ftc0d"
+        "token": "your-token"
       },
       "endpointId": "9AB03900-D923-47B9-BE7F-833892A388B9",
       "cookie": {

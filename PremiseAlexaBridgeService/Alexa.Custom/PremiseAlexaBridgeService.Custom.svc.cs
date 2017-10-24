@@ -64,7 +64,7 @@ namespace PremiseAlexaBridgeService
             #region ConnectToPremise
 
             if (PremiseServer.HomeObject == null)
-            { 
+            {
                 response.header.@namespace = Faults.QueryNamespace;
                 response.header.name = Faults.DependentServiceUnavailableError;
                 response.payload.exception = new ExceptionResponsePayload()

@@ -52,14 +52,14 @@ namespace Alexa.HVAC
     #endregion
 
     public class SetTargetTemperatureController : AlexaControllerBase<
-        AlexaSetTargetTemperatureRequestPayload, 
+        AlexaSetTargetTemperatureRequestPayload,
         ControlResponse,
         AlexaSetTargetTemperatureControllerRequest>, IAlexaController
     {
         private readonly string @namespace = "Alexa.ThermostatController";
         private readonly string[] directiveNames = { "SetTargetTemperature" };
         private readonly string[] premiseProperties = { "HeatingSetPoint", "CoolingSetPoint", "CurrentSetPoint" };
-       private readonly string[] alexaProperties = { "lowerSetpoint","upperSetpoint","targetSetpoint" };
+        private readonly string[] alexaProperties = { "lowerSetpoint", "upperSetpoint", "targetSetpoint" };
         public readonly AlexaHVAC PropertyHelpers;
 
         public SetTargetTemperatureController(AlexaSetTargetTemperatureControllerRequest request)
@@ -95,7 +95,7 @@ namespace Alexa.HVAC
             return @namespace;
         }
 
-        public string [] GetDirectiveNames()
+        public string[] GetDirectiveNames()
         {
             return directiveNames;
         }
@@ -128,13 +128,13 @@ namespace Alexa.HVAC
         public List<AlexaProperty> GetPropertyStates()
         {
             List<AlexaProperty> properties = new List<AlexaProperty>();
-            
+
             Temperature lower = new Temperature(this.endpoint.GetValue<double>("HeatingSetPoint").GetAwaiter().GetResult());
             AlexaProperty lowerSetpoint = new AlexaProperty
-            { 
+            {
                 @namespace = @namespace,
                 name = "lowerSetpoint",
-                value = new AlexaTemperatureSensorResponsePayload(Math.Round(lower.Fahrenheit,1), "FAHRENHEIT"),
+                value = new AlexaTemperatureSensorResponsePayload(Math.Round(lower.Fahrenheit, 1), "FAHRENHEIT"),
                 timeOfSample = GetUtcTime()
             };
             properties.Add(lowerSetpoint);
@@ -161,7 +161,6 @@ namespace Alexa.HVAC
             return properties;
         }
 
-
         public void ProcessControllerDirective()
         {
 
@@ -185,7 +184,7 @@ namespace Alexa.HVAC
                         default:
                             break;
                     }
-                    this.endpoint.SetValue("CurrentSetPoint", Math.Round(target.Kelvin,1).ToString()).GetAwaiter().GetResult();
+                    this.endpoint.SetValue("CurrentSetPoint", Math.Round(target.Kelvin, 1).ToString()).GetAwaiter().GetResult();
                 }
                 if (payload.lowerSetpoint != null)
                 {

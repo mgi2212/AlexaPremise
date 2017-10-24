@@ -79,14 +79,14 @@ namespace Alexa.HVAC
     #endregion
 
     public class AlexaSetThermostatModeController : AlexaControllerBase<
-        AlexaSetThermostatModePayload, 
-        ControlResponse, 
+        AlexaSetThermostatModePayload,
+        ControlResponse,
         AlexaSetThermostatModeControllerRequest>, IAlexaController
     {
         private readonly string @namespace = "Alexa.ThermostatController";
         private readonly string[] directiveNames = { "SetThermostatMode" };
         private readonly string[] premiseProperties = { "TemperatureMode", "FanControl" };
-       private readonly string[] alexaProperties = { "thermostatMode" };
+        private readonly string[] alexaProperties = { "thermostatMode" };
         public readonly AlexaHVAC PropertyHelpers;
 
         public AlexaSetThermostatModeController(AlexaSetThermostatModeControllerRequest request)
@@ -122,7 +122,7 @@ namespace Alexa.HVAC
             return @namespace;
         }
 
-        public string [] GetDirectiveNames()
+        public string[] GetDirectiveNames()
         {
             return directiveNames;
         }

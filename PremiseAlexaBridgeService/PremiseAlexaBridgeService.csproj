@@ -215,6 +215,7 @@
     <None Include="Alexa.V3\readme.md" />
     <None Include="App_Data\TestJson\AdjustBrightnessController.http" />
     <None Include="App_Data\TestJson\AdjustColorTemperature.http" />
+    <Content Include="App_Data\TestJson\AdjustTargetTemperature.http" />
     <None Include="App_Data\TestJson\Authrorization.http" />
     <None Include="App_Data\TestJson\BrightnessController.http" />
     <None Include="App_Data\TestJson\ColorTemperature.http" />
@@ -223,16 +224,15 @@
     <None Include="App_Data\TestJson\ReportState.http" />
     <None Include="App_Data\TestJson\SceneController.http" />
     <None Include="App_Data\TestJson\SetColorController.http" />
+    <Content Include="App_Data\TestJson\SetTargetTemperature.http" />
+    <Content Include="App_Data\TestJson\SetThermostatMode.http" />
     <None Include="BaseClasses\readme.md" />
     <None Include="Alexa.Discovery\readme.md" />
     <None Include="Alexa.Scene\readme.md" />
     <None Include="Alexa.EndpointHealth\readme.md" />
     <None Include="App_Data\SmartHome V3 Json Schema.json" />
-    <None Include="Properties\PublishProfiles\AD2.pubxml" />
-    <None Include="Properties\PublishProfiles\cek.pubxml" />
     <None Include="Properties\PublishProfiles\CustomProfile.pubxml" />
-    <None Include="Properties\PublishProfiles\Kindel.pubxml" />
-    <None Include="Properties\PublishProfiles\PremiseTest.pubxml" />
+    <None Include="Properties\PublishProfiles\CustomProfile1.pubxml" />
     <None Include="ServerService\readme.md" />
     <None Include="Web.Debug.config">
       <DependentUpon>Web.config</DependentUpon>

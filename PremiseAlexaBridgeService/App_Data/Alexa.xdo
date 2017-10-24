@@ -8,7 +8,7 @@
             <Object ID="{219DFC9B-F094-4B5E-8A31-F088096D7072}" Name="ColorTemperature" Class="sys://Schema/System/Class" Virtual="-1" >
               <Object ID="{3EB86F97-AB38-44E3-A51B-972C679A19B5}" Name="Temperature" Flags="0x900" Class="sys://Schema/System/Units/Temperature" DefaultValue="3000 K" DisplayName="Temperature" Description="Temperature" Aggregation="4" />
             </Object>
-            <Object ID="{FEB5CCE9-F343-4CD9-9611-E75329EB3223}" Name="Color" Class="sys://Schema/System/Class" Virtual="-1" >
+            <Object ID="{FEB5CCE9-F343-4CD9-9611-E75329EB3223}" Name="Color" Class="sys://Schema/System/Class" Virtual="-1" Icon="Color.ico" >
               <Object ID="{AFE71B50-6818-4422-A259-8F816698AEB5}" Name="Hue" Flags="0x900" Class="sys://Schema/System/Real" DisplayName="Hue" Description="Hue" />
               <Object ID="{264DE839-193A-4693-9E95-CBE54564A042}" Name="Saturation" Flags="0x900" Class="sys://Schema/System/Percent" DisplayName="Saturation" Description="Saturation" />
             </Object>
@@ -389,8 +389,8 @@ json = ""
               <Object ID="{DFB63660-DC61-4ED7-B84D-5BC58827ED40}" Name="ClassConstructor" Class="sys://Schema/Scripting/ClassConstructor" >
                 <![CDATA[
 Script=
-this.CreateObject "sys://Schema/Modules/Alexa/Classes/AlexaTriggerButton","On"
-this.CreateObject "sys://Schema/Modules/Alexa/Classes/AlexaTriggerButton","Off"
+this.CreateObject "sys://Schema/Modules/Alexa/Scenes/Classes/AlexaTriggerButton","On"
+this.CreateObject "sys://Schema/Modules/Alexa/Scenes/Classes/AlexaTriggerButton","Off"
 ]]>
               </Object>
               <Object ID="{1780E679-097A-4636-8C3A-6401F8678953}" Class="sys://Schema/System/ChildClass" LinkObject="{93E7B083-1F5E-4F41-9AAC-4AA8C8D3DBF9}" />
@@ -550,7 +550,7 @@ end if
             <Object ID="{415F83E3-A174-4CF1-B1B0-789D04494348}" Name="HealthDescription" Flags="0x900" Class="sys://Schema/System/Text" />
             <Object ID="{B51289C5-A483-4FCE-8C6E-88B8115793D6}" Name="AlexaAsyncAuthorizationCode" Flags="0x2" Class="sys://Schema/System/Text" />
             <Object ID="{0ACA49C6-F4A8-4456-9D22-02008D5FFC04}" Name="AlexaAsyncAuthorizationRefreshToken" Flags="0x2" Class="sys://Schema/System/Text" />
-            <Object ID="{470526F9-CD38-4E1C-85FE-2ACEAB3BD37A}" Name="AlexaAsyncAuthorizationCodeExpiry" Class="sys://Schema/System/Text" />
+            <Object ID="{470526F9-CD38-4E1C-85FE-2ACEAB3BD37A}" Name="AlexaAsyncAuthorizationCodeExpiry" Flags="0x900" Class="sys://Schema/System/Text" />
             <Object ID="{66801F08-1126-4863-BCB8-D63F845ADD62}" Name="AlexaAsyncAuthorizationClientId" Flags="0x2" Class="sys://Schema/System/Text" />
             <Object ID="{4CB14A20-1E8A-4017-8C21-2162C8D45C06}" Name="AlexaAsyncAuthorizationSecret" Flags="0x2" Class="sys://Schema/System/Text" />
             <Object ID="{7E3A5983-0C34-49AC-A156-59BCBA16EEEF}" Name="AlexaAsyncUpdateCount" Flags="0x900" Class="sys://Schema/System/Number" />
@@ -576,7 +576,7 @@ end if
             <Object ID="{AC71ED16-5354-46C1-A4BC-64E4CF8F8606}" Name="FriendlyDescription" Flags="0x900" Class="sys://Schema/System/Text" Mergeable="0" DisplayName="Human Readable Description" Description="Human Readable Description" />
             <Object ID="{41C98863-EDE3-4ED6-AF34-00DF88C7D154}" Name="FriendlyName" Flags="0x900" Class="sys://Schema/System/Text" Mergeable="0" DisplayName="What Alexa Hears" Description="What Alexa Hears" />
             <Object ID="{DD1A6ADE-99B2-4F21-9D81-EB8B734705E0}" Class="sys://Schema/System/SuperClass" LinkObject="{3470B9B5-E685-4EB2-ABC0-2F4CCD7F686A}" />
-            <Object ID="{44471B9C-A87E-4B7E-91B0-2AE8CB1B7D50}" Name="discoveryJson" Flags="0x900" Class="sys://Schema/System/Text" />
+            <Object ID="{44471B9C-A87E-4B7E-91B0-2AE8CB1B7D50}" Name="discoveryJson" Flags="0x2" Class="sys://Schema/System/Text" />
             <Object ID="{0FD0B716-45DD-435F-895D-73708A20C8B9}" Name="generateDiscoveryJson" Class="sys://Schema/Scripting/SimpleClassMethod" >
               <![CDATA[
 Script=

@@ -36,7 +36,7 @@ namespace Alexa.Power
         }
     }
 
-    public class AlexaSetPowerStateRequestPayload 
+    public class AlexaSetPowerStateRequestPayload
     {
 
     }
@@ -44,15 +44,15 @@ namespace Alexa.Power
     #endregion
 
     public class AlexaSetPowerStateController : AlexaControllerBase<
-        AlexaSetPowerStateRequestPayload, 
-        ControlResponse, 
+        AlexaSetPowerStateRequestPayload,
+        ControlResponse,
         AlexaSetPowerStateControllerRequest>, IAlexaController
     {
         public readonly AlexaPower PropertyHelpers;
         private readonly string[] directiveNames = { "TurnOn", "TurnOff" };
         private readonly string @namespace = "Alexa.PowerController";
         private readonly string[] premiseProperties = { "PowerState" };
-       private readonly string[] alexaProperties = { "powerState" };
+        private readonly string[] alexaProperties = { "powerState" };
 
         public AlexaSetPowerStateController(AlexaSetPowerStateControllerRequest request)
             : base(request)
@@ -87,14 +87,14 @@ namespace Alexa.Power
             return @namespace;
         }
 
-        public string [] GetDirectiveNames()
+        public string[] GetDirectiveNames()
         {
             return directiveNames;
         }
 
         public bool HasAlexaProperty(string property)
         {
-            return ( this.alexaProperties.Contains(property));
+            return (this.alexaProperties.Contains(property));
         }
 
         public bool HasPremiseProperty(string property)
@@ -153,8 +153,11 @@ namespace Alexa.Power
                     base.ReportError(AlexaErrorTypes.INVALID_DIRECTIVE, "Operation not supported!");
                     return;
                 }
-
-                this.endpoint.SetValue(premiseProperties[0], valueToSend).GetAwaiter().GetResult();
+                // only change powerState if it needs to.
+                if (this.GetPropertyState().value != property.value)
+                {
+                    this.endpoint.SetValue(premiseProperties[0], valueToSend).GetAwaiter().GetResult();
+                }
                 property.timeOfSample = GetUtcTime();
                 this.response.context.properties.Add(property);
                 this.response.context.properties.AddRange(this.PropertyHelpers.FindRelatedProperties(endpoint, @namespace));

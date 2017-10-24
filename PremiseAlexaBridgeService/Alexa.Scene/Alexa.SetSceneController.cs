@@ -1,7 +1,6 @@
 ﻿using Alexa.Controller;
 using Alexa.SmartHomeAPI.V3;
 using System;
-using System.Linq;
 using System.Runtime.Serialization;
 using SYSWebSockClient;
 
@@ -43,14 +42,14 @@ namespace Alexa.Scene
     #endregion
 
     public class AlexaSetSceneController : AlexaControllerBase<
-        AlexaSetSceneRequestPayload, 
-        ControlResponse, 
+        AlexaSetSceneRequestPayload,
+        ControlResponse,
         AlexaSetSceneControllerRequest>, IAlexaController
     {
         public readonly AlexaScene PropertyHelpers;
         public readonly string @namespace = "Alexa.SceneController";
         public readonly string[] directiveNames = { "Activate", "Deactivate" };
-       private readonly string[] alexaProperties = { "" };
+        private readonly string[] alexaProperties = { "" };
         public readonly string premiseProperty = "PowerState";
 
         public AlexaSetSceneController(AlexaSetSceneControllerRequest request)
@@ -111,7 +110,6 @@ namespace Alexa.Scene
             AlexaProperty property = new AlexaProperty
             {
                 @namespace = @namespace,
-                //name = alexaProperty,
                 value = (powerState == true ? "ActivationStarted" : "DeactivationStarted"),
                 timeOfSample = GetUtcTime()
             };

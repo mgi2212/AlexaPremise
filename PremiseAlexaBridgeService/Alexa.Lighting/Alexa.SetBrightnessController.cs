@@ -47,14 +47,14 @@ namespace Alexa.Lighting
     #endregion
 
     public class AlexaSetBrightnessController : AlexaControllerBase<
-        AlexaSetBrightnessRequestPayload, 
-        ControlResponse, 
+        AlexaSetBrightnessRequestPayload,
+        ControlResponse,
         AlexaSetBrightnessControllerRequest>, IAlexaController
     {
         private readonly string @namespace = "Alexa.BrightnessController";
         private readonly string[] directiveNames = { "SetBrightness" };
         private readonly string[] premiseProperties = { "Brightness" };
-       private readonly string[] alexaProperties = { "brightness" };
+        private readonly string[] alexaProperties = { "brightness" };
         public readonly AlexaLighting PropertyHelpers;
 
         public AlexaSetBrightnessController(AlexaSetBrightnessControllerRequest request)
@@ -89,7 +89,7 @@ namespace Alexa.Lighting
             return @namespace;
         }
 
-        public string [] GetDirectiveNames()
+        public string[] GetDirectiveNames()
         {
             return directiveNames;
         }
@@ -108,7 +108,6 @@ namespace Alexa.Lighting
             return false;
         }
 
-
         public string AssemblyTypeName()
         {
             return this.GetType().AssemblyQualifiedName;
@@ -121,7 +120,7 @@ namespace Alexa.Lighting
             {
                 @namespace = @namespace,
                 name = alexaProperties[0],
-                value = (int)((brightness * 100)).LimitToRange(0,100),
+                value = (int)((brightness * 100)).LimitToRange(0, 100),
                 timeOfSample = GetUtcTime()
             };
             return property;
@@ -140,7 +139,7 @@ namespace Alexa.Lighting
                 double setValue = (double)(payload.brightness / 100.00).LimitToRange(0.00, 1.000);
                 this.endpoint.SetValue(premiseProperties[0], setValue.ToString()).GetAwaiter().GetResult();
                 property.timeOfSample = GetUtcTime();
-                property.value = ((int)(setValue * 100)).LimitToRange(0,100);
+                property.value = ((int)(setValue * 100)).LimitToRange(0, 100);
                 this.response.context.properties.Add(property);
                 this.Response.Event.header.name = "Response";
                 this.response.context.properties.AddRange(this.PropertyHelpers.FindRelatedProperties(endpoint, @namespace));

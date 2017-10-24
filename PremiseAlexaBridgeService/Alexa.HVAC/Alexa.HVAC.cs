@@ -1,19 +1,14 @@
-﻿using Alexa;
+﻿using Alexa.EndpointHealth;
 using Alexa.SmartHomeAPI.V3;
 using PremiseAlexaBridgeService;
 using System;
 using System.Collections.Generic;
 using SYSWebSockClient;
-using Alexa.Controller;
-using Alexa.EndpointHealth;
 
 namespace Alexa.HVAC
 {
     public class AlexaHVAC : IAlexaDeviceType
     {
-
-        //Dictionary<string, IAlexaController> Controllers = new Dictionary<string, IAlexaController>();
-
         public List<AlexaProperty> FindRelatedProperties(IPremiseObject endpoint, string currentController)
         {
             List<AlexaProperty> relatedProperties = new List<AlexaProperty>();
@@ -25,9 +20,6 @@ namespace Alexa.HVAC
             }
             foreach (Capability capability in discoveryEndpoint.capabilities)
             {
-                //if (capability.@interface == currentController)
-                //    continue;
-
                 AlexaProperty property = null;
 
                 switch (capability.@interface)
@@ -145,10 +137,10 @@ namespace Alexa.HVAC
                             break;
                     }
                 }
-                if (subscription != null)
-                {
-                    subscriptions.Add(discoveryEndpoint.endpointId + "." + capability.@interface, subscription);
-                }
+                //if (subscription != null)
+                //{
+                //    subscriptions.Add(discoveryEndpoint.endpointId + "." + capability.@interface, subscription);
+                //}
             }
             return subscriptions;
         }

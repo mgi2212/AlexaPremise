@@ -47,14 +47,14 @@ namespace Alexa.HVAC
     #endregion
 
     public class AlexaAdjustTargetTemperatureController : AlexaControllerBase<
-        AlexaAdjustTemperatureRequestPayload, 
+        AlexaAdjustTemperatureRequestPayload,
         ControlResponse,
         AlexaAdjustTargetTemperatureControllerRequest>, IAlexaController
     {
         private readonly string @namespace = "Alexa.ThermostatController";
         private readonly string[] directiveNames = { "AdjustTargetTemperature" };
         private readonly string[] premiseProperties = { "Temperature" };
-       private readonly string[] alexaProperties = { "targetSetpoint" };
+        private readonly string[] alexaProperties = { "targetSetpoint" };
         public readonly AlexaHVAC PropertyHelpers;
 
         public AlexaAdjustTargetTemperatureController(AlexaAdjustTargetTemperatureControllerRequest request)
@@ -90,7 +90,7 @@ namespace Alexa.HVAC
             return @namespace;
         }
 
-        public string [] GetDirectiveNames()
+        public string[] GetDirectiveNames()
         {
             return directiveNames;
         }
