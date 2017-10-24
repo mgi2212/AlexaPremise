@@ -61,7 +61,7 @@ namespace Alexa.SmartHomeAPI.V2
             set { _applianceId = value != null && value.Length > 256 ? value.Substring(0, 256) : value; }
         }
 
-        [DataMember(Name = "friendlyDescription", EmitDefaultValue = false, Order = 2)]
+        [DataMember(Name = "friendlyDescription", EmitDefaultValue = false, Order = 4)]
         private string _friendlyDescription;
         public string friendlyDescription
         {
@@ -88,7 +88,7 @@ namespace Alexa.SmartHomeAPI.V2
             set { _manufacturerName = value != null && value.Length > 128 ? value.Substring(0, 128) : value; }
         }
 
-        [DataMember(Name = "modelName", EmitDefaultValue = false, Order = 4)]
+        [DataMember(Name = "modelName", EmitDefaultValue = false, Order = 8)]
         private string _modelName;
         public string modelName
         {
@@ -104,11 +104,11 @@ namespace Alexa.SmartHomeAPI.V2
             set { _version = value != null && value.Length > 128 ? value.Substring(0, 128) : value; }
         }
 
-        [DataMember(Name = "applianceTypes", EmitDefaultValue = false, Order = 6)]
+        [DataMember(Name = "applianceTypes", EmitDefaultValue = false, Order = 10)]
         public List<string> applianceTypes { get; set; }
 
         // If present in on the Premise object, will end up as the first entry in appliancetypes[]
-        [DataMember(Name = "applianceType", EmitDefaultValue = false, Order = 7)]
+        [DataMember(Name = "applianceType", EmitDefaultValue = false, Order = 11)]
         private string _applianceType;
         public string applianceType
         {
@@ -116,23 +116,8 @@ namespace Alexa.SmartHomeAPI.V2
             set { _applianceType = value != null && value.Length > 128 ? value.Substring(0, 128) : value; }
         }
 
-        [DataMember(Name = "actions", EmitDefaultValue = false, Order = 8)]
-        public List<string> actions { get; set; }
-
-        [DataMember(Name = "additionalApplianceDetails", EmitDefaultValue = false, Order = 9)]
-        public AdditionalApplianceDetails additionalApplianceDetails { get; set; }
-
-        [DataMember(Name = "isReachable", EmitDefaultValue = true, Order = 10)]
-        public bool isReachable { get; set; }
-
-        [DataMember(Name = "version", EmitDefaultValue = false, Order = 11)]
-        private string _version;
-        public string version {
-            get { return _version; }
-            set { _version = value != null && value.Length > 128 ? value.Substring(0, 128) : value; }
-        }
-
-        public static int CompareByFriendlyName(Appliance appliance1, Appliance appliance2) {
+        public static int CompareByFriendlyName(Appliance appliance1, Appliance appliance2)
+        {
             return String.Compare(appliance1.friendlyName, appliance2.friendlyName, StringComparison.InvariantCultureIgnoreCase);
         }
     }
