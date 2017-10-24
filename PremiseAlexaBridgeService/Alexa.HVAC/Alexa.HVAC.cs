@@ -137,10 +137,10 @@ namespace Alexa.HVAC
                             break;
                     }
                 }
-                if (subscription != null)
-                {
-                    subscriptions.Add(discoveryEndpoint.endpointId + "." + capability.@interface, subscription);
-                }
+                //if (subscription != null)
+                //{
+                //    subscriptions.Add(discoveryEndpoint.endpointId + "." + capability.@interface, subscription);
+                //}
             }
             return subscriptions;
         }

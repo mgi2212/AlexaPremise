@@ -153,8 +153,11 @@ namespace Alexa.Power
                     base.ReportError(AlexaErrorTypes.INVALID_DIRECTIVE, "Operation not supported!");
                     return;
                 }
-
-                this.endpoint.SetValue(premiseProperties[0], valueToSend).GetAwaiter().GetResult();
+                // only change powerState if it needs to.
+                if (this.GetPropertyState().value != property.value)
+                {
+                    this.endpoint.SetValue(premiseProperties[0], valueToSend).GetAwaiter().GetResult();
+                }
                 property.timeOfSample = GetUtcTime();
                 this.response.context.properties.Add(property);
                 this.response.context.properties.AddRange(this.PropertyHelpers.FindRelatedProperties(endpoint, @namespace));

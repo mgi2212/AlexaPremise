@@ -7,6 +7,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Nito.AsyncEx;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Configuration;
 using System.Diagnostics;
@@ -298,7 +299,11 @@ namespace PremiseAlexaBridgeService
 
                         foreach (IAlexaDeviceType deviceType in all)
                         {
-                            deviceType.SubcribeToSupportedProperties(endpoint, discoveryEndpoint, callback);
+                            Dictionary<string, IPremiseSubscription> subs = deviceType.SubcribeToSupportedProperties(endpoint, discoveryEndpoint, callback);
+                            foreach (string key in subs.Keys)
+                            {
+                                subscriptions.Add(key, subs[key]);
+                            }
                         }
                     }
                 }
