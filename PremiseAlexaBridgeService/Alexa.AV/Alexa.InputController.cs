@@ -73,7 +73,7 @@ namespace Alexa.AV
         private const string Namespace = "Alexa.InputController";
         private readonly string[] _alexaProperties = { "input" };
         private readonly string[] _directiveNames = { "SelectInput" };
-        private readonly string[] _premiseProperties = { "" };
+        private readonly string[] _premiseProperties = { }; // proactive state updates not supported now
 
         #endregion Fields
 
