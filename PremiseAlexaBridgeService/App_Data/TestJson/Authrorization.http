@@ -1,6 +1,6 @@
-POST http://yourhost:port/V3/Alexa.svc/json/Authorization/
+POST http://localhost:51124/AlexaV3.svc/json/Authorization/
 Content-Type: application/json
-Host: yourhost
+Host: localhost
 
 {
   "directive": {
@@ -13,15 +13,15 @@ Host: yourhost
     },
     "payload": {
       "grant": {
-        "access_token": "Atza|IwEBIIVGSe9...",
-        "refresh_token": "Atzr|IwEBIHLuPW...",
+        "access_token": "Atza|IwEBIIVGSe9zNfkhSMYDFXTfhobWlzdOrguV",
+        "refresh_token": "Atzr|IwEBIHLuPWN3uPLgBWUWf8FzhczJaiaKicM",
         "token_type": "bearer",
         "expires_in": 900
       },
       "grantee": {
         "type": "BearerToken",
         "token": "some-token",
-        "localAccessToken": "your-token"
+        "localAccessToken": "t110ftc0d"
       }
     }
   }

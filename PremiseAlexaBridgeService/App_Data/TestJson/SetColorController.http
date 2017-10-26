@@ -1,6 +1,6 @@
-POST http://yourhost:port/V3/Alexa.svc/json/Control/SetColor/
+POST http://localhost:51124/V3/Alexa.svc/json/Control/SetColor/
 Content-Type: application/json
-Host: yourhost
+Host: localhost
 
 {
   "directive": {
@@ -15,7 +15,7 @@ Host: yourhost
       "scope": {
             "type":"BearerToken",
             "token":"some-token",
-            "localAccessToken": "your-token"
+            "localAccessToken": "t110ftc0d"
       },
       "endpointId": "9B40217D-7664-4613-A2BF-967F700CEAF8",
       "cookie": {
