@@ -17,7 +17,7 @@ Host: localhost
       "scope":{
             "type":"BearerToken",
             "token":"some-token",
-            "localAccessToken": "t110ftc0d"
+            "localAccessToken": "premise-access-token"
       }
     },
     "payload": {

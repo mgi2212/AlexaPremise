@@ -16,7 +16,7 @@ Host: localhost
       "cookie": {},
       "scope":{
             "type":"BearerToken",
-            "token":"t110ftc0d"
+            "token":"premise-access-token"
       }
     },
     "payload": {

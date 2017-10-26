@@ -15,7 +15,7 @@ Host: localhost
       "scope": {
         "type": "BearerToken",
         "token": "some-token",
-        "localAccessToken": "t110ftc0d"
+        "localAccessToken": "premise-access-token"
       },
       "endpointId": "3B4443C7-AE2B-4A07-9605-A3E9042BDC01",
       "cookie": {
