@@ -1,15 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
-using Alexa.EndpointHealth;
+using Alexa.Controller;
+using Alexa.Power;
 using Alexa.SmartHomeAPI.V3;
 using PremiseAlexaBridgeService;
 using SYSWebSockClient;
-using Alexa.Controller;
-using System.Runtime.Serialization;
 
-namespace Alexa.HVAC
+namespace Alexa.AV
 {
-    public class AlexaHVAC : IAlexaDeviceType
+    public class AlexaAV : IAlexaDeviceType
     {
         #region Methods
 
@@ -22,36 +21,51 @@ namespace Alexa.HVAC
             {
                 return relatedProperties;
             }
+
             foreach (Capability capability in discoveryEndpoint.capabilities)
             {
+                if (capability.@interface == currentController)
+                    continue;
+
+                AlexaProperty property;
+
                 switch (capability.@interface)
                 {
-                    case "Alexa.EndpointHealth":
+                    case "Alexa.PowerController":
                         {
-                            AlexaEndpointHealthController controller = new AlexaEndpointHealthController(endpoint);
-                            AlexaProperty property = controller.GetPropertyState();
-                            if (property != null)
-                            {
-                                relatedProperties.Add(property);
-                            }
+                            AlexaSetPowerStateController controller = new AlexaSetPowerStateController(endpoint);
+                            property = controller.GetPropertyState();
+                            relatedProperties.Add(property);
                         }
                         break;
 
-                    case "Alexa.TemperatureSensor":
+                    case "Alexa.ChannelController":
                         {
-                            AlexaTemperatureSensor controller = new AlexaTemperatureSensor(endpoint);
-                            AlexaProperty property = controller.GetPropertyState();
-                            if (property != null)
-                            {
-                                relatedProperties.Add(property);
-                            }
+                            AlexaChannelController controller = new AlexaChannelController(endpoint);
+                            property = controller.GetPropertyState();
+                            relatedProperties.Add(property);
                         }
                         break;
 
-                    case "Alexa.ThermostatController":
+                    case "Alexa.InputController":
                         {
-                            AlexaThermostatController controller = new AlexaThermostatController(endpoint);
-                            relatedProperties.AddRange(controller.GetPropertyStates());
+                            AlexaInputController controller = new AlexaInputController(endpoint);
+                            relatedProperties.AddUnique(controller.GetPropertyStates());
+                        }
+                        break;
+
+                    case "Alexa.PlaybackController":
+                        {
+                            AlexaPlaybackController controller = new AlexaPlaybackController(endpoint);
+                            property = controller.GetPropertyState();
+                            relatedProperties.Add(property);
+                        }
+                        break;
+
+                    case "Alexa.Speaker":
+                        {
+                            AlexaSpeaker controller = new AlexaSpeaker(endpoint);
+                            relatedProperties.AddUnique(controller.GetPropertyStates());
                         }
                         break;
                 }
@@ -78,12 +92,20 @@ namespace Alexa.HVAC
 
                 switch (capability.@interface)
                 {
-                    case "Alexa.TemperatureSensor":
-                        controller = new AlexaTemperatureSensor();
+                    case "Alexa.ChannelController":
+                        controller = new AlexaChannelController();
                         break;
 
-                    case "Alexa.ThermostatController":
-                        controller = new AlexaThermostatController();
+                    case "Alexa.InputController":
+                        controller = new AlexaInputController();
+                        break;
+
+                    case "Alexa.PlaybackController":
+                        controller = new AlexaPlaybackController();
+                        break;
+
+                    case "Alexa.Speaker":
+                        controller = new AlexaSpeaker();
                         break;
                 }
 
@@ -110,27 +132,14 @@ namespace Alexa.HVAC
         #endregion Methods
     }
 
-    [DataContract]
-    public class AlexaTemperature
+    internal class Channel
     {
-        #region Fields
+        #region Properties
 
-        [DataMember(Name = "scale")]
-        public string scale;
+        private string affiliateCallSign { get; set; }
+        private string callSign { get; set; }
+        private float number { get; set; }
 
-        [DataMember(Name = "value")]
-        public double value;
-
-        #endregion Fields
-
-        #region Constructors
-
-        public AlexaTemperature(double temperature, string scaleString)
-        {
-            value = temperature;
-            scale = scaleString;
-        }
-
-        #endregion Constructors
+        #endregion Properties
     }
 }

@@ -1,9 +1,10 @@
-﻿using Alexa.Controller;
-using Alexa.SmartHomeAPI.V3;
-using PremiseAlexaBridgeService;
-using System;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.Serialization;
+using Alexa.Controller;
+using Alexa.SmartHomeAPI.V3;
+using PremiseAlexaBridgeService;
 using SYSWebSockClient;
 
 namespace Alexa.Lighting
@@ -13,21 +14,18 @@ namespace Alexa.Lighting
     [DataContract]
     public class AlexaSetBrightnessControllerRequest
     {
+        #region Properties
+
         [DataMember(Name = "directive")]
         public AlexaSetBrightnessControllerRequestDirective directive { get; set; }
+
+        #endregion Properties
     }
 
     [DataContract]
     public class AlexaSetBrightnessControllerRequestDirective
     {
-        [DataMember(Name = "header")]
-        public Header header { get; set; }
-
-        [DataMember(Name = "endpoint")]
-        public DirectiveEndpoint endpoint { get; set; }
-
-        [DataMember(Name = "payload")]
-        public AlexaSetBrightnessRequestPayload payload { get; set; }
+        #region Constructors
 
         public AlexaSetBrightnessControllerRequestDirective()
         {
@@ -35,27 +33,52 @@ namespace Alexa.Lighting
             endpoint = new DirectiveEndpoint();
             payload = new AlexaSetBrightnessRequestPayload();
         }
+
+        #endregion Constructors
+
+        #region Properties
+
+        [DataMember(Name = "endpoint")]
+        public DirectiveEndpoint endpoint { get; set; }
+
+        [DataMember(Name = "header")]
+        public Header header { get; set; }
+
+        [DataMember(Name = "payload")]
+        public AlexaSetBrightnessRequestPayload payload { get; set; }
+
+        #endregion Properties
     }
 
     [DataContract]
     public class AlexaSetBrightnessRequestPayload
     {
+        #region Properties
+
         [DataMember(Name = "brightness")]
         public int brightness { get; set; }
+
+        #endregion Properties
     }
 
-    #endregion
+    #endregion SetBrightness Data Contracts
 
     public class AlexaSetBrightnessController : AlexaControllerBase<
         AlexaSetBrightnessRequestPayload,
         ControlResponse,
         AlexaSetBrightnessControllerRequest>, IAlexaController
     {
+        #region Fields
+
+        public readonly AlexaLighting PropertyHelpers;
         private readonly string @namespace = "Alexa.BrightnessController";
+        private readonly string[] alexaProperties = { "brightness" };
         private readonly string[] directiveNames = { "SetBrightness" };
         private readonly string[] premiseProperties = { "Brightness" };
-        private readonly string[] alexaProperties = { "brightness" };
-        public readonly AlexaLighting PropertyHelpers;
+
+        #endregion Fields
+
+        #region Constructors
 
         public AlexaSetBrightnessController(AlexaSetBrightnessControllerRequest request)
             : base(request)
@@ -68,10 +91,19 @@ namespace Alexa.Lighting
         {
             PropertyHelpers = new AlexaLighting();
         }
+
         public AlexaSetBrightnessController()
-            : base()
         {
             PropertyHelpers = new AlexaLighting();
+        }
+
+        #endregion Constructors
+
+        #region Methods
+
+        public string AssemblyTypeName()
+        {
+            return GetType().AssemblyQualifiedName;
         }
 
         public string[] GetAlexaProperties()
@@ -81,7 +113,12 @@ namespace Alexa.Lighting
 
         public string GetAssemblyTypeName()
         {
-            return this.GetType().AssemblyQualifiedName;
+            return GetType().AssemblyQualifiedName;
+        }
+
+        public string[] GetDirectiveNames()
+        {
+            return directiveNames;
         }
 
         public string GetNameSpace()
@@ -89,33 +126,14 @@ namespace Alexa.Lighting
             return @namespace;
         }
 
-        public string[] GetDirectiveNames()
+        public string[] GetPremiseProperties()
         {
-            return directiveNames;
-        }
-        public bool HasAlexaProperty(string property)
-        {
-            return (this.alexaProperties.Contains(property));
-        }
-
-        public bool HasPremiseProperty(string property)
-        {
-            foreach (string s in this.premiseProperties)
-            {
-                if (s == property)
-                    return true;
-            }
-            return false;
-        }
-
-        public string AssemblyTypeName()
-        {
-            return this.GetType().AssemblyQualifiedName;
+            return premiseProperties;
         }
 
         public AlexaProperty GetPropertyState()
         {
-            double brightness = this.endpoint.GetValue<double>(premiseProperties[0]).GetAwaiter().GetResult();
+            double brightness = Endpoint.GetValue<double>(premiseProperties[0]).GetAwaiter().GetResult();
             AlexaProperty property = new AlexaProperty
             {
                 @namespace = @namespace,
@@ -126,28 +144,50 @@ namespace Alexa.Lighting
             return property;
         }
 
+        public List<AlexaProperty> GetPropertyStates()
+        {
+            return null;
+        }
+
+        public bool HasAlexaProperty(string property)
+        {
+            return (alexaProperties.Contains(property));
+        }
+
+        public bool HasPremiseProperty(string property)
+        {
+            foreach (string s in premiseProperties)
+            {
+                if (s == property)
+                    return true;
+            }
+            return false;
+        }
+
         public void ProcessControllerDirective()
         {
-            AlexaProperty property = new AlexaProperty(header)
+            AlexaProperty property = new AlexaProperty(Header)
             {
                 name = alexaProperties[0]
             };
-            response.Event.header.@namespace = "Alexa";
+            Response.Event.header.@namespace = "Alexa";
 
             try
             {
-                double setValue = (double)(payload.brightness / 100.00).LimitToRange(0.00, 1.000);
-                this.endpoint.SetValue(premiseProperties[0], setValue.ToString()).GetAwaiter().GetResult();
+                double setValue = (Payload.brightness / 100.00).LimitToRange(0.00, 1.000);
+                Endpoint.SetValue(premiseProperties[0], setValue.ToString()).GetAwaiter().GetResult();
                 property.timeOfSample = GetUtcTime();
                 property.value = ((int)(setValue * 100)).LimitToRange(0, 100);
-                this.response.context.properties.Add(property);
-                this.Response.Event.header.name = "Response";
-                this.response.context.properties.AddRange(this.PropertyHelpers.FindRelatedProperties(endpoint, @namespace));
+                Response.context.properties.Add(property);
+                Response.Event.header.name = "Response";
+                Response.context.properties.AddRange(PropertyHelpers.FindRelatedProperties(Endpoint, @namespace));
             }
             catch (Exception ex)
             {
-                base.ReportError(AlexaErrorTypes.INTERNAL_ERROR, ex.Message);
+                ReportError(AlexaErrorTypes.INTERNAL_ERROR, ex.Message);
             }
         }
+
+        #endregion Methods
     }
 }

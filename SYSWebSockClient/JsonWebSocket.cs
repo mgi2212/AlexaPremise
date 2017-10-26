@@ -5,22 +5,33 @@
     using System.Net.WebSockets;
     using System.Text;
     using System.Threading;
-    using System.Diagnostics;
-    using System.Threading.Tasks;
     using Alexa.RegisteredTasks;
+
     public class JsonWebSocket
     {
-        private object AccumulatorLock = new object();
+        #region Fields
+
+        private static int receiveCount;
+        private static int sendCount;
+        private readonly object AccumulatorLock = new object();
         private byte[] Accumulator = ArrayUtils<byte>.Empty;
         private int AccumulatorLength;
-        private BlockingCollection<byte[]> SendQueue; 
+        private BlockingCollection<byte[]> SendQueue;
 
-        private ClientWebSocket WebSocket = null;
+        private ClientWebSocket WebSocket;
+
+        #endregion Fields
+
+        #region Constructors
 
         public JsonWebSocket()
         {
             this.WebSocket = null;
         }
+
+        #endregion Constructors
+
+        #region Properties
 
         public WebSocketState ConnectionState
         {
@@ -37,11 +48,31 @@
             }
         }
 
+        #endregion Properties
+
+        #region Methods
+
+        public void Disconnect(WebSocketCloseStatus status = WebSocketCloseStatus.NormalClosure)
+        {
+            this.SendQueue.CompleteAdding();
+
+            this.WebSocket.CloseAsync(status, "Closing Connection", CancellationToken.None);
+        }
+
+        public void Send(string message)
+        {
+            byte[] sendBuffer = Encoding.UTF8.GetBytes(message);
+
+            Interlocked.Increment(ref sendCount);
+
+            this.SendQueue.Add(sendBuffer);
+        }
+
         protected async void Connect(string uri)
         {
             if (this.WebSocket != null)
             {
-                if (this?.WebSocket.State == WebSocketState.Open)
+                if (this.WebSocket.State == WebSocketState.Open)
                 {
                     this.Disconnect();
                 }
@@ -54,7 +85,8 @@
             SendQueue = null;
             SendQueue = new BlockingCollection<byte[]>();
 
-            await this.WebSocket.ConnectAsync(new Uri(uri), CancellationToken.None)?.ContinueWith(
+            await this.WebSocket.ConnectAsync(new Uri(uri), CancellationToken.None)
+                .ContinueWith(
                 (task) =>
                 {
                     if (this.WebSocket.State != WebSocketState.Open)
@@ -74,9 +106,6 @@
                     {
                         this.StartReceiving();
                     });
-
-                    //Task.Factory.StartNew(this.StartSending);
-                    //Task.Factory.StartNew(this.StartReceiving);
                 });
         }
 
@@ -91,38 +120,9 @@
         protected virtual void OnError(Exception error)
         {
         }
+
         protected virtual void OnMessage(string message)
         {
-        }
-
-        static int sendCount = 0;
-
-        public void Send(string message)
-        {
-            byte[] sendBuffer = Encoding.UTF8.GetBytes(message);
-
-            Interlocked.Increment(ref sendCount);
-
-            this.SendQueue.Add(sendBuffer);
-        }
-
-        private void StartSending()
-        {
-            foreach (var sendBuffer in this.SendQueue.GetConsumingEnumerable())
-            {
-                // Note: CHRISBE: ClientWebSocket SendAsync can be called from any thread, but
-                // SendAsync isn't thread safe - so you can't issue overlapped calls
-                // kind of lame
-                // ...sooo have to wait for it to complete
-                try
-                { 
-                    this.WebSocket.SendAsync(new ArraySegment<byte>(sendBuffer), WebSocketMessageType.Text, true, CancellationToken.None).GetAwaiter().GetResult();
-                }
-                catch (Exception ex)
-                {
-                    this.OnError(ex);
-                }
-            }
         }
 
         private void Accumulate(byte[] buffer, int count, bool endOfMessage)
@@ -135,7 +135,7 @@
             if (!endOfMessage)
                 return;
 
-            string message = string.Empty;
+            string message;
 
             lock (this.AccumulatorLock)
             {
@@ -150,21 +150,13 @@
             }
             catch
             {
+                // ignored
             }
         }
 
-        public void Disconnect(WebSocketCloseStatus status = WebSocketCloseStatus.NormalClosure)
-        {
-            this.SendQueue.CompleteAdding();
-
-            this.WebSocket.CloseAsync(status, "Closing Connection", CancellationToken.None);
-        }
-
-        static int receiveCount = 0;
-
         private void StartReceiving()
         {
-        loop:
+            loop:
             if (this.WebSocket.State != WebSocketState.Open)
                 return;
 
@@ -172,7 +164,7 @@
 
             WebSocketReceiveResult result;
             try
-            { 
+            {
                 result = this.WebSocket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None).GetAwaiter().GetResult();
             }
             catch (Exception)
@@ -188,12 +180,15 @@
                 case WebSocketMessageType.Text:
                     this.Accumulate(buffer, result.Count, result.EndOfMessage);
                     break;
+
                 case WebSocketMessageType.Binary:
                     this.Disconnect();
                     break;
+
                 case WebSocketMessageType.Close:
                     this.Disconnect();
                     break;
+
                 default:
                     this.Disconnect();
                     break;
@@ -201,5 +196,25 @@
 
             goto loop;
         }
+
+        private void StartSending()
+        {
+            foreach (var sendBuffer in this.SendQueue.GetConsumingEnumerable())
+            {
+                // Note: CHRISBE: ClientWebSocket SendAsync can be called from any thread, but
+                // SendAsync isn't thread safe - so you can't issue overlapped calls kind of lame
+                // ...sooo have to wait for it to complete
+                try
+                {
+                    this.WebSocket.SendAsync(new ArraySegment<byte>(sendBuffer), WebSocketMessageType.Text, true, CancellationToken.None).GetAwaiter().GetResult();
+                }
+                catch (Exception ex)
+                {
+                    this.OnError(ex);
+                }
+            }
+        }
+
+        #endregion Methods
     }
 }

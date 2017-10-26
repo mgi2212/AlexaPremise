@@ -1,80 +1,135 @@
 ﻿namespace SYSWebSockClient
 {
-    using Newtonsoft.Json;
     using System.Collections.Generic;
+
     #region SetName
+
     internal class SetNameFuture : JsonRPCFuture
     {
+        #region Fields
+
         public string @params;
+
+        #endregion Fields
+
+        #region Constructors
 
         public SetNameFuture(string objectId, string name)
             : base(objectId, "setName")
         {
             this.@params = name;
         }
+
+        #endregion Constructors
     }
-    #endregion
+
+    #endregion SetName
 
     #region GetName
+
     internal class GetNameFuture : JsonRPCFuture
     {
+        #region Constructors
+
         public GetNameFuture(string objectId)
             : base(objectId, "getName")
         {
         }
+
+        #endregion Constructors
     }
-    #endregion
+
+    #endregion GetName
 
     #region SetDisplayName
+
     internal class SetDisplayNameFuture : JsonRPCFuture
     {
+        #region Fields
+
         public string @params;
+
+        #endregion Fields
+
+        #region Constructors
 
         public SetDisplayNameFuture(string objectId, string name)
             : base(objectId, "setDisplayName")
         {
             this.@params = name;
         }
+
+        #endregion Constructors
     }
-    #endregion
+
+    #endregion SetDisplayName
 
     #region GetDisplayName
+
     internal class GetDisplayNameFuture : JsonRPCFuture
     {
+        #region Constructors
+
         public GetDisplayNameFuture(string objectId)
             : base(objectId, "getDisplayName")
         {
         }
+
+        #endregion Constructors
     }
-    #endregion
+
+    #endregion GetDisplayName
 
     #region SetDescription
+
     internal class SetDescriptionFuture : JsonRPCFuture
     {
+        #region Fields
+
         public string @params;
+
+        #endregion Fields
+
+        #region Constructors
 
         public SetDescriptionFuture(string objectId, string name)
             : base(objectId, "setDescription")
         {
             this.@params = name;
         }
+
+        #endregion Constructors
     }
-    #endregion
+
+    #endregion SetDescription
 
     #region GetDescription
+
     internal class GetDescriptionFuture : JsonRPCFuture
     {
+        #region Constructors
+
         public GetDescriptionFuture(string objectId)
             : base(objectId, "getDescription")
         {
         }
+
+        #endregion Constructors
     }
-    #endregion
+
+    #endregion GetDescription
 
     #region SetValue
+
     internal class SetValueFuture : JsonRPCFuture
     {
+        #region Fields
+
         public Params @params;
+
+        #endregion Fields
+
+        #region Constructors
 
         public SetValueFuture(string objectId, string name, string value)
             : base(objectId, "setValue")
@@ -82,10 +137,20 @@
             this.@params = new Params(name, value);
         }
 
+        #endregion Constructors
+
+        #region Classes
+
         internal class Params
         {
+            #region Fields
+
             public string name;
             public string value;
+
+            #endregion Fields
+
+            #region Constructors
 
             public Params(
                 string propertyName,
@@ -94,226 +159,383 @@
                 this.name = propertyName;
                 this.value = value;
             }
+
+            #endregion Constructors
         };
+
+        #endregion Classes
     }
-    #endregion
+
+    #endregion SetValue
 
     #region GetValue
+
     internal class GetValueFuture : JsonRPCFuture
     {
+        #region Fields
+
         public string @params;
+
+        #endregion Fields
+
+        #region Constructors
 
         public GetValueFuture(string objectId, string name)
             : base(objectId, "getValue")
         {
             this.@params = name;
         }
+
+        #endregion Constructors
     }
-    #endregion
+
+    #endregion GetValue
 
     #region GetPropertyAsText
+
     internal class GetPropertyAsTextFuture : JsonRPCFuture
     {
+        #region Fields
+
         public string @params;
+
+        #endregion Fields
+
+        #region Constructors
 
         public GetPropertyAsTextFuture(string objectId, string propertyId)
             : base(objectId, "getPropertyAsText")
         {
             this.@params = propertyId;
         }
+
+        #endregion Constructors
     }
-    #endregion
+
+    #endregion GetPropertyAsText
 
     #region GetClass
+
     internal class GetClassFuture : JsonRPCFuture
     {
+        #region Constructors
+
         public GetClassFuture(string objectId)
             : base(objectId, "getClass")
         {
         }
+
+        #endregion Constructors
     }
-    #endregion
+
+    #endregion GetClass
 
     #region SetClass
+
     internal class SetClassFuture : JsonRPCFuture
     {
+        #region Fields
+
         public string @params;
+
+        #endregion Fields
+
+        #region Constructors
 
         public SetClassFuture(string objectId, string classObjectId)
             : base(objectId, "setClass")
         {
             this.@params = classObjectId;
         }
+
+        #endregion Constructors
     }
-    #endregion
+
+    #endregion SetClass
 
     #region GetFlags
+
     internal class GetFlagsFuture : JsonRPCFuture
     {
+        #region Fields
+
+        private readonly string _name;
+        private readonly string _value;
+
+        #endregion Fields
+
+        #region Constructors
+
         public GetFlagsFuture(string objectId, string name, string value)
             : base(objectId, "getFlags")
         {
+            _name = name;
+            _value = value;
         }
+
+        #endregion Constructors
     }
-    #endregion
+
+    #endregion GetFlags
 
     #region GetParent
+
     internal class GetParentFuture : JsonRPCFuture
     {
+        #region Constructors
+
         public GetParentFuture(string objectId)
             : base(objectId, "getParent")
         {
         }
+
+        #endregion Constructors
     }
-    #endregion
+
+    #endregion GetParent
 
     #region GetRoot
+
     internal class GetRootFuture : JsonRPCFuture
     {
+        #region Constructors
+
         public GetRootFuture(string objectId)
             : base(objectId, "getRoot")
         {
         }
+
+        #endregion Constructors
     }
-    #endregion
+
+    #endregion GetRoot
 
     #region GetPath
+
     internal class GetPathFuture : JsonRPCFuture
     {
+        #region Constructors
+
         public GetPathFuture(string objectId)
             : base(objectId, "getPath")
         {
         }
+
+        #endregion Constructors
     }
-    #endregion
+
+    #endregion GetPath
 
     #region GetObjectID
+
     internal class GetObjectIDFuture : JsonRPCFuture
     {
+        #region Constructors
+
         public GetObjectIDFuture(string objectId)
             : base(objectId, "getObjectID")
         {
         }
+
+        #endregion Constructors
     }
-    #endregion
+
+    #endregion GetObjectID
 
     #region GetObject
+
     internal class GetObjectFuture : JsonRPCFuture
     {
+        #region Fields
+
         public string @params;
+
+        #endregion Fields
+
+        #region Constructors
 
         public GetObjectFuture(string objectId, string subObject)
             : base(objectId, "getObject")
         {
             this.@params = subObject;
         }
+
+        #endregion Constructors
     }
-    #endregion
+
+    #endregion GetObject
 
     #region GetAll
+
     internal class GetAllFuture : JsonRPCFuture
     {
+        #region Constructors
+
         public GetAllFuture(string objectId)
             : base(objectId, "getAll")
         {
         }
+
+        #endregion Constructors
     }
-    #endregion
+
+    #endregion GetAll
 
     #region GetChildren
+
     internal class GetChildrenFuture : JsonRPCFuture
     {
+        #region Constructors
+
         public GetChildrenFuture(string objectId)
             : base(objectId, "getChildren")
         {
         }
+
+        #endregion Constructors
     }
-    #endregion
+
+    #endregion GetChildren
 
     #region GetClasses
+
     internal class GetClassesFuture : JsonRPCFuture
     {
+        #region Constructors
+
         public GetClassesFuture(string objectId)
             : base(objectId, "getClasses")
         {
         }
+
+        #endregion Constructors
     }
-    #endregion
+
+    #endregion GetClasses
 
     #region GetSubClasses
+
     internal class GetSubClassesFuture : JsonRPCFuture
     {
+        #region Constructors
+
         public GetSubClassesFuture(string objectId)
             : base(objectId, "getSubClasses")
         {
         }
+
+        #endregion Constructors
     }
-    #endregion
+
+    #endregion GetSubClasses
 
     #region GetSuperClasses
+
     internal class GetSuperClassesFuture : JsonRPCFuture
     {
+        #region Constructors
+
         public GetSuperClassesFuture(string objectId)
             : base(objectId, "getSuperClasses")
         {
         }
+
+        #endregion Constructors
     }
-    #endregion
+
+    #endregion GetSuperClasses
 
     #region GetProperties
+
     internal class GetPropertiesFuture : JsonRPCFuture
     {
+        #region Constructors
+
         public GetPropertiesFuture(string objectId)
             : base(objectId, "getProperties")
         {
         }
+
+        #endregion Constructors
     }
-    #endregion
+
+    #endregion GetProperties
 
     #region GetAggregatedProperties
+
     internal class GetAggregatedPropertiesFuture : JsonRPCFuture
     {
+        #region Constructors
+
         public GetAggregatedPropertiesFuture(string objectId)
             : base(objectId, "getAggregatedProperties")
         {
         }
+
+        #endregion Constructors
     }
-    #endregion
+
+    #endregion GetAggregatedProperties
 
     #region GetMethods
+
     internal class GetMethodsFuture : JsonRPCFuture
     {
+        #region Constructors
+
         public GetMethodsFuture(string objectId)
             : base(objectId, "getMethods")
         {
         }
+
+        #endregion Constructors
     }
-    #endregion
+
+    #endregion GetMethods
 
     #region GetConnectedObjects
+
     internal class GetConnectedObjectsFuture : JsonRPCFuture
     {
+        #region Constructors
+
         public GetConnectedObjectsFuture(string objectId)
             : base(objectId, "getConnectedObjects")
         {
         }
+
+        #endregion Constructors
     }
-    #endregion
+
+    #endregion GetConnectedObjects
 
     #region GetCreatableObjects
+
     internal class GetCreatableObjectsFuture : JsonRPCFuture
     {
+        #region Constructors
+
         public GetCreatableObjectsFuture(string objectId)
             : base(objectId, "getCreatableObjects")
         {
         }
+
+        #endregion Constructors
     }
-    #endregion
+
+    #endregion GetCreatableObjects
 
     #region CreateObject
+
     internal class CreateObjectFuture : JsonRPCFuture
     {
+        #region Fields
+
         public Params @params;
+
+        #endregion Fields
+
+        #region Constructors
 
         public CreateObjectFuture(string objectId, string type, string name)
             : base(objectId, "createObject")
@@ -321,10 +543,20 @@
             this.@params = new Params(type, name);
         }
 
+        #endregion Constructors
+
+        #region Classes
+
         internal class Params
         {
-            public string type;
+            #region Fields
+
             public string name;
+            public string type;
+
+            #endregion Fields
+
+            #region Constructors
 
             public Params(
                 string type,
@@ -333,40 +565,72 @@
                 this.type = type;
                 this.name = name;
             }
+
+            #endregion Constructors
         };
+
+        #endregion Classes
     }
-    #endregion
+
+    #endregion CreateObject
 
     #region DeleteObject
+
     internal class DeleteObjectFuture : JsonRPCFuture
     {
+        #region Fields
+
         public string @params;
+
+        #endregion Fields
+
+        #region Constructors
 
         public DeleteObjectFuture(string objectId, string subObjectId)
             : base(objectId, "deleteObject")
         {
             this.@params = subObjectId;
         }
+
+        #endregion Constructors
     }
-    #endregion
+
+    #endregion DeleteObject
 
     #region IsOfType
+
     internal class IsOfTypeFuture : JsonRPCFuture
     {
+        #region Fields
+
         public string @params;
+
+        #endregion Fields
+
+        #region Constructors
 
         public IsOfTypeFuture(string objectId, string typeId)
             : base(objectId, "isOfType")
         {
             this.@params = typeId;
         }
+
+        #endregion Constructors
     }
-    #endregion
+
+    #endregion IsOfType
 
     #region Subscribe
+
     internal class SubscribeFuture : JsonRPCFuture
     {
+        #region Fields
+
         public Params @params;
+
+        #endregion Fields
+
+        #region Constructors
 
         public SubscribeFuture(string objectId, string propertyName, string callbackMethod)
             : base(objectId, "subscribeToProperty")
@@ -374,11 +638,21 @@
             this.@params = new Params(objectId, propertyName, callbackMethod);
         }
 
+        #endregion Constructors
+
+        #region Classes
+
         internal class Params
         {
+            #region Fields
+
+            public string callbackMethod;
             public string objectId;
             public string propertyName;
-            public string callbackMethod;
+
+            #endregion Fields
+
+            #region Constructors
 
             public Params(
                 string objectId,
@@ -389,27 +663,49 @@
                 this.propertyName = propertyName;
                 this.callbackMethod = callbackMethod;
             }
+
+            #endregion Constructors
         };
+
+        #endregion Classes
     }
-    #endregion
+
+    #endregion Subscribe
 
     #region Unsubscribe
+
     internal class UnsubscribeFuture : JsonRPCFuture
     {
+        #region Fields
+
         public long @params;
+
+        #endregion Fields
+
+        #region Constructors
 
         public UnsubscribeFuture(string objectId, long subscriptionId)
             : base(objectId, "unsubscribe")
         {
             this.@params = subscriptionId;
         }
+
+        #endregion Constructors
     }
-    #endregion
+
+    #endregion Unsubscribe
 
     #region SelectFuture
+
     internal class SelectFuture : JsonRPCFuture
     {
+        #region Fields
+
         public Params @params;
+
+        #endregion Fields
+
+        #region Constructors
 
         public SelectFuture(string objectId, dynamic returnClause, dynamic whereClause)
             : base(objectId, "select")
@@ -417,17 +713,32 @@
             this.@params = new Params(returnClause, whereClause);
         }
 
+        #endregion Constructors
+
+        #region Classes
+
         internal class Params
         {
+            #region Fields
+
             public ICollection<string> @return;
             public dynamic @where;
+
+            #endregion Fields
+
+            #region Constructors
 
             public Params(dynamic returnClause, dynamic whereClause)
             {
                 this.@return = returnClause;
                 this.@where = whereClause;
             }
+
+            #endregion Constructors
         };
+
+        #endregion Classes
     }
-    #endregion
+
+    #endregion SelectFuture
 }

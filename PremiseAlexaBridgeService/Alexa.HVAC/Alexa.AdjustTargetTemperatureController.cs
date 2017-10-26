@@ -1,9 +1,10 @@
-﻿using Alexa.Controller;
-using Alexa.SmartHomeAPI.V3;
-using PremiseAlexaBridgeService;
-using System;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.Serialization;
+using Alexa.Controller;
+using Alexa.SmartHomeAPI.V3;
+using PremiseAlexaBridgeService;
 using SYSWebSockClient;
 
 namespace Alexa.HVAC
@@ -13,21 +14,18 @@ namespace Alexa.HVAC
     [DataContract]
     public class AlexaAdjustTargetTemperatureControllerRequest
     {
+        #region Properties
+
         [DataMember(Name = "directive")]
         public AlexaAdjustTargetTemperatureControllerRequestDirective directive { get; set; }
+
+        #endregion Properties
     }
 
     [DataContract]
     public class AlexaAdjustTargetTemperatureControllerRequestDirective
     {
-        [DataMember(Name = "header")]
-        public Header header { get; set; }
-
-        [DataMember(Name = "endpoint")]
-        public DirectiveEndpoint endpoint { get; set; }
-
-        [DataMember(Name = "payload")]
-        public AlexaAdjustTemperatureRequestPayload payload { get; set; }
+        #region Constructors
 
         public AlexaAdjustTargetTemperatureControllerRequestDirective()
         {
@@ -35,27 +33,52 @@ namespace Alexa.HVAC
             endpoint = new DirectiveEndpoint();
             payload = new AlexaAdjustTemperatureRequestPayload();
         }
+
+        #endregion Constructors
+
+        #region Properties
+
+        [DataMember(Name = "endpoint")]
+        public DirectiveEndpoint endpoint { get; set; }
+
+        [DataMember(Name = "header")]
+        public Header header { get; set; }
+
+        [DataMember(Name = "payload")]
+        public AlexaAdjustTemperatureRequestPayload payload { get; set; }
+
+        #endregion Properties
     }
 
     [DataContract]
     public class AlexaAdjustTemperatureRequestPayload
     {
+        #region Properties
+
         [DataMember(Name = "targetSetpointDelta")]
-        public AlexaTemperatureSensorResponsePayload targetSetpointDelta { get; set; }
+        public AlexaTemperature targetSetpointDelta { get; set; }
+
+        #endregion Properties
     }
 
-    #endregion
+    #endregion AdjustTemperature Data Contracts
 
     public class AlexaAdjustTargetTemperatureController : AlexaControllerBase<
         AlexaAdjustTemperatureRequestPayload,
         ControlResponse,
         AlexaAdjustTargetTemperatureControllerRequest>, IAlexaController
     {
-        private readonly string @namespace = "Alexa.ThermostatController";
-        private readonly string[] directiveNames = { "AdjustTargetTemperature" };
-        private readonly string[] premiseProperties = { "Temperature" };
-        private readonly string[] alexaProperties = { "targetSetpoint" };
+        #region Fields
+
         public readonly AlexaHVAC PropertyHelpers;
+        private const string Namespace = "Alexa.ThermostatController";
+        private readonly string[] _alexaProperties = { "targetSetpoint" };
+        private readonly string[] _directiveNames = { "AdjustTargetTemperature" };
+        private readonly string[] _premiseProperties = { "Temperature" };
+
+        #endregion Fields
+
+        #region Constructors
 
         public AlexaAdjustTargetTemperatureController(AlexaAdjustTargetTemperatureControllerRequest request)
             : base(request)
@@ -70,49 +93,42 @@ namespace Alexa.HVAC
         }
 
         public AlexaAdjustTargetTemperatureController()
-            : base()
         {
             PropertyHelpers = new AlexaHVAC();
         }
 
+        #endregion Constructors
+
+        #region Methods
+
+        public string AssemblyTypeName()
+        {
+            return GetType().AssemblyQualifiedName;
+        }
+
         public string[] GetAlexaProperties()
         {
-            return alexaProperties;
+            return _alexaProperties;
         }
 
         public string GetAssemblyTypeName()
         {
-            return this.GetType().AssemblyQualifiedName;
-        }
-
-        public string GetNameSpace()
-        {
-            return @namespace;
+            return GetType().AssemblyQualifiedName;
         }
 
         public string[] GetDirectiveNames()
         {
-            return directiveNames;
+            return _directiveNames;
         }
 
-        public bool HasAlexaProperty(string property)
+        public string GetNameSpace()
         {
-            return (this.alexaProperties.Contains(property));
+            return Namespace;
         }
 
-        public bool HasPremiseProperty(string property)
+        public string[] GetPremiseProperties()
         {
-            foreach (string s in this.premiseProperties)
-            {
-                if (s == property)
-                    return true;
-            }
-            return false;
-        }
-
-        public string AssemblyTypeName()
-        {
-            return this.GetType().AssemblyQualifiedName;
+            return _premiseProperties;
         }
 
         public AlexaProperty GetPropertyState()
@@ -120,50 +136,54 @@ namespace Alexa.HVAC
             return null;
         }
 
+        public List<AlexaProperty> GetPropertyStates()
+        {
+            return null;
+        }
+
+        public bool HasAlexaProperty(string property)
+        {
+            return (_alexaProperties.Contains(property));
+        }
+
+        public bool HasPremiseProperty(string property)
+        {
+            return _premiseProperties.Contains(property);
+        }
+
         public void ProcessControllerDirective()
         {
-            //AlexaProperty property = new AlexaProperty(header)
-            //{
-            //    name = alexaProperty
-            //};
-
-            response.Event.header.@namespace = "Alexa";
+            Response.Event.header.@namespace = "Alexa";
 
             try
             {
+                Temperature target = new Temperature(Endpoint.GetValue<double>("CurrentSetPoint").GetAwaiter().GetResult());
 
-                Temperature target = new Temperature(this.endpoint.GetValue<double>("CurrentSetPoint").GetAwaiter().GetResult());
-
-                switch (payload.targetSetpointDelta.scale)
+                switch (Payload.targetSetpointDelta.scale)
                 {
                     case "FAHRENHEIT":
-                        target.Fahrenheit += payload.targetSetpointDelta.value;
+                        target.Fahrenheit += Payload.targetSetpointDelta.value;
                         break;
+
                     case "CELCIUS":
-                        target.Celcius += payload.targetSetpointDelta.value;
+                        target.Celcius += Payload.targetSetpointDelta.value;
                         break;
+
                     case "KELVIN":
-                        target.Kelvin += payload.targetSetpointDelta.value;
+                        target.Kelvin += Payload.targetSetpointDelta.value;
                         break;
                 }
 
-                this.endpoint.SetValue("CurrentSetPoint", Math.Round(target.Kelvin, 1).ToString()).GetAwaiter().GetResult();
-
-                //AlexaProperty targetSetpoint = new AlexaProperty
-                //{
-                //    @namespace = @namespace,
-                //    name = "targetSetpoint",
-                //    value = new AlexaTemperatureSensorResponsePayload(Math.Round(target.Fahrenheit, 1), "FAHRENHEIT"),
-                //    timeOfSample = GetUtcTime()
-                //};
-                //this.response.context.properties.Add(targetSetpoint);
-                this.Response.Event.header.name = "Response";
-                this.response.context.properties.AddRange(this.PropertyHelpers.FindRelatedProperties(endpoint, @namespace));
+                Endpoint.SetValue("CurrentSetPoint", Math.Round(target.Kelvin, 1).ToString()).GetAwaiter().GetResult();
+                Response.Event.header.name = "Response";
+                Response.context.properties.AddRange(PropertyHelpers.FindRelatedProperties(Endpoint, Namespace));
             }
             catch (Exception ex)
             {
-                base.ReportError(AlexaErrorTypes.INTERNAL_ERROR, ex.Message);
+                ReportError(AlexaErrorTypes.INTERNAL_ERROR, ex.Message);
             }
         }
+
+        #endregion Methods
     }
 }

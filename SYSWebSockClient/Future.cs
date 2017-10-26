@@ -6,31 +6,42 @@
 
     internal static class FutureId
     {
+        #region Fields
+
         private static long NextId;
+
+        #endregion Fields
+
+        #region Methods
 
         public static long Next()
         {
-            return Interlocked.Increment(ref FutureId.NextId);
+            return Interlocked.Increment(ref NextId);
         }
+
+        #endregion Methods
     }
 
     internal class Future
     {
-        private ManualResetEventSlim Event;
+        #region Fields
+
+        private readonly ManualResetEventSlim Event;
         private Exception Exception;
         private object Result;
+
+        #endregion Fields
+
+        #region Constructors
 
         public Future()
         {
             this.Event = new ManualResetEventSlim();
         }
 
-        public void Notify(Exception exception, object result)
-        {
-            this.Exception = exception;
-            this.Result = result;
-            this.Event.Set();
-        }
+        #endregion Constructors
+
+        #region Methods
 
         public object Await()
         {
@@ -46,6 +57,15 @@
 
             throw this.Exception;
         }
+
+        public void Notify(Exception exception, object result)
+        {
+            this.Exception = exception;
+            this.Result = result;
+            this.Event.Set();
+        }
+
+        #endregion Methods
     }
 
     /// <summary>
@@ -53,10 +73,16 @@
     /// </summary>
     internal class JsonRPCFuture : Future
     {
-        private static string JsonRPCVersion = "2.0";
-        public string jsonrpc = JsonRPCFuture.JsonRPCVersion;
+        #region Fields
+
         public long id;
+        public string jsonrpc = JsonRPCVersion;
         public string method;
+        private static string JsonRPCVersion = "2.0";
+
+        #endregion Fields
+
+        #region Constructors
 
         protected JsonRPCFuture(string objectId, string method)
         {
@@ -73,9 +99,16 @@
             else
                 this.method = objectId + "/" + method;
         }
+
+        #endregion Constructors
+
+        #region Methods
+
         public override string ToString()
         {
             return JsonConvert.SerializeObject(this);
         }
+
+        #endregion Methods
     }
 }

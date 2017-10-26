@@ -1,9 +1,10 @@
-﻿using Alexa.Controller;
-using Alexa.SmartHomeAPI.V3;
-using PremiseAlexaBridgeService;
-using System;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.Serialization;
+using Alexa.Controller;
+using Alexa.SmartHomeAPI.V3;
+using PremiseAlexaBridgeService;
 using SYSWebSockClient;
 
 namespace Alexa.HVAC
@@ -13,81 +14,80 @@ namespace Alexa.HVAC
     [DataContract]
     public class AlexaSetThermostatModeControllerRequest
     {
+        #region Properties
+
         [DataMember(Name = "directive")]
         public AlexaSetThermostatModeControllerRequestDirective directive { get; set; }
+
+        #endregion Properties
     }
 
     [DataContract]
     public class AlexaSetThermostatModeControllerRequestDirective
     {
-        [DataMember(Name = "header")]
-        public Header header { get; set; }
-
-        [DataMember(Name = "endpoint")]
-        public DirectiveEndpoint endpoint { get; set; }
-
-        [DataMember(Name = "payload")]
-        public AlexaSetThermostatModePayload payload { get; set; }
+        #region Constructors
 
         public AlexaSetThermostatModeControllerRequestDirective()
         {
             header = new Header();
-            endpoint = new DirectiveEndpoint();
+            Endpoint = new DirectiveEndpoint();
             payload = new AlexaSetThermostatModePayload();
         }
+
+        #endregion Constructors
+
+        #region Properties
+
+        [DataMember(Name = "Endpoint")]
+        public DirectiveEndpoint Endpoint { get; set; }
+
+        [DataMember(Name = "header")]
+        public Header header { get; set; }
+
+        [DataMember(Name = "payload")]
+        public AlexaSetThermostatModePayload payload { get; set; }
+
+        #endregion Properties
     }
 
     [DataContract]
     public class AlexaSetThermostatModePayload
     {
-        [DataMember(Name = "thermostatMode")]
-        public AlexaSetThermostatModePayloadValue thermostatMode { get; set; }
-        //public object thermostatMode { get; set; }
+        #region Constructors
 
         public AlexaSetThermostatModePayload()
         {
             thermostatMode = new AlexaSetThermostatModePayloadValue();
         }
 
+        //public object thermostatMode { get; set; }
         public AlexaSetThermostatModePayload(string value)
         {
             thermostatMode = new AlexaSetThermostatModePayloadValue(value);
             //thermostatMode = value;
         }
+
+        #endregion Constructors
     }
 
-    [DataContract]
-    public class AlexaSetThermostatModePayloadValue
-    {
-        [DataMember(Name = "value")]
-        public string value { get; set; }
-
-        [DataMember(Name = "customName", EmitDefaultValue = false)]
-        public string customName { get; set; }
-
-        public AlexaSetThermostatModePayloadValue(string valueString)
-        {
-            value = valueString;
-        }
-
-        public AlexaSetThermostatModePayloadValue()
-        {
-
-        }
-    }
-
-    #endregion
+    #endregion SetColorTemperature Data Contracts
 
     public class AlexaSetThermostatModeController : AlexaControllerBase<
         AlexaSetThermostatModePayload,
         ControlResponse,
         AlexaSetThermostatModeControllerRequest>, IAlexaController
     {
-        private readonly string @namespace = "Alexa.ThermostatController";
-        private readonly string[] directiveNames = { "SetThermostatMode" };
-        private readonly string[] premiseProperties = { "TemperatureMode", "FanControl" };
-        private readonly string[] alexaProperties = { "thermostatMode" };
+        #region Fields
+
         public readonly AlexaHVAC PropertyHelpers;
+        private readonly string @namespace = "Alexa.ThermostatController";
+        private readonly string[] alexaProperties = { "thermostatMode" };
+        private readonly string[] directiveNames = { "SetThermostatMode" };
+        private readonly string[] premiseProperties = { "TemperatureMode" };
+
+        #endregion Fields
+
+        #region Constructors
 
         public AlexaSetThermostatModeController(AlexaSetThermostatModeControllerRequest request)
             : base(request)
@@ -102,9 +102,17 @@ namespace Alexa.HVAC
         }
 
         public AlexaSetThermostatModeController()
-            : base()
         {
             PropertyHelpers = new AlexaHVAC();
+        }
+
+        #endregion Constructors
+
+        #region Methods
+
+        public string AssemblyTypeName()
+        {
+            return GetType().AssemblyQualifiedName;
         }
 
         public string[] GetAlexaProperties()
@@ -114,12 +122,7 @@ namespace Alexa.HVAC
 
         public string GetAssemblyTypeName()
         {
-            return this.GetType().AssemblyQualifiedName;
-        }
-
-        public string GetNameSpace()
-        {
-            return @namespace;
+            return GetType().AssemblyQualifiedName;
         }
 
         public string[] GetDirectiveNames()
@@ -127,29 +130,19 @@ namespace Alexa.HVAC
             return directiveNames;
         }
 
-        public bool HasAlexaProperty(string property)
+        public string GetNameSpace()
         {
-            return (this.alexaProperties.Contains(property));
+            return @namespace;
         }
 
-        public bool HasPremiseProperty(string property)
+        public string[] GetPremiseProperties()
         {
-            foreach (string s in this.premiseProperties)
-            {
-                if (s == property)
-                    return true;
-            }
-            return false;
-        }
-
-        public string AssemblyTypeName()
-        {
-            return this.GetType().AssemblyQualifiedName;
+            return premiseProperties;
         }
 
         public AlexaProperty GetPropertyState()
         {
-            int mode = this.endpoint.GetValue<int>(premiseProperties[0]).GetAwaiter().GetResult();
+            int mode = Endpoint.GetValue<int>(premiseProperties[0]).GetAwaiter().GetResult();
             AlexaProperty property = new AlexaProperty
             {
                 @namespace = @namespace,
@@ -160,47 +153,61 @@ namespace Alexa.HVAC
             return property;
         }
 
+        public List<AlexaProperty> GetPropertyStates()
+        {
+            return null;
+        }
+
+        public bool HasAlexaProperty(string property)
+        {
+            return alexaProperties.Contains(property);
+        }
+
+        public bool HasPremiseProperty(string property)
+        {
+            return premiseProperties.Contains(property);
+        }
+
         public void ProcessControllerDirective()
         {
-            //AlexaProperty property = new AlexaProperty(header)
-            //{
-            //    name = alexaProperty
-            //};
-
-            response.Event.header.@namespace = "Alexa";
+            Response.Event.header.@namespace = "Alexa";
 
             try
             {
-                string mode = this.request.directive.payload.thermostatMode.value;
+                string mode = Request.directive.payload.thermostatMode.value;
                 switch (mode)
                 {
                     case "AUTO":
-                        this.endpoint.SetValue(premiseProperties[0], "0").GetAwaiter().GetResult();
+                        Endpoint.SetValue(premiseProperties[0], "0").GetAwaiter().GetResult();
                         break;
+
                     case "HEAT":
-                        this.endpoint.SetValue(premiseProperties[0], "1").GetAwaiter().GetResult();
+                        Endpoint.SetValue(premiseProperties[0], "1").GetAwaiter().GetResult();
                         break;
+
                     case "COOL":
-                        this.endpoint.SetValue(premiseProperties[0], "2").GetAwaiter().GetResult();
+                        Endpoint.SetValue(premiseProperties[0], "2").GetAwaiter().GetResult();
                         break;
+
                     case "OFF": // 3 is emergency heat in premise
-                        this.endpoint.SetValue(premiseProperties[0], "4").GetAwaiter().GetResult();
+                        Endpoint.SetValue(premiseProperties[0], "4").GetAwaiter().GetResult();
                         break;
+
                     case "ECO":
                     default:
                         // not supported
                         break;
                 }
-                //property.timeOfSample = GetUtcTime();
-                //property.value = mode;
-                //this.response.context.properties.Add(property);
-                this.Response.Event.header.name = "Response";
-                this.response.context.properties.AddRange(this.PropertyHelpers.FindRelatedProperties(endpoint, @namespace));
+
+                Response.Event.header.name = "Response";
+                Response.context.properties.AddRange(PropertyHelpers.FindRelatedProperties(Endpoint, @namespace));
             }
             catch (Exception ex)
             {
-                base.ReportError(AlexaErrorTypes.INTERNAL_ERROR, ex.Message);
+                ReportError(AlexaErrorTypes.INTERNAL_ERROR, ex.Message);
             }
         }
+
+        #endregion Methods
     }
 }

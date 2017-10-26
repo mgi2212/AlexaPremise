@@ -7,8 +7,14 @@ namespace PremiseAlexaBridgeService
 {
     public sealed class AlexaBlockingQueue<T> : IEnumerable<T>
     {
-        private int _count = 0;
-        private Queue<T> _queue = new Queue<T>();
+        #region Fields
+
+        private readonly Queue<T> _queue = new Queue<T>();
+        private int _count;
+
+        #endregion Fields
+
+        #region Methods
 
         public T Dequeue()
         {
@@ -22,7 +28,10 @@ namespace PremiseAlexaBridgeService
 
         public void Enqueue(T data)
         {
-            if (data == null) throw new ArgumentNullException("data");
+            if (data == null)
+            {
+                throw new ArgumentNullException(nameof(data));
+            }
 
             lock (_queue)
             {
@@ -41,6 +50,7 @@ namespace PremiseAlexaBridgeService
         {
             return ((IEnumerable<T>)this).GetEnumerator();
         }
-    }
 
+        #endregion Methods
+    }
 }

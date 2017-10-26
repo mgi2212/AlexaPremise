@@ -30,11 +30,9 @@ const healthyResponse = {
 };
 
 exports.handler = function (event, context) {
-
     log('event', JSON.stringify(event));
 
     switch (event.directive.header.namespace) {
-
         case 'Alexa':
             if (event.directive.header.name === "ReportState") {
                 getCustomerProfile(event, context, "ReportState");
@@ -59,9 +57,14 @@ exports.handler = function (event, context) {
         case 'Alexa.ColorController':
             getCustomerProfile(event, context, "Control/" + event.directive.header.name);
             break;
+        case 'Alexa.Speaker':
+            getCustomerProfile(event, context, "Control/Speaker");
+            break;
+        case 'Alexa.InputController':
+            getCustomerProfile(event, context, "Control/InputController");
+            break;
         case 'Alexa.Authorization':
             if (event.directive.header.name === 'AcceptGrant') {
-
                 var lwa_params = 'grant_type=authorization_code';
                 lwa_params += '&code=' + event.directive.payload.grant.code;
                 lwa_params += '&client_id=' + skill_client_id;
@@ -92,7 +95,6 @@ function callLWA(data, event, context) {
     // Set up the request
     var result = "";
     var post_req = https.request(post_options, function (response) {
-
         response.setEncoding('utf-8');
 
         response.on('data', function (chunk) {
@@ -107,7 +109,6 @@ function callLWA(data, event, context) {
             event.directive.payload.grant.client_secret = skill_client_secret;
 
             getCustomerProfile(event, context, "Authorization");
-
         });
 
         response.on('error', function (e) {
@@ -121,7 +122,6 @@ function callLWA(data, event, context) {
 }
 
 function getCustomerProfile(event, context, command) {
-
     // prepare request options
     var get_options = {
         host: 'api.amazon.com',
@@ -138,7 +138,6 @@ function getCustomerProfile(event, context, command) {
     // Set up the request
     var result = "";
     var get_req = https.request(get_options, function (response) {
-
         response.setEncoding('utf-8');
 
         response.on('data', function (chunk) {
@@ -163,7 +162,6 @@ function getCustomerProfile(event, context, command) {
 }
 
 function getCustomerEndpoint(event, context, command, customer_info) {
-
     var dynamodb = new AWS.DynamoDB();
 
     var params = {
@@ -176,7 +174,6 @@ function getCustomerEndpoint(event, context, command, customer_info) {
     };
 
     dynamodb.getItem(params, function (err, data) {
-
         if (err) {
             log('Database Error', err.stack);
             return;
@@ -190,7 +187,6 @@ function getCustomerEndpoint(event, context, command, customer_info) {
 }
 
 function proxyEvent(event, context, command, customer_endpoint) {
-
     setLocalAccessToken(event, customer_endpoint);
     var post_data = JSON.stringify(event, 'utf-8');
 
@@ -221,7 +217,6 @@ function proxyEvent(event, context, command, customer_endpoint) {
     }
 
     var post_req = protocol.request(post_options, function (response) { // changes to http when debugging
-
         response.setEncoding('utf-8');
 
         response.on('data', function (chunk) {
@@ -250,7 +245,6 @@ function proxyEvent(event, context, command, customer_endpoint) {
 }
 
 function cleanUpResponse(event, response) {
-
     //log('clean-up', response);
     //log('directive', event.directive.header.namespace);
     var clean = false;
@@ -288,7 +282,6 @@ function cleanUpResponse(event, response) {
 }
 
 function setLocalAccessToken(event, customer_endpoint) {
-
     var local_access_token = customer_endpoint.access_token.S;
 
     switch (event.directive.header.namespace) {
@@ -307,6 +300,8 @@ function setLocalAccessToken(event, customer_endpoint) {
         case 'Alexa.ColorTemperatureController':
         case 'Alexa.ThermostatController':
         case 'Alexa.TemperatureSensor':
+        case 'Alexa.Speaker':
+        case 'Alexa.InputController':
             event.directive.endpoint.scope.localAccessToken = local_access_token;
             break;
         case 'Alexa.Authorization':
@@ -335,6 +330,8 @@ function getBearerToken(event) {
         case 'Alexa.ColorTemperatureController':
         case 'Alexa.ThermostatController':
         case 'Alexa.TemperatureSensor':
+        case 'Alexa.Speaker':
+        case 'Alexa.InputController':
             token = event.directive.endpoint.scope.token;
             break;
         case 'Alexa.Authorization':

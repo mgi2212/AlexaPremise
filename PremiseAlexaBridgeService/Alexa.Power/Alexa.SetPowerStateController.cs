@@ -1,8 +1,9 @@
-﻿using Alexa.Controller;
-using Alexa.SmartHomeAPI.V3;
-using System;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.Serialization;
+using Alexa.Controller;
+using Alexa.SmartHomeAPI.V3;
 using SYSWebSockClient;
 
 namespace Alexa.Power
@@ -12,21 +13,18 @@ namespace Alexa.Power
     [DataContract]
     public class AlexaSetPowerStateControllerRequest
     {
+        #region Properties
+
         [DataMember(Name = "directive")]
         public AlexaSetPowerStateControllerRequestDirective directive { get; set; }
+
+        #endregion Properties
     }
 
     [DataContract]
     public class AlexaSetPowerStateControllerRequestDirective
     {
-        [DataMember(Name = "header")]
-        public Header header { get; set; }
-
-        [DataMember(Name = "endpoint")]
-        public DirectiveEndpoint endpoint { get; set; }
-
-        [DataMember(Name = "payload")]
-        public AlexaSetPowerStateRequestPayload payload { get; set; }
+        #region Constructors
 
         public AlexaSetPowerStateControllerRequestDirective()
         {
@@ -34,25 +32,45 @@ namespace Alexa.Power
             endpoint = new DirectiveEndpoint();
             payload = new AlexaSetPowerStateRequestPayload();
         }
+
+        #endregion Constructors
+
+        #region Properties
+
+        [DataMember(Name = "endpoint")]
+        public DirectiveEndpoint endpoint { get; set; }
+
+        [DataMember(Name = "header")]
+        public Header header { get; set; }
+
+        [DataMember(Name = "payload")]
+        public AlexaSetPowerStateRequestPayload payload { get; set; }
+
+        #endregion Properties
     }
 
     public class AlexaSetPowerStateRequestPayload
     {
-
     }
 
-    #endregion
+    #endregion PowerState Data Contracts
 
     public class AlexaSetPowerStateController : AlexaControllerBase<
         AlexaSetPowerStateRequestPayload,
         ControlResponse,
         AlexaSetPowerStateControllerRequest>, IAlexaController
     {
+        #region Fields
+
         public readonly AlexaPower PropertyHelpers;
-        private readonly string[] directiveNames = { "TurnOn", "TurnOff" };
         private readonly string @namespace = "Alexa.PowerController";
-        private readonly string[] premiseProperties = { "PowerState" };
         private readonly string[] alexaProperties = { "powerState" };
+        private readonly string[] directiveNames = { "TurnOn", "TurnOff" };
+        private readonly string[] premiseProperties = { "PowerState" };
+
+        #endregion Fields
+
+        #region Constructors
 
         public AlexaSetPowerStateController(AlexaSetPowerStateControllerRequest request)
             : base(request)
@@ -67,9 +85,17 @@ namespace Alexa.Power
         }
 
         public AlexaSetPowerStateController()
-            : base()
         {
             PropertyHelpers = new AlexaPower();
+        }
+
+        #endregion Constructors
+
+        #region Methods
+
+        public string AssemblyTypeName()
+        {
+            return GetType().AssemblyQualifiedName;
         }
 
         public string[] GetAlexaProperties()
@@ -79,12 +105,7 @@ namespace Alexa.Power
 
         public string GetAssemblyTypeName()
         {
-            return this.GetType().AssemblyQualifiedName;
-        }
-
-        public string GetNameSpace()
-        {
-            return @namespace;
+            return GetType().AssemblyQualifiedName;
         }
 
         public string[] GetDirectiveNames()
@@ -92,14 +113,42 @@ namespace Alexa.Power
             return directiveNames;
         }
 
+        public string GetNameSpace()
+        {
+            return @namespace;
+        }
+
+        public string[] GetPremiseProperties()
+        {
+            return premiseProperties;
+        }
+
+        public AlexaProperty GetPropertyState()
+        {
+            bool powerState = Endpoint.GetValue<bool>(premiseProperties[0]).GetAwaiter().GetResult();
+            AlexaProperty property = new AlexaProperty
+            {
+                @namespace = @namespace,
+                name = alexaProperties[0],
+                value = (powerState ? "ON" : "OFF"),
+                timeOfSample = GetUtcTime()
+            };
+            return property;
+        }
+
+        public List<AlexaProperty> GetPropertyStates()
+        {
+            return null;
+        }
+
         public bool HasAlexaProperty(string property)
         {
-            return (this.alexaProperties.Contains(property));
+            return (alexaProperties.Contains(property));
         }
 
         public bool HasPremiseProperty(string property)
         {
-            foreach (string s in this.premiseProperties)
+            foreach (string s in premiseProperties)
             {
                 if (s == property)
                     return true;
@@ -107,68 +156,52 @@ namespace Alexa.Power
             return false;
         }
 
-
-        public string AssemblyTypeName()
-        {
-            return this.GetType().AssemblyQualifiedName;
-        }
-
-        public AlexaProperty GetPropertyState()
-        {
-            bool powerState = endpoint.GetValue<bool>(premiseProperties[0]).GetAwaiter().GetResult();
-            AlexaProperty property = new AlexaProperty
-            {
-                @namespace = @namespace,
-                name = alexaProperties[0],
-                value = (powerState == true ? "ON" : "OFF"),
-                timeOfSample = GetUtcTime()
-            };
-            return property;
-        }
-
         public void ProcessControllerDirective()
         {
-            AlexaProperty property = new AlexaProperty(header)
+            AlexaProperty property = new AlexaProperty(Header)
             {
                 name = alexaProperties[0]
             };
 
-            response.Event.header.@namespace = "Alexa";
+            Response.Event.header.@namespace = "Alexa";
 
             try
             {
                 string valueToSend;
-                if (header.name == "TurnOff")
+                switch (Header.name)
                 {
-                    valueToSend = "False";
-                    property.value = "OFF";
-                }
-                else if (header.name == "TurnOn")
-                {
-                    valueToSend = "True";
-                    property.value = "ON";
-                }
-                else
-                {
-                    base.ReportError(AlexaErrorTypes.INVALID_DIRECTIVE, "Operation not supported!");
-                    return;
+                    case "TurnOff":
+                        valueToSend = "False";
+                        property.value = "OFF";
+                        break;
+
+                    case "TurnOn":
+                        valueToSend = "True";
+                        property.value = "ON";
+                        break;
+
+                    default:
+                        ReportError(AlexaErrorTypes.INVALID_DIRECTIVE, "Operation not supported!");
+                        return;
                 }
                 // only change powerState if it needs to.
-                if (this.GetPropertyState().value != property.value)
+                if (GetPropertyState().value != property.value)
                 {
-                    this.endpoint.SetValue(premiseProperties[0], valueToSend).GetAwaiter().GetResult();
+                    Endpoint.SetValue(premiseProperties[0], valueToSend).GetAwaiter().GetResult();
                 }
                 property.timeOfSample = GetUtcTime();
-                this.response.context.properties.Add(property);
-                this.response.context.properties.AddRange(this.PropertyHelpers.FindRelatedProperties(endpoint, @namespace));
+                Response.context.properties.Add(property);
+                Response.context.properties.AddRange(PropertyHelpers.FindRelatedProperties(Endpoint, @namespace));
             }
             catch (Exception ex)
             {
-                base.ReportError(AlexaErrorTypes.INTERNAL_ERROR, ex.Message);
+                ReportError(AlexaErrorTypes.INTERNAL_ERROR, ex.Message);
                 return;
             }
 
-            this.Response.Event.header.name = "Response";
+            Response.Event.header.name = "Response";
         }
+
+        #endregion Methods
     }
 }

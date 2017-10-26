@@ -1,24 +1,29 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Threading.Tasks;
 
 namespace SYSWebSockClient
 {
-
     public interface IPremiseSubscription
     {
+        #region Methods
+
         Task Unsubscribe();
+
+        #endregion Methods
     }
 
     public class PremiseSubscription : IPremiseSubscription
     {
-        private SYSClient SysClient;
-        private string ObjectId; 
-        private long SubscriptionId;
+        #region Fields
+
         public string clientSideSubscriptionId;
+        private string ObjectId;
+        private long SubscriptionId;
+        private SYSClient SysClient;
+
+        #endregion Fields
+
+        #region Constructors
 
         internal PremiseSubscription(SYSClient sysClient, string objectId, long subscriptionId, string clientSubscriptionId)
         {
@@ -28,16 +33,22 @@ namespace SYSWebSockClient
             this.clientSideSubscriptionId = clientSubscriptionId;
         }
 
+        #endregion Constructors
+
+        #region Methods
+
         Task IPremiseSubscription.Unsubscribe()
         {
             var future = new UnsubscribeFuture(this.ObjectId, this.SubscriptionId);
 
             this.SysClient.Send(future, out Task task);
-            if (!this.SysClient.Subscriptions.TryRemove(this.clientSideSubscriptionId, out Subscription subscription))
+            if (!this.SysClient.Subscriptions.TryRemove(this.clientSideSubscriptionId, out Subscription _))
             {
-                Debug.WriteLine(string.Format("Subscription {0} Not Found", this.clientSideSubscriptionId));
+                Debug.WriteLine($"Subscription {this.clientSideSubscriptionId} Not Found");
             }
             return task;
         }
+
+        #endregion Methods
     }
 }
