@@ -470,7 +470,8 @@ namespace PremiseAlexaBridgeService
             catch
             {
                 response.context = null;
-                response.@event.payload = new AlexaErrorResponsePayload(AlexaErrorTypes.INTERNAL_ERROR, string.Format("Cannot find device {0} on server.", directive.endpoint.endpointId));
+                response.@event.payload = new AlexaErrorResponsePayload(AlexaErrorTypes.INTERNAL_ERROR,
+                    $"Cannot find device {directive.endpoint.endpointId} on server.");
                 return response;
             }
 
@@ -487,7 +488,8 @@ namespace PremiseAlexaBridgeService
             if (discoveryEndpoint == null)
             {
                 response.context = null;
-                response.@event.payload = new AlexaErrorResponsePayload(AlexaErrorTypes.INTERNAL_ERROR, string.Format("Cannot find or invalid discoveryJson for {0} on server.", directive.endpoint.endpointId));
+                response.@event.payload = new AlexaErrorResponsePayload(AlexaErrorTypes.INTERNAL_ERROR,
+                    $"Cannot find or invalid discoveryJson for {directive.endpoint.endpointId} on server.");
                 return response;
             }
             response.@event.endpoint.cookie = discoveryEndpoint.cookie;
@@ -539,7 +541,7 @@ namespace PremiseAlexaBridgeService
             }
 
             response.@event.header.name = "StateReport";
-            InformLastContact(string.Format("StateReport: {0}", response.@event?.endpoint?.cookie?.path)).GetAwaiter().GetResult();
+            InformLastContact($"StateReport: {response.@event?.endpoint?.cookie?.path}").GetAwaiter().GetResult();
             return response;
         }
 

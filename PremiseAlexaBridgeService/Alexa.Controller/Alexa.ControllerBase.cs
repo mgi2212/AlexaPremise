@@ -196,6 +196,23 @@ namespace Alexa.Controller
             ResponseContext = null;
             ResponseEvent.header.name = "ErrorResponse";
             ResponseEvent.payload = new AlexaErrorResponsePayload(type, message);
+            EventLogEntryType errorType;
+            switch (type)
+            {
+                case AlexaErrorTypes.INTERNAL_ERROR:
+                    errorType = EventLogEntryType.Error;
+                    break;
+
+                case AlexaErrorTypes.INVALID_VALUE:
+                case AlexaErrorTypes.VALUE_OUT_OF_RANGE:
+                    errorType = EventLogEntryType.Warning;
+                    break;
+
+                default:
+                    errorType = EventLogEntryType.Information;
+                    break;
+            }
+            PremiseServer.NotifyError(errorType, $"Controller Error: Controller:{RequestHeader.@namespace} ErrorType:{type} ErrorMessage:{message}", 200).GetAwaiter().GetResult();
         }
 
         public bool ValidateDirective(string[] directiveNames, string @namespace)

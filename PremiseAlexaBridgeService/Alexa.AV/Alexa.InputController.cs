@@ -224,7 +224,7 @@ namespace Alexa.AV
         {
             IPremiseObject switcher = null;
 
-            foreach (IPremiseObject child in this.Endpoint.GetChildren().GetAwaiter().GetResult())
+            foreach (IPremiseObject child in Endpoint.GetChildren().GetAwaiter().GetResult())
             {
                 // there should be an object of type matrix switcher zone as a child
                 if (child.IsOfType(PremiseServer.AlexaMatrixSwitcherZone).GetAwaiter().GetResult())

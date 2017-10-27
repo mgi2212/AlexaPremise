@@ -141,6 +141,7 @@
   <ItemGroup>
     <Content Include="Alexa.Video\readme.md" />
     <None Include="App_Data\alexa.txt" />
+    <Content Include="App_Data\Install-Premise.ps1" />
     <None Include="App_Data\Micro Service for DB Lambda.js" />
     <None Include="App_Data\Custom Skill Lambda.js" />
     <None Include="App_Data\Smart Home V3 Lambda.js" />
