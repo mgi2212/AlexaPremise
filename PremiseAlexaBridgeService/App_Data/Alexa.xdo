@@ -660,11 +660,11 @@ end if
           <Object ID="{31E99AB9-79D2-4BC1-9982-9D615DE6644E}" Name="AlexaStatus" Class="sys://Schema/System/Class" Virtual="-1">
             <Object ID="{68A63139-5D3A-4CDF-B7A4-46982D7A8C7B}" Name="Health" Flags="0x900" Class="sys://Schema/System/Boolean" DefaultValue="-1" />
             <Object ID="{415F83E3-A174-4CF1-B1B0-789D04494348}" Name="HealthDescription" Flags="0x900" Class="sys://Schema/System/Text" />
-            <Object ID="{B51289C5-A483-4FCE-8C6E-88B8115793D6}" Name="AlexaAsyncAuthorizationCode" Flags="0x2" Class="sys://Schema/System/Text" />
-            <Object ID="{0ACA49C6-F4A8-4456-9D22-02008D5FFC04}" Name="AlexaAsyncAuthorizationRefreshToken" Flags="0x2" Class="sys://Schema/System/Text" />
-            <Object ID="{470526F9-CD38-4E1C-85FE-2ACEAB3BD37A}" Name="AlexaAsyncAuthorizationCodeExpiry" Flags="0x900" Class="sys://Schema/System/Text" />
-            <Object ID="{66801F08-1126-4863-BCB8-D63F845ADD62}" Name="AlexaAsyncAuthorizationClientId" Flags="0x2" Class="sys://Schema/System/Text" />
-            <Object ID="{4CB14A20-1E8A-4017-8C21-2162C8D45C06}" Name="AlexaAsyncAuthorizationSecret" Flags="0x2" Class="sys://Schema/System/Text" />
+            <Object ID="{B51289C5-A483-4FCE-8C6E-88B8115793D6}" Name="AlexaAsyncAuthorizationCode" Flags="0x800" Class="sys://Schema/System/Text" Encoded="0" Persistent="-1" Browsable="-1" Mergeable="0" />
+            <Object ID="{0ACA49C6-F4A8-4456-9D22-02008D5FFC04}" Name="AlexaAsyncAuthorizationRefreshToken" Flags="0x800" Class="sys://Schema/System/Text" Encoded="0" Persistent="-1" Browsable="-1" Mergeable="0" />
+            <Object ID="{470526F9-CD38-4E1C-85FE-2ACEAB3BD37A}" Name="AlexaAsyncAuthorizationCodeExpiry" Flags="0x800" Class="sys://Schema/System/Text" Encoded="0" Persistent="-1" Browsable="-1" Mergeable="0" />
+            <Object ID="{66801F08-1126-4863-BCB8-D63F845ADD62}" Name="AlexaAsyncAuthorizationClientId" Flags="0x800" Class="sys://Schema/System/Text" Encoded="0" Persistent="-1" Browsable="-1" Mergeable="0" />
+            <Object ID="{4CB14A20-1E8A-4017-8C21-2162C8D45C06}" Name="AlexaAsyncAuthorizationSecret" Flags="0x800" Class="sys://Schema/System/Text" Encoded="0" Persistent="-1" Browsable="-1" Mergeable="0" />
             <Object ID="{7E3A5983-0C34-49AC-A156-59BCBA16EEEF}" Name="AlexaAsyncUpdateCount" Flags="0x900" Class="sys://Schema/System/Number" />
             <Object ID="{8944A9A9-5BBC-499C-8F5D-93DF139E7276}" Name="AccessToken" Flags="0x900" Class="sys://Schema/System/Text" />
             <Object ID="{98931CAB-FD97-4246-B75A-2CE43E7E4341}" Name="LastRefreshed" Flags="0x900" Class="sys://Schema/System/DateTime" DefaultValue="8/30/2015 3:11:44 PM" />
@@ -688,7 +688,7 @@ end if
             <Object ID="{AC71ED16-5354-46C1-A4BC-64E4CF8F8606}" Name="FriendlyDescription" Flags="0x900" Class="sys://Schema/System/Text" Mergeable="0" DisplayName="Human Readable Description" Description="Human Readable Description" />
             <Object ID="{41C98863-EDE3-4ED6-AF34-00DF88C7D154}" Name="FriendlyName" Flags="0x900" Class="sys://Schema/System/Text" Mergeable="0" DisplayName="What Alexa Hears" Description="What Alexa Hears" />
             <Object ID="{DD1A6ADE-99B2-4F21-9D81-EB8B734705E0}" Class="sys://Schema/System/SuperClass" LinkObject="{3470B9B5-E685-4EB2-ABC0-2F4CCD7F686A}" />
-            <Object ID="{44471B9C-A87E-4B7E-91B0-2AE8CB1B7D50}" Name="discoveryJson" Class="sys://Schema/System/Text" />
+            <Object ID="{44471B9C-A87E-4B7E-91B0-2AE8CB1B7D50}" Name="discoveryJson" Flags="0x900" Class="sys://Schema/System/Text" Encoded="-1" />
             <Object ID="{0FD0B716-45DD-435F-895D-73708A20C8B9}" Name="generateDiscoveryJson" Class="sys://Schema/Scripting/SimpleClassMethod">
               <![CDATA[
 Script=
