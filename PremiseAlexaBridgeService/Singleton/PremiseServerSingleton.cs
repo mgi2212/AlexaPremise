@@ -569,7 +569,7 @@ namespace PremiseAlexaBridgeService
             {
                 using (HttpWebResponse httpResponse = refreshRequest.GetResponse() as HttpWebResponse)
                 {
-                    if (httpResponse == null || httpResponse.StatusCode != HttpStatusCode.OK)
+                    if (httpResponse == null || !(httpResponse.StatusCode == HttpStatusCode.OK || httpResponse.StatusCode == HttpStatusCode.Accepted))
                     {
                         string message = $"Could not refresh async token! Error({httpResponse?.StatusCode})";
                         NotifyError(EventLogEntryType.Warning, message, eventID).GetAwaiter().GetResult();
