@@ -1,0 +1,19 @@
+body {
+  padding-top: 50px;
+}
+.home-page-content {
+  padding: 40px 15px;
+  text-align: center;
+}
+.Absolute-Center {
+  margin: auto;
+  position: absolute;
+  top: 0; left: 0; bottom: 0; right: 0;
+}
+.Absolute-Center.is-Responsive {
+  width: 50%; 
+  height: 50%;
+  min-width: 200px;
+  max-width: 400px;
+  padding: 40px;
+}

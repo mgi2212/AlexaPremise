@@ -1,16 +1,15 @@
-﻿using Alexa;
+﻿using System;
+using System.Collections.Generic;
 using Alexa.SmartHomeAPI.V3;
 using PremiseAlexaBridgeService;
-using System.Collections.Generic;
 using SYSWebSockClient;
-using Alexa.Controller;
-using System;
 
 namespace Alexa.EndpointHealth
 {
-
     public class AlexaEndpointHealth : IAlexaDeviceType
     {
+        #region Methods
+
         public List<AlexaProperty> FindRelatedProperties(IPremiseObject endpoint, string currentController)
         {
             List<AlexaProperty> relatedProperties = new List<AlexaProperty>();
@@ -35,15 +34,11 @@ namespace Alexa.EndpointHealth
                             property = controller.GetPropertyState();
                         }
                         break;
-
-                    default:
-                        break;
                 }
                 if (property != null)
                 {
                     relatedProperties.Add(property);
                 }
-
             }
             return relatedProperties;
         }
@@ -65,9 +60,7 @@ namespace Alexa.EndpointHealth
                     switch (capability.@interface)
                     {
                         case "Alexa.EndpointHealth":
-                            subscription = endpoint.Subscribe("IsReachable", this.GetType().AssemblyQualifiedName, callback).GetAwaiter().GetResult();
-                            break;
-                        default:
+                            subscription = endpoint.Subscribe("IsReachable", GetType().AssemblyQualifiedName, callback).GetAwaiter().GetResult();
                             break;
                     }
                 }
@@ -78,6 +71,7 @@ namespace Alexa.EndpointHealth
             }
             return subscriptions;
         }
+
+        #endregion Methods
     }
 }
-

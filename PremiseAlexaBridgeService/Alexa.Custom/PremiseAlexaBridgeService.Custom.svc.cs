@@ -1,8 +1,8 @@
-﻿using Alexa.Premise.Custom;
-using System;
+﻿using System;
+using System.Dynamic;
 using System.ServiceModel.Web;
+using Alexa.Premise.Custom;
 using SYSWebSockClient;
-
 
 namespace PremiseAlexaBridgeService
 {
@@ -30,16 +30,17 @@ namespace PremiseAlexaBridgeService
             {
                 response.header.@namespace = Faults.Namespace;
                 response.header.name = Faults.UnexpectedInformationReceivedError;
-                response.payload.exception = new ExceptionResponsePayload()
+                response.payload.exception = new ExceptionResponsePayload
                 {
                     faultingParameter = "alexaRequest"
                 };
                 return response;
             }
 
-            #endregion
+            #endregion CheckRequest
 
             #region Initialize Response
+
             try
             {
                 response.header.messageId = alexaRequest.header.messageId;
@@ -50,14 +51,14 @@ namespace PremiseAlexaBridgeService
             {
                 response.header.@namespace = Faults.QueryNamespace;
                 response.header.name = Faults.UnexpectedInformationReceivedError;
-                response.payload.exception = new ExceptionResponsePayload()
+                response.payload.exception = new ExceptionResponsePayload
                 {
                     faultingParameter = "alexaRequest.header.name"
                 };
                 return response;
             }
 
-            #endregion
+            #endregion Initialize Response
 
             //SYSClient client = new SYSClient();
 
@@ -67,14 +68,14 @@ namespace PremiseAlexaBridgeService
             {
                 response.header.@namespace = Faults.QueryNamespace;
                 response.header.name = Faults.DependentServiceUnavailableError;
-                response.payload.exception = new ExceptionResponsePayload()
+                response.payload.exception = new ExceptionResponsePayload
                 {
                     dependentServiceName = "Premise Server"
                 };
                 return response;
             }
 
-            #endregion
+            #endregion ConnectToPremise
 
             #region Dispatch Requests
 
@@ -95,12 +96,15 @@ namespace PremiseAlexaBridgeService
                     case "ROOMASSIGNMENTREQUEST":
                         ProcessRoomAssignmentRequest(alexaRequest, response);
                         break;
+
                     case "ROOMCOMMANDREQUEST":
                         ProcessRoomCommandRequest(alexaRequest, response);
                         break;
+
                     case "GETSPACEMODEREQUEST":
                         ProcessGetSpaceModeRequest(alexaRequest, response);
                         break;
+
                     default:
                         response.header.@namespace = Faults.QueryNamespace;
                         response.header.name = Faults.UnsupportedOperationError;
@@ -128,7 +132,8 @@ namespace PremiseAlexaBridgeService
             }
 
             return response;
-            #endregion
+
+            #endregion Dispatch Requests
         }
 
         #region Process Room Assignment Request
@@ -141,8 +146,8 @@ namespace PremiseAlexaBridgeService
             string spaceName = alexaRequest.payload.device.name.ToUpper();
             string spaceOperation = alexaRequest.payload.device.operation.ToUpper();
 
-            var returnClause = new string[] { "Name", "DisplayName", "Description", "OID" };
-            dynamic whereClause = new System.Dynamic.ExpandoObject();
+            var returnClause = new[] { "Name", "DisplayName", "Description", "OID" };
+            dynamic whereClause = new ExpandoObject();
             whereClause.TypeOf = PremiseServer.AlexaLocationClassPath; ;
             var availableLocations = PremiseServer.HomeObject.Select(returnClause, whereClause).GetAwaiter().GetResult();
 
@@ -159,8 +164,8 @@ namespace PremiseAlexaBridgeService
 
                 var premiseObject = PremiseServer.HomeObject.GetObject(objectId).GetAwaiter().GetResult();
 
-                returnClause = new string[] { "Name", "DisplayName", "Description", "DeviceID", "OID" };
-                whereClause = new System.Dynamic.ExpandoObject();
+                returnClause = new[] { "Name", "DisplayName", "Description", "DeviceID", "OID" };
+                whereClause = new ExpandoObject();
                 whereClause.TypeOf = PremiseServer.AlexaEndpointClassPath;
                 var currentAlexaEndpoints = premiseObject.Select(returnClause, whereClause).GetAwaiter().GetResult();
                 foreach (var endpoint in currentAlexaEndpoints)
@@ -199,7 +204,9 @@ namespace PremiseAlexaBridgeService
             }
         }
 
-        #endregion  
+        #endregion Process Room Assignment Request
+
+
 
         #region Process Room Command Request
 
@@ -211,8 +218,8 @@ namespace PremiseAlexaBridgeService
             string deviceType = alexaRequest.payload.device.type;
             string deviceOperation = alexaRequest.payload.device.operation;
 
-            var returnClause = new string[] { "Name", "DisplayName", "Description", "DeviceID", "OID" };
-            dynamic whereClause = new System.Dynamic.ExpandoObject();
+            var returnClause = new[] { "Name", "DisplayName", "Description", "DeviceID", "OID" };
+            dynamic whereClause = new ExpandoObject();
             whereClause.TypeOf = PremiseServer.AlexaEndpointClassPath; ;
             var alexaEndpoints = PremiseServer.HomeObject.Select(returnClause, whereClause).GetAwaiter().GetResult();
 
@@ -221,7 +228,6 @@ namespace PremiseAlexaBridgeService
 
             foreach (var endpoint in alexaEndpoints)
             {
-
                 if (endpoint.DeviceID != deviceId)
                     continue;
 
@@ -235,7 +241,6 @@ namespace PremiseAlexaBridgeService
 
                 var devices = this_space.GetChildren().GetAwaiter().GetResult();
 
-
                 foreach (var device in devices)
                 {
                     if (device.IsOfType("{0B1DA7E1-1731-49AC-9814-47470E78EFAB}").GetAwaiter().GetResult())  // lighting
@@ -247,11 +252,13 @@ namespace PremiseAlexaBridgeService
                                 device.SetValue("PowerState", "True").GetAwaiter().GetResult();
                                 opCount++;
                                 break;
+
                             case "TURN OFF":
                             case "OFF":
                                 device.SetValue("PowerState", "False").GetAwaiter().GetResult();
                                 opCount++;
                                 break;
+
                             default:
                                 break;
                         }
@@ -268,8 +275,7 @@ namespace PremiseAlexaBridgeService
             InformLastContact("Implicit Control Request").GetAwaiter().GetResult();
         }
 
-
-        #endregion
+        #endregion Process Room Command Request
 
         #region Process Space Mode Request
 
@@ -279,8 +285,8 @@ namespace PremiseAlexaBridgeService
             if (string.IsNullOrEmpty(toMatch) == false)
             {
                 toMatch = toMatch.Trim();
-                var returnClause = new string[] { "Name", "DisplayName", "Description", "CurrentScene", "Occupancy", "LastOccupied", "OccupancyCount", "OID", "OPATH", "OTYPENAME", "Type" };
-                dynamic whereClause = new System.Dynamic.ExpandoObject();
+                var returnClause = new[] { "Name", "DisplayName", "Description", "CurrentScene", "Occupancy", "LastOccupied", "OccupancyCount", "OID", "OPATH", "OTYPENAME", "Type" };
+                dynamic whereClause = new ExpandoObject();
                 whereClause.TypeOf = PremiseServer.AlexaLocationClassPath;
                 var sysRooms = PremiseServer.HomeObject.Select(returnClause, whereClause).GetAwaiter().GetResult();
 
@@ -306,16 +312,16 @@ namespace PremiseAlexaBridgeService
 
                         foreach (var device in devices)
                         {
-                            if (device.IsOfType("{3470B9B5-E685-4EB2-ABC0-2F4CCD7F686A}").GetAwaiter().GetResult() == true)
+                            if (device.IsOfType("{3470B9B5-E685-4EB2-ABC0-2F4CCD7F686A}").GetAwaiter().GetResult())
                             {
                                 count++;
-                                if (device.IsOfType("{65C7B5C2-153D-4711-BAD7-D334FDB12338}").GetAwaiter().GetResult() == true)
+                                if (device.IsOfType("{65C7B5C2-153D-4711-BAD7-D334FDB12338}").GetAwaiter().GetResult())
                                 {
                                     temperature = new Temperature(device.GetValue<double>("Temperature").GetAwaiter().GetResult());
                                 }
-                                else if (device.IsOfType("{0B1DA7E1-1731-49AC-9814-47470E78EFAB}").GetAwaiter().GetResult() == true)
+                                else if (device.IsOfType("{0B1DA7E1-1731-49AC-9814-47470E78EFAB}").GetAwaiter().GetResult())
                                 {
-                                    onCount += (device.GetValue<bool>("PowerState").GetAwaiter().GetResult() == true) ? 1 : 0;
+                                    onCount += device.GetValue<bool>("PowerState").GetAwaiter().GetResult() ? 1 : 0;
                                 }
                             }
                         }
@@ -355,9 +361,10 @@ namespace PremiseAlexaBridgeService
             response.payload.exception = new ExceptionResponsePayload();
         }
 
-        #endregion
+        #endregion Process Space Mode Request
 
         #region Utility
+
         private static bool isAddOperation(string operation)
         {
             return (operation == "ASSIGN") || (operation == "PUT") || (operation == "ADD");
@@ -368,8 +375,8 @@ namespace PremiseAlexaBridgeService
             return (operation == "REMOVE") || (operation == "DELETE");
         }
 
-        #endregion
+        #endregion Utility
 
-        #endregion
+        #endregion Custom Skill
     }
 }

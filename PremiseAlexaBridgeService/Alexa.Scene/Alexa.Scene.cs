@@ -1,15 +1,14 @@
-﻿using Alexa;
+﻿using System;
+using System.Collections.Generic;
 using Alexa.SmartHomeAPI.V3;
 using PremiseAlexaBridgeService;
-using System.Collections.Generic;
-using Alexa.Controller;
 using SYSWebSockClient;
-using System;
 
 namespace Alexa.Scene
 {
     public class AlexaScene : IAlexaDeviceType
     {
+        #region Methods
 
         public List<AlexaProperty> FindRelatedProperties(IPremiseObject endpoint, string currentController)
         {
@@ -31,19 +30,15 @@ namespace Alexa.Scene
                 {
                     case "Alexa.SceneController":
                         {
-                            AlexaSetSceneController controller = new AlexaSetSceneController("", endpoint);
+                            AlexaSetSceneController controller = new AlexaSetSceneController(endpoint);
                             property = controller.GetPropertyState();
                         }
-                        break;
-
-                    default:
                         break;
                 }
                 if (property != null)
                 {
                     relatedProperties.Add(property);
                 }
-
             }
             return relatedProperties;
         }
@@ -60,10 +55,7 @@ namespace Alexa.Scene
                     switch (capability.@interface)
                     {
                         case "Alexa.SceneController":
-                            Type type = this.GetType();
-                            subscription = endpoint.Subscribe("PowerState", this.GetType().AssemblyQualifiedName, callback).GetAwaiter().GetResult();
-                            break;
-                        default:
+                            subscription = endpoint.Subscribe("PowerState", GetType().AssemblyQualifiedName, callback).GetAwaiter().GetResult();
                             break;
                     }
                 }
@@ -74,6 +66,7 @@ namespace Alexa.Scene
             }
             return subscriptions;
         }
+
+        #endregion Methods
     }
 }
-

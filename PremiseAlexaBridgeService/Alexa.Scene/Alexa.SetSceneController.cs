@@ -1,7 +1,8 @@
-﻿using Alexa.Controller;
-using Alexa.SmartHomeAPI.V3;
-using System;
+﻿using System;
+using System.Collections.Generic;
 using System.Runtime.Serialization;
+using Alexa.Controller;
+using Alexa.SmartHomeAPI.V3;
 using SYSWebSockClient;
 
 namespace Alexa.Scene
@@ -11,21 +12,18 @@ namespace Alexa.Scene
     [DataContract]
     public class AlexaSetSceneControllerRequest
     {
+        #region Properties
+
         [DataMember(Name = "directive")]
         public AlexaSetSceneControllerRequestDirective directive { get; set; }
+
+        #endregion Properties
     }
 
     [DataContract]
     public class AlexaSetSceneControllerRequestDirective
     {
-        [DataMember(Name = "header")]
-        public Header header { get; set; }
-
-        [DataMember(Name = "endpoint")]
-        public DirectiveEndpoint endpoint { get; set; }
-
-        [DataMember(Name = "payload")]
-        public AlexaSetSceneRequestPayload payload { get; set; }
+        #region Constructors
 
         public AlexaSetSceneControllerRequestDirective()
         {
@@ -33,24 +31,46 @@ namespace Alexa.Scene
             endpoint = new DirectiveEndpoint();
             payload = new AlexaSetSceneRequestPayload();
         }
+
+        #endregion Constructors
+
+        #region Properties
+
+        [DataMember(Name = "endpoint")]
+        public DirectiveEndpoint endpoint { get; set; }
+
+        [DataMember(Name = "header")]
+        public Header header { get; set; }
+
+        [DataMember(Name = "payload")]
+        public AlexaSetSceneRequestPayload payload { get; set; }
+
+        #endregion Properties
     }
+
     [DataContract]
     public class AlexaSetSceneRequestPayload : object
     {
     }
 
-    #endregion
+    #endregion Scene Data Contracts
 
     public class AlexaSetSceneController : AlexaControllerBase<
         AlexaSetSceneRequestPayload,
         ControlResponse,
         AlexaSetSceneControllerRequest>, IAlexaController
     {
-        public readonly AlexaScene PropertyHelpers;
+        #region Fields
+
         public readonly string @namespace = "Alexa.SceneController";
         public readonly string[] directiveNames = { "Activate", "Deactivate" };
-        private readonly string[] alexaProperties = { "" };
         public readonly string premiseProperty = "PowerState";
+        public readonly AlexaScene PropertyHelpers;
+        private readonly string[] alexaProperties = { "" };
+
+        #endregion Fields
+
+        #region Constructors
 
         public AlexaSetSceneController(AlexaSetSceneControllerRequest request)
             : base(request)
@@ -58,67 +78,24 @@ namespace Alexa.Scene
             PropertyHelpers = new AlexaScene();
         }
 
-        public AlexaSetSceneController(string value, IPremiseObject endpoint)
+        public AlexaSetSceneController(IPremiseObject endpoint)
             : base(endpoint)
         {
             PropertyHelpers = new AlexaScene();
         }
 
         public AlexaSetSceneController()
-            : base()
         {
             PropertyHelpers = new AlexaScene();
         }
 
-        public string[] GetAlexaProperties()
-        {
-            return alexaProperties;
-        }
+        #endregion Constructors
 
-        public string GetAssemblyTypeName()
-        {
-            return this.GetType().AssemblyQualifiedName;
-        }
-
-        public string GetNameSpace()
-        {
-            return @namespace;
-        }
-
-        public string[] GetDirectiveNames()
-        {
-            return directiveNames;
-        }
-
-        public bool HasAlexaProperty(string property)
-        {
-            return false;
-        }
-        public bool HasPremiseProperty(string property)
-        {
-            return false;
-        }
-
-        public string AssemblyTypeName()
-        {
-            return this.GetType().AssemblyQualifiedName;
-        }
-
-        public AlexaProperty GetPropertyState()
-        {
-            bool powerState = endpoint.GetValue<bool>(premiseProperty).GetAwaiter().GetResult();
-            AlexaProperty property = new AlexaProperty
-            {
-                @namespace = @namespace,
-                value = (powerState == true ? "ActivationStarted" : "DeactivationStarted"),
-                timeOfSample = GetUtcTime()
-            };
-            return property;
-        }
+        #region Methods
 
         public AlexaChangeReport AlterChangeReport(AlexaChangeReport report)
         {
-            AlexaProperty prop = this.GetPropertyState();
+            AlexaProperty prop = GetPropertyState();
             report.context.propertiesInternal = null;
             report.@event.payload.change = null;
             report.@event.header.@namespace = @namespace;
@@ -129,41 +106,99 @@ namespace Alexa.Scene
             return report;
         }
 
+        public string AssemblyTypeName()
+        {
+            return GetType().AssemblyQualifiedName;
+        }
+
+        public string[] GetAlexaProperties()
+        {
+            return alexaProperties;
+        }
+
+        public string GetAssemblyTypeName()
+        {
+            return GetType().AssemblyQualifiedName;
+        }
+
+        public string[] GetDirectiveNames()
+        {
+            return directiveNames;
+        }
+
+        public string GetNameSpace()
+        {
+            return @namespace;
+        }
+
+        public string[] GetPremiseProperties()
+        {
+            return null;
+        }
+
+        public AlexaProperty GetPropertyState()
+        {
+            bool powerState = Endpoint.GetValue<bool>(premiseProperty).GetAwaiter().GetResult();
+            AlexaProperty property = new AlexaProperty
+            {
+                @namespace = @namespace,
+                value = (powerState ? "ActivationStarted" : "DeactivationStarted"),
+                timeOfSample = GetUtcTime()
+            };
+            return property;
+        }
+
+        public List<AlexaProperty> GetPropertyStates()
+        {
+            return null;
+        }
+
+        public bool HasAlexaProperty(string property)
+        {
+            return false;
+        }
+
+        public bool HasPremiseProperty(string property)
+        {
+            return false;
+        }
+
         public void ProcessControllerDirective()
         {
             try
             {
                 string valueToSend;
-                if (header.name == "Activate")
+                if (Header.name == "Activate")
                 {
                     valueToSend = "True";
-                    this.Response.Event.header.name = "ActivationStarted";
-                    this.endpoint.SetValue(premiseProperty, valueToSend).GetAwaiter().GetResult();
+                    Response.Event.header.name = "ActivationStarted";
+                    Endpoint.SetValue(premiseProperty, valueToSend).GetAwaiter().GetResult();
                 }
-                else if (header.name == "Deactivate")
+                else if (Header.name == "Deactivate")
                 {
                     valueToSend = "False";
-                    this.Response.Event.header.name = "DeactivationStarted";
-                    this.endpoint.SetValue(premiseProperty, valueToSend).GetAwaiter().GetResult();
+                    Response.Event.header.name = "DeactivationStarted";
+                    Endpoint.SetValue(premiseProperty, valueToSend).GetAwaiter().GetResult();
                 }
                 else
                 {
-                    base.ReportError(AlexaErrorTypes.INVALID_DIRECTIVE, "Operation not supported!");
+                    ReportError(AlexaErrorTypes.INVALID_DIRECTIVE, "Operation not supported!");
                     return;
                 }
 
-                this.endpoint.SetValue(premiseProperty, valueToSend).GetAwaiter().GetResult();
-                this.Response.context.properties = null;
-                this.Response.Event.payload.cause = new ChangeReportCause();
-                this.Response.Event.payload.cause.type = "VOICE_INTERACTION";
-                this.Response.Event.payload.timestamp = GetUtcTime();
-                this.Response.Event.endpoint.cookie.path = endpoint.GetPath().GetAwaiter().GetResult();
+                Endpoint.SetValue(premiseProperty, valueToSend).GetAwaiter().GetResult();
+                Response.context.properties = null;
+                Response.Event.payload.cause = new ChangeReportCause();
+                Response.Event.payload.cause.type = "VOICE_INTERACTION";
+                Response.Event.payload.timestamp = GetUtcTime();
+                Response.Event.endpoint.cookie.path = Endpoint.GetPath().GetAwaiter().GetResult();
             }
             catch (Exception ex)
             {
-                base.ReportError(AlexaErrorTypes.INTERNAL_ERROR, ex.Message);
-                return;
+                ReportError(AlexaErrorTypes.INTERNAL_ERROR, ex.Message);
             }
         }
+
+        #endregion Methods
     }
 }

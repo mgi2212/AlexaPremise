@@ -1,6 +1,6 @@
-POST http://yourhost:port/V3/Alexa.svc/json/Control/SetPowerState/
+POST http://localhost:51124/AlexaV3.svc/json/Control/SetPowerState/
 Content-Type: text/plain
-Host: yourhost
+Host: localhost
 
 {
   "directive": {
@@ -14,11 +14,11 @@ Host: yourhost
     "endpoint": {
       "scope": {
         "type": "BearerToken",
-        "token": "your-token"
+        "token": "premise-access-token"
       },
-      "endpointId": "9AB03900-D923-47B9-BE7F-833892A388B9",
+      "endpointId": "9B40217D-7664-4613-A2BF-967F700CEAF8",
       "cookie": {
-          "path": "sys://Home/House/First/Den/Mood"
+          "path": "sys://Home/House/First/Den/ColorLight"
       }
     },
     "payload": {}

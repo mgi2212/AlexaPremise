@@ -1,0 +1,29 @@
+POST http://localhost:51124/V3/Alexa.svc/json/Control/InputController/
+Content-Type: application/json
+Host: localhost
+
+{
+  "directive": {
+    "header": {
+      "namespace": "Alexa.InputController",
+      "name": "SelectInput",
+      "payloadVersion": "3",
+      "messageId": "1bd5d003-31b9-476f-ad03-71d471922820",
+      "correlationToken": "dFMb0z+PgpgdDmluhJ1LddFvSqZ/jCc8ptlAKulUj90jSqg=="
+    },
+    "endpoint": {
+      "scope": {
+        "type": "BearerToken",
+        "token": "some-token",
+        "localAccessToken": "premise-access-token"
+      },
+      "endpointId": "3B4443C7-AE2B-4A07-9605-A3E9042BDC01",
+      "cookie": {
+          "path": "sys://Home/House/First/Den/MediaZone"
+      }
+    },
+    "payload": {
+      "input": "Input1"
+    }
+  }
+}

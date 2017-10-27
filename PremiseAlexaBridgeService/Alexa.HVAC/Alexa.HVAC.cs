@@ -1,14 +1,18 @@
-﻿using Alexa.EndpointHealth;
+﻿using System;
+using System.Collections.Generic;
+using Alexa.EndpointHealth;
 using Alexa.SmartHomeAPI.V3;
 using PremiseAlexaBridgeService;
-using System;
-using System.Collections.Generic;
 using SYSWebSockClient;
+using Alexa.Controller;
+using System.Runtime.Serialization;
 
 namespace Alexa.HVAC
 {
     public class AlexaHVAC : IAlexaDeviceType
     {
+        #region Methods
+
         public List<AlexaProperty> FindRelatedProperties(IPremiseObject endpoint, string currentController)
         {
             List<AlexaProperty> relatedProperties = new List<AlexaProperty>();
@@ -20,43 +24,36 @@ namespace Alexa.HVAC
             }
             foreach (Capability capability in discoveryEndpoint.capabilities)
             {
-                AlexaProperty property = null;
-
                 switch (capability.@interface)
                 {
                     case "Alexa.EndpointHealth":
                         {
                             AlexaEndpointHealthController controller = new AlexaEndpointHealthController(endpoint);
-                            property = controller.GetPropertyState();
+                            AlexaProperty property = controller.GetPropertyState();
+                            if (property != null)
+                            {
+                                relatedProperties.Add(property);
+                            }
                         }
                         break;
 
                     case "Alexa.TemperatureSensor":
                         {
                             AlexaTemperatureSensor controller = new AlexaTemperatureSensor(endpoint);
-                            property = controller.GetPropertyState();
-                        }
-                        break;
-                    case "Alexa.ThermostatController":
-                        {
-                            AlexaSetThermostatModeController mode = new AlexaSetThermostatModeController(endpoint);
-                            property = mode.GetPropertyState();
+                            AlexaProperty property = controller.GetPropertyState();
                             if (property != null)
                             {
                                 relatedProperties.Add(property);
                             }
-                            property = null;
-
-                            SetTargetTemperatureController temperature = new SetTargetTemperatureController(endpoint);
-                            relatedProperties.AddRange(temperature.GetPropertyStates());
                         }
                         break;
-                    default:
+
+                    case "Alexa.ThermostatController":
+                        {
+                            AlexaThermostatController controller = new AlexaThermostatController(endpoint);
+                            relatedProperties.AddRange(controller.GetPropertyStates());
+                        }
                         break;
-                }
-                if (property != null)
-                {
-                    relatedProperties.Add(property);
                 }
             }
             return relatedProperties;
@@ -67,83 +64,73 @@ namespace Alexa.HVAC
             Dictionary<string, IPremiseSubscription> subscriptions = new Dictionary<string, IPremiseSubscription>();
             foreach (Capability capability in discoveryEndpoint.capabilities)
             {
-                IPremiseSubscription subscription = null;
-
                 if (capability.HasProperties() == false)
                 {
                     continue;
                 }
 
-                if (capability.properties.proactivelyReported)
+                if (!capability.properties.proactivelyReported)
                 {
-                    switch (capability.@interface)
+                    continue;
+                }
+
+                IAlexaController controller = null;
+
+                switch (capability.@interface)
+                {
+                    case "Alexa.TemperatureSensor":
+                        controller = new AlexaTemperatureSensor();
+                        break;
+
+                    case "Alexa.ThermostatController":
+                        controller = new AlexaThermostatController();
+                        break;
+                }
+
+                if (controller == null)
+                {
+                    continue;
+                }
+
+                foreach (string premiseProperty in controller.GetPremiseProperties())
+                {
+                    string index = discoveryEndpoint.endpointId + $".{premiseProperty}." + capability.@interface;
+                    if (subscriptions.ContainsKey(index)) continue;
+
+                    IPremiseSubscription subscription = endpoint.Subscribe(premiseProperty, GetType().AssemblyQualifiedName, callback).GetAwaiter().GetResult();
+                    if (subscription != null)
                     {
-                        case "Alexa.TemperatureSensor":
-                            {
-                                string index = discoveryEndpoint.endpointId + ".Temperature." + capability.@interface;
-                                if ((subscription != null) && (!subscriptions.ContainsKey(index)))
-                                {
-                                    subscription = endpoint.Subscribe("Temperature", capability.@interface, callback).GetAwaiter().GetResult();
-                                    subscriptions.Add(index, subscription);
-                                }
-                            }
-                            break;
-                        case "Alexa.ThermostatController":
-                            {
-                                Type type = this.GetType();
-
-                                string index = discoveryEndpoint.endpointId + ".HeatingSetPoint." + capability.@interface;
-                                if (!subscriptions.ContainsKey(index))
-                                {
-                                    subscription = endpoint.Subscribe("HeatingSetPoint", this.GetType().AssemblyQualifiedName, callback).GetAwaiter().GetResult();
-                                    if (subscription != null)
-                                    {
-                                        subscriptions.Add(index, subscription);
-                                    }
-                                }
-
-                                index = discoveryEndpoint.endpointId + ".CoolingSetPoint." + capability.@interface;
-                                if (!subscriptions.ContainsKey(index))
-                                {
-                                    subscription = endpoint.Subscribe("CoolingSetPoint", this.GetType().AssemblyQualifiedName, callback).GetAwaiter().GetResult();
-                                    if (subscription != null)
-                                    {
-                                        subscriptions.Add(index, subscription);
-                                    }
-                                }
-
-                                index = discoveryEndpoint.endpointId + ".CurrentSetPoint." + capability.@interface;
-                                if (!subscriptions.ContainsKey(index))
-                                {
-                                    subscription = endpoint.Subscribe("CurrentSetPoint", this.GetType().AssemblyQualifiedName, callback).GetAwaiter().GetResult();
-                                    if (subscription != null)
-                                    {
-                                        subscriptions.Add(index, subscription);
-                                    }
-                                }
-
-                                index = discoveryEndpoint.endpointId + ".TemperatureMode." + capability.@interface;
-                                if (!subscriptions.ContainsKey(index))
-                                {
-                                    subscription = endpoint.Subscribe("TemperatureMode", this.GetType().AssemblyQualifiedName, callback).GetAwaiter().GetResult();
-                                    if (subscription != null)
-                                    {
-                                        subscriptions.Add(index, subscription);
-                                    }
-                                }
-                            }
-                            break;
-                        default:
-                            break;
+                        subscriptions.Add(index, subscription);
                     }
                 }
-                //if (subscription != null)
-                //{
-                //    subscriptions.Add(discoveryEndpoint.endpointId + "." + capability.@interface, subscription);
-                //}
             }
             return subscriptions;
         }
 
+        #endregion Methods
+    }
+
+    [DataContract]
+    public class AlexaTemperature
+    {
+        #region Fields
+
+        [DataMember(Name = "scale")]
+        public string scale;
+
+        [DataMember(Name = "value")]
+        public double value;
+
+        #endregion Fields
+
+        #region Constructors
+
+        public AlexaTemperature(double temperature, string scaleString)
+        {
+            value = temperature;
+            scale = scaleString;
+        }
+
+        #endregion Constructors
     }
 }

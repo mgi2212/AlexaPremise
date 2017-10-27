@@ -1,6 +1,6 @@
-POST http://yourhost:port/V3/Alexa.svc/jsons/Control/SetThermostatMode/
+POST http://localhost:51124/V3/Alexa.svc/json/Control/SetThermostatMode/
 Content-Type: application/json
-Host: yourhost
+Host: localhost
 
 {
   "directive": {
@@ -15,14 +15,14 @@ Host: yourhost
       "scope": {
         "type": "BearerToken",
         "token": "some-access-token",
-        "localAccessToken": "your-token"
+        "localAccessToken": "premise-access-token"
       },
       "endpointId": "0EE3CC6C-EB28-4DC2-917D-5205CF9488EE",
       "cookie": {}
     },
     "payload": {
       "thermostatMode":{
-        "value": "HEAT"
+        "value": "OFF"
       }
     }
   }

@@ -1,9 +1,10 @@
-﻿using Alexa.SmartHomeAPI.V2;
-using System;
+﻿using System;
 using System.Collections.Generic;
+using System.Dynamic;
 using System.ServiceModel;
 using System.ServiceModel.Web;
 using System.Threading.Tasks;
+using Alexa.SmartHomeAPI.V2;
 using SYSWebSockClient;
 
 namespace PremiseAlexaBridgeService
@@ -15,17 +16,21 @@ namespace PremiseAlexaBridgeService
     [ServiceContract(Name = "PremiseAlexaService", Namespace = "https://PremiseAlexa.com")]
     public interface IPremiseAlexaService
     {
-        [OperationContract]
-        DiscoveryResponse Discovery(DiscoveryRequest request);
+        #region Methods
 
         [OperationContract]
         ControlResponse Control(ControlRequest request);
+
+        [OperationContract]
+        DiscoveryResponse Discovery(DiscoveryRequest request);
 
         [OperationContract]
         QueryResponse Query(QueryRequest request);
 
         [OperationContract]
         SystemResponse System(SystemRequest request);
+
+        #endregion Methods
     }
 
     public partial class PremiseAlexaService : PremiseAlexaBase, IPremiseAlexaService
@@ -57,7 +62,7 @@ namespace PremiseAlexaBridgeService
             {
                 response.header.@namespace = Faults.Namespace;
                 response.header.name = Faults.DependentServiceUnavailableError;
-                response.payload.exception = new ExceptionResponsePayload()
+                response.payload.exception = new ExceptionResponsePayload
                 {
                     dependentServiceName = "Premise Server"
                 };
@@ -69,7 +74,7 @@ namespace PremiseAlexaBridgeService
                 case "HealthCheckRequest":
                     InformLastContact("System:HealthCheckRequest").GetAwaiter().GetResult();
                     response.header.name = "HealthCheckResponse";
-                    response.payload = this.GetHealthCheckResponseV2();
+                    response.payload = GetHealthCheckResponseV2();
                     break;
 
                 default:
@@ -84,14 +89,14 @@ namespace PremiseAlexaBridgeService
         private SystemResponsePayload GetHealthCheckResponseV2()
         {
             SystemResponsePayload payload = new SystemResponsePayload();
-            var returnClause = new string[] { "Health", "HealthDescription" };
-            dynamic whereClause = new System.Dynamic.ExpandoObject();
+            var returnClause = new[] { "Health", "HealthDescription" };
+            dynamic whereClause = new ExpandoObject();
             payload.isHealthy = PremiseServer.HomeObject.GetValue<bool>("Health").GetAwaiter().GetResult();
             payload.description = PremiseServer.HomeObject.GetValue<string>("HealthDescription").GetAwaiter().GetResult();
             return payload;
         }
 
-        #endregion
+        #endregion System
 
         #region Discovery
 
@@ -103,7 +108,6 @@ namespace PremiseAlexaBridgeService
         [WebInvoke(Method = "POST", RequestFormat = WebMessageFormat.Json, ResponseFormat = WebMessageFormat.Json, BodyStyle = WebMessageBodyStyle.Bare, UriTemplate = "/Discovery/")]
         public DiscoveryResponse Discovery(DiscoveryRequest alexaRequest)
         {
-
             //IPremiseObject PremiseServer.HomeObject, rootObject;
             var response = new DiscoveryResponse();
 
@@ -113,27 +117,25 @@ namespace PremiseAlexaBridgeService
             {
                 response.header.@namespace = Faults.Namespace;
                 response.header.name = Faults.UnexpectedInformationReceivedError;
-                response.payload.exception = new ExceptionResponsePayload()
+                response.payload.exception = new ExceptionResponsePayload
                 {
                     faultingParameter = "alexaRequest"
                 };
                 return response;
             }
 
-
             if (alexaRequest.header.name != "DiscoverAppliancesRequest")
             {
                 response.header.@namespace = Faults.Namespace;
                 response.header.name = Faults.UnsupportedOperationError;
-                response.payload.exception = new ExceptionResponsePayload()
+                response.payload.exception = new ExceptionResponsePayload
                 {
                     faultingParameter = "alexaRequest.header.name"
                 };
                 return response;
             }
 
-
-            #endregion
+            #endregion CheckRequest
 
             #region InitialzeResponse
 
@@ -154,20 +156,20 @@ namespace PremiseAlexaBridgeService
             {
                 response.header.@namespace = Faults.QueryNamespace;
                 response.header.name = Faults.UnexpectedInformationReceivedError;
-                response.payload.exception = new ExceptionResponsePayload()
+                response.payload.exception = new ExceptionResponsePayload
                 {
                     faultingParameter = "alexaRequest.header.name"
                 };
                 return response;
             }
 
-            #endregion
+            #endregion InitialzeResponse
 
             if (alexaRequest.header.name != "DiscoverAppliancesRequest")
             {
                 response.header.@namespace = Faults.Namespace;
                 response.header.name = Faults.UnsupportedOperationError;
-                response.payload.exception = new ExceptionResponsePayload()
+                response.payload.exception = new ExceptionResponsePayload
                 {
                     faultingParameter = "alexaRequest.header.name"
                 };
@@ -182,18 +184,17 @@ namespace PremiseAlexaBridgeService
             {
                 response.header.@namespace = Faults.Namespace;
                 response.header.name = Faults.DependentServiceUnavailableError;
-                response.payload.exception = new ExceptionResponsePayload()
+                response.payload.exception = new ExceptionResponsePayload
                 {
                     dependentServiceName = "Premise Server"
                 };
                 return response;
             }
 
-            #endregion
+            #endregion ConnectToPremise
 
             try
             {
-
                 #region VerifyAccess
 
                 if (!CheckAccessToken(alexaRequest.payload.accessToken).GetAwaiter().GetResult())
@@ -203,16 +204,16 @@ namespace PremiseAlexaBridgeService
                     return response;
                 }
 
-                #endregion
+                #endregion VerifyAccess
 
                 #region Perform Discovery
 
                 InformLastContact(alexaRequest.header.name).GetAwaiter().GetResult();
 
-                response.payload.discoveredAppliances = this.GetAppliances().GetAwaiter().GetResult();
+                response.payload.discoveredAppliances = GetAppliances().GetAwaiter().GetResult();
                 response.payload.discoveredAppliances.Sort(Appliance.CompareByFriendlyName);
 
-                #endregion
+                #endregion Perform Discovery
             }
             catch (Exception ex)
             {
@@ -222,7 +223,7 @@ namespace PremiseAlexaBridgeService
                 {
                     errorInfo = new ErrorInfo
                     {
-                        description = ex.Message.ToString()
+                        description = ex.Message
                     }
                 };
             }
@@ -234,8 +235,8 @@ namespace PremiseAlexaBridgeService
         {
             List<Appliance> appliances = new List<Appliance>();
 
-            var returnClause = new string[] { "Name", "DisplayName", "FriendlyName", "FriendlyDescription", "IsReachable", "IsDiscoverable", "PowerState", "Brightness", "Temperature", "TemperatureMode", "Host", "Port", "Path", "Hue", "OID", "OPATH", "OTYPENAME", "Type", "ApplianceType" };
-            dynamic whereClause = new System.Dynamic.ExpandoObject();
+            var returnClause = new[] { "Name", "DisplayName", "FriendlyName", "FriendlyDescription", "IsReachable", "IsDiscoverable", "PowerState", "Brightness", "Temperature", "TemperatureMode", "Host", "Port", "Path", "Hue", "OID", "OPATH", "OTYPENAME", "Type", "ApplianceType" };
+            dynamic whereClause = new ExpandoObject();
             whereClause.TypeOf = PremiseServer.AlexaApplianceClassPath;
 
             var sysAppliances = await PremiseServer.HomeObject.Select(returnClause, whereClause);
@@ -250,7 +251,7 @@ namespace PremiseAlexaBridgeService
 
                 var objectId = (string)sysAppliance.OID;
 
-                var appliance = new Appliance()
+                var appliance = new Appliance
                 {
                     actions = new List<string>(),
                     applianceId = Guid.Parse(objectId).ToString("D"),
@@ -261,21 +262,22 @@ namespace PremiseAlexaBridgeService
                     friendlyName = ((string)sysAppliance.FriendlyName).Trim(),
                     friendlyDescription = ((string)sysAppliance.FriendlyDescription).Trim(), // Dan: Premise should be source of truth
                     applianceTypes = new List<string>()
-
                 };
 
                 var premiseObject = await PremiseServer.HomeObject.GetObject(objectId);
 
                 // the FriendlyName is what Alexa tries to match when finding devices, so we need one
-                // if no FriendlyName value then try to invent one and set it so we dont have to do this again!
+                // if no FriendlyName value then try to invent one and set it so we dont have to do
+                // this again!
                 if (string.IsNullOrEmpty(appliance.friendlyName))
                 {
                     generatedNameCount++;
 
-                    // parent should be a container - so get that 
+                    // parent should be a container - so get that
                     var parent = await premiseObject.GetParent();
 
-                    // use displayName and if not that, the the object name. (note: this should help handle cases for objects with names lile like LivingRoom)
+                    // use displayName and if not that, the the object name. (note: this should help
+                    // handle cases for objects with names lile like LivingRoom)
                     string parentName = (await parent.GetDisplayName()).Trim();
                     if (string.IsNullOrEmpty(parentName))
                     {
@@ -348,7 +350,6 @@ namespace PremiseAlexaBridgeService
                         else if (await premiseObject.IsOfType("{68BF174A-8984-4214-AC09-2975A4CEBEAA}")) // camera
                         {
                             applianceType = AlexaApplianceTypes.CAMERA;
-
                         } // else if (await premiseObject.IsOfType("{77319741-F5A7-4CA5-A2EA-4F377D394301}"))
                         //{
                         //    applianceType = AlexaApplianceTypes.FAN;
@@ -360,13 +361,12 @@ namespace PremiseAlexaBridgeService
                     applianceType = AlexaApplianceTypes.SCENE_TRIGGER;
                 }
 
-                // If ApplianceType is provided on the premise object, ensure it's the first entry in applianceTypes[]
-                // This way you can over-ride the logic below in Premise
+                // If ApplianceType is provided on the premise object, ensure it's the first entry in
+                // applianceTypes[] This way you can over-ride the logic below in Premise
                 if (!string.IsNullOrEmpty((string)sysAppliance.ApplianceType))
                     appliance.applianceTypes.Add(((string)sysAppliance.ApplianceType).Trim());
 
-
-                appliance.additionalApplianceDetails = new AdditionalApplianceDetails()
+                appliance.additionalApplianceDetails = new AdditionalApplianceDetails
                 {
                     path = sysAppliance.OPATH
                 };
@@ -402,6 +402,7 @@ namespace PremiseAlexaBridgeService
                             }
                         }
                         break;
+
                     case AlexaApplianceTypes.SCENE_TRIGGER:
                         {
                             appliance.actions.Add("turnOn");
@@ -427,7 +428,7 @@ namespace PremiseAlexaBridgeService
 
                     default: // UNKNOWN
                         {
-                            if (await premiseObject.IsOfType("{9C3E5340-EAB7-402D-979A-93B5135264AA}")) // powerstate 
+                            if (await premiseObject.IsOfType("{9C3E5340-EAB7-402D-979A-93B5135264AA}")) // powerstate
                             {
                                 appliance.actions.Add("turnOn");
                                 appliance.actions.Add("turnOff");
@@ -452,7 +453,7 @@ namespace PremiseAlexaBridgeService
             return appliances;
         }
 
-        #endregion
+        #endregion Discovery
 
         #region Control
 
@@ -471,7 +472,6 @@ namespace PremiseAlexaBridgeService
         [WebInvoke(Method = "POST", RequestFormat = WebMessageFormat.Json, ResponseFormat = WebMessageFormat.Json, BodyStyle = WebMessageBodyStyle.Bare, UriTemplate = "/Control/")]
         public ControlResponse Control(ControlRequest alexaRequest)
         {
-
             //IPremiseObject PremiseServer.HomeObject, rootObject;
             var response = new ControlResponse();
 
@@ -481,16 +481,16 @@ namespace PremiseAlexaBridgeService
             {
                 response.header.@namespace = Faults.Namespace;
                 response.header.name = Faults.UnexpectedInformationReceivedError;
-                response.payload.exception = new ExceptionResponsePayload()
+                response.payload.exception = new ExceptionResponsePayload
                 {
                     faultingParameter = "alexaRequest"
                 };
                 return response;
             }
 
-            #endregion
+            #endregion CheckRequest
 
-            #region BuildResponse 
+            #region BuildResponse
 
             try
             {
@@ -502,15 +502,14 @@ namespace PremiseAlexaBridgeService
             {
                 response.header.@namespace = Faults.Namespace;
                 response.header.name = Faults.UnexpectedInformationReceivedError;
-                response.payload.exception = new ExceptionResponsePayload()
+                response.payload.exception = new ExceptionResponsePayload
                 {
                     faultingParameter = "alexaRequest.header.name"
                 };
                 return response;
-
             }
 
-            #endregion
+            #endregion BuildResponse
 
             //SYSClient client = new SYSClient();
 
@@ -520,14 +519,14 @@ namespace PremiseAlexaBridgeService
             {
                 response.header.@namespace = Faults.Namespace;
                 response.header.name = Faults.DependentServiceUnavailableError;
-                response.payload.exception = new ExceptionResponsePayload()
+                response.payload.exception = new ExceptionResponsePayload
                 {
                     dependentServiceName = "Premise Server"
                 };
                 return response;
             }
 
-            #endregion
+            #endregion ConnectToPremise
 
             try
             {
@@ -552,46 +551,57 @@ namespace PremiseAlexaBridgeService
                         requestType = ControlRequestType.TurnOffRequest;
                         deviceType = DeviceType.OnOff;
                         break;
+
                     case "TURNONREQUEST":
                         requestType = ControlRequestType.TurnOnRequest;
                         deviceType = DeviceType.OnOff;
                         break;
+
                     case "SETTARGETTEMPERATUREREQUEST":
                         requestType = ControlRequestType.SetTargetTemperature;
                         deviceType = DeviceType.Thermostat;
                         break;
+
                     case "INCREMENTTARGETTEMPERATUREREQUEST":
                         requestType = ControlRequestType.IncrementTargetTemperature;
                         deviceType = DeviceType.Thermostat;
                         break;
+
                     case "DECREMENTTARGETTEMPERATUREREQUEST":
                         requestType = ControlRequestType.DecrementTargetTemperature;
                         deviceType = DeviceType.Thermostat;
                         break;
+
                     case "SETPERCENTAGEREQUEST":
                         requestType = ControlRequestType.SetPercentage;
                         deviceType = DeviceType.Dimmer;
                         break;
+
                     case "INCREMENTPERCENTAGEREQUEST":
                         requestType = ControlRequestType.IncrementPercentage;
                         deviceType = DeviceType.Dimmer;
                         break;
+
                     case "DECREMENTPERCENTAGEREQUEST":
                         requestType = ControlRequestType.DecrementPercentage;
                         deviceType = DeviceType.Dimmer;
                         break;
+
                     case "SETCOLORREQUEST":
                         requestType = ControlRequestType.SetColorRequest;
                         deviceType = DeviceType.ColorLight;
                         break;
+
                     case "SETCOLORTEMPERATUREREQUEST":
                         requestType = ControlRequestType.SetColorTemperatureRequest;
                         deviceType = DeviceType.ColorLight;
                         break;
+
                     case "INCREMENTCOLORTEMPERATUREREQUEST":
                         requestType = ControlRequestType.IncrementColorTemperature;
                         deviceType = DeviceType.ColorLight;
                         break;
+
                     case "DECREMENTCOLORTEMPERATUREREQUEST":
                         requestType = ControlRequestType.DecrementColorTemperature;
                         deviceType = DeviceType.ColorLight;
@@ -630,9 +640,11 @@ namespace PremiseAlexaBridgeService
                         case ControlRequestType.TurnOnRequest:
                             applianceToControl.SetValue("PowerState", "True").GetAwaiter().GetResult();
                             break;
+
                         case ControlRequestType.TurnOffRequest:
                             applianceToControl.SetValue("PowerState", "False").GetAwaiter().GetResult();
                             break;
+
                         default:
                             break;
                     }
@@ -652,6 +664,7 @@ namespace PremiseAlexaBridgeService
                             valueToSend = Math.Round(adjustValue / 100.00, 4);
                             applianceToControl.SetValue("Brightness", valueToSend.ToString()).GetAwaiter().GetResult();
                             break;
+
                         case ControlRequestType.IncrementPercentage:
                             // obtain the adjustValue
                             adjustValue = Math.Round(double.Parse(alexaRequest.payload.deltaPercentage.value) / 100.00, 2).LimitToRange(0.00, 100.00);
@@ -660,6 +673,7 @@ namespace PremiseAlexaBridgeService
                             valueToSend = Math.Round(currentValue + adjustValue, 2).LimitToRange(0.00, 1.00);
                             applianceToControl.SetValue("Brightness", valueToSend.ToString()).GetAwaiter().GetResult();
                             break;
+
                         case ControlRequestType.DecrementPercentage:
                             // obtain the adjustValue
                             adjustValue = Math.Round(double.Parse(alexaRequest.payload.deltaPercentage.value) / 100.00, 2).LimitToRange(0.00, 100.00);
@@ -668,6 +682,7 @@ namespace PremiseAlexaBridgeService
                             valueToSend = Math.Round(currentValue - adjustValue, 2).LimitToRange(0.00, 1.00);
                             applianceToControl.SetValue("Brightness", valueToSend.ToString()).GetAwaiter().GetResult();
                             break;
+
                         default:
                             break;
                     }
@@ -738,7 +753,6 @@ namespace PremiseAlexaBridgeService
                             break;
                     }
                 }
-
                 else if (deviceType == DeviceType.Thermostat)
                 {
                     int previousTemperatureMode;
@@ -760,6 +774,7 @@ namespace PremiseAlexaBridgeService
                                 Celcius = double.Parse(alexaRequest.payload.targetTemperature.value)
                             };
                             break;
+
                         case ControlRequestType.IncrementTargetTemperature:
                             // get delta temp in C
                             deltaTemperatureC = double.Parse(alexaRequest.payload.deltaTemperature.value);
@@ -793,7 +808,7 @@ namespace PremiseAlexaBridgeService
                         value = targetTemperature.Celcius.ToString()
                     };
 
-                    // get new mode 
+                    // get new mode
                     temperatureMode = applianceToControl.GetValue<int>("TemperatureMode").GetAwaiter().GetResult();
                     // report new mode
                     response.payload.temperatureMode = new ApplianceValue
@@ -804,7 +819,6 @@ namespace PremiseAlexaBridgeService
                     // alloc a previousState object
                     response.payload.previousState = new AppliancePreviousState
                     {
-
                         // report previous mode
                         mode = new ApplianceValue
                         {
@@ -835,7 +849,7 @@ namespace PremiseAlexaBridgeService
             return response;
         }
 
-        #endregion
+        #endregion Control
 
         #region Query
 
@@ -856,16 +870,17 @@ namespace PremiseAlexaBridgeService
             {
                 response.header.@namespace = Faults.Namespace;
                 response.header.name = Faults.UnexpectedInformationReceivedError;
-                response.payload.exception = new ExceptionResponsePayload()
+                response.payload.exception = new ExceptionResponsePayload
                 {
                     faultingParameter = "alexaRequest"
                 };
                 return response;
             }
 
-            #endregion
+            #endregion CheckRequest
 
             #region Initialize Response
+
             try
             {
                 response.header.messageId = alexaRequest.header.messageId;
@@ -876,14 +891,14 @@ namespace PremiseAlexaBridgeService
             {
                 response.header.@namespace = Faults.QueryNamespace;
                 response.header.name = Faults.UnexpectedInformationReceivedError;
-                response.payload.exception = new ExceptionResponsePayload()
+                response.payload.exception = new ExceptionResponsePayload
                 {
                     faultingParameter = "alexaRequest.header.name"
                 };
                 return response;
             }
 
-            #endregion
+            #endregion Initialize Response
 
             //SYSClient client = new SYSClient();
 
@@ -893,14 +908,14 @@ namespace PremiseAlexaBridgeService
             {
                 response.header.@namespace = Faults.QueryNamespace;
                 response.header.name = Faults.DependentServiceUnavailableError;
-                response.payload.exception = new ExceptionResponsePayload()
+                response.payload.exception = new ExceptionResponsePayload
                 {
                     dependentServiceName = "Premise Server"
                 };
                 return response;
             }
 
-            #endregion
+            #endregion ConnectToPremise
 
             #region Dispatch Query
 
@@ -920,12 +935,15 @@ namespace PremiseAlexaBridgeService
                     case "RETRIEVECAMERASTREAMURIREQUEST":
                         ProcessDeviceStateQueryRequest(QueryRequestType.RetrieveCameraStreamUri, alexaRequest, response);
                         break;
+
                     case "GETTARGETTEMPERATUREREQUEST":
                         ProcessDeviceStateQueryRequest(QueryRequestType.GetTargetTemperature, alexaRequest, response);
                         break;
+
                     case "GETTEMPERATUREREADINGREQUEST":
                         ProcessDeviceStateQueryRequest(QueryRequestType.GetTemperatureReading, alexaRequest, response);
                         break;
+
                     default:
                         response.header.@namespace = Faults.QueryNamespace;
                         response.header.name = Faults.UnsupportedOperationError;
@@ -953,14 +971,14 @@ namespace PremiseAlexaBridgeService
             }
 
             return response;
-            #endregion
+
+            #endregion Dispatch Query
         }
 
         #region Process Device State Query
 
         private void ProcessDeviceStateQueryRequest(QueryRequestType requestType, QueryRequest alexaRequest, QueryResponse response)
         {
-
             IPremiseObject applianceToQuery;
 
             InformLastContact("QueryRequest:" + alexaRequest.payload.appliance.additionalApplianceDetails.path).GetAwaiter().GetResult();
@@ -981,12 +999,15 @@ namespace PremiseAlexaBridgeService
                     case QueryRequestType.PowerState:
                         string state = applianceToQuery.GetValue("PowerState").GetAwaiter().GetResult();
                         break;
+
                     case QueryRequestType.DimmerLevel:
                         string state = applianceToQuery.GetValue("Brightness").GetAwaiter().GetResult();
                         break;
+
                     case QueryRequestType.ColorTemperature:
                         string state = applianceToQuery.GetValue("ColorTemperature").GetAwaiter().GetResult();
                         break;
+
                     case QueryRequestType.Color:
                         string state = applianceToQuery.GetValue("Hue").GetAwaiter().GetResult();
                         break;
@@ -1000,6 +1021,7 @@ namespace PremiseAlexaBridgeService
                             response.payload.uri.value = string.Format(@"rtsp://{0}:{1}{2}", host, port, path);
                         }
                         break;
+
                     case QueryRequestType.GetTargetTemperature:
                         Temperature coolingSetPoint = new Temperature(applianceToQuery.GetValue<double>("CoolingSetPoint").GetAwaiter().GetResult());
                         Temperature heatingSetPoint = new Temperature(applianceToQuery.GetValue<double>("HeatingSetPoint").GetAwaiter().GetResult());
@@ -1020,6 +1042,7 @@ namespace PremiseAlexaBridgeService
                         };
                         //response.payload.applianceResponseTimestamp = DateTime.UtcNow.ToUniversalTime().ToString("yyyy-MM-dd'T'HH:mm:ss.ffZ");// XmlConvert.ToString(DateTime.UtcNow.ToUniversalTime(), XmlDateTimeSerializationMode.Utc);
                         break;
+
                     case QueryRequestType.GetTemperatureReading:
                         Temperature temperature = new Temperature(applianceToQuery.GetValue<double>("Temperature").GetAwaiter().GetResult());
                         response.payload.temperatureReading = new ApplianceTemperatureReading
@@ -1029,6 +1052,7 @@ namespace PremiseAlexaBridgeService
                         };
                         //response.payload.applianceResponseTimestamp = DateTime.UtcNow.ToUniversalTime().ToString("yyyy-MM-dd'T'HH:mm:ss.ffZ"); //XmlConvert.ToString(DateTime.UtcNow.ToUniversalTime(), XmlDateTimeSerializationMode.Utc);
                         break;
+
                     default:
                         response.header.@namespace = Faults.QueryNamespace;
                         response.header.name = Faults.UnsupportedOperationError;
@@ -1050,8 +1074,8 @@ namespace PremiseAlexaBridgeService
             }
         }
 
-        #endregion
+        #endregion Process Device State Query
 
-        #endregion
+        #endregion Query
     }
 }

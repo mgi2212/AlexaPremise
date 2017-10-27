@@ -1,0 +1,29 @@
+POST http://localhost:51124/V3/Alexa.svc/json/Control/Speaker/
+Content-Type: application/json
+Host: localhost
+
+{
+  "directive": {
+    "header": {
+      "namespace": "Alexa.Speaker",
+      "name": "AdjustVolume",
+      "payloadVersion": "3",
+      "messageId": "1bd5d003-31b9-476f-ad03-71d471922820",
+      "correlationToken": "dFMb0z+PgpgdDmluhJ1LddFvSqZ/jCc8ptlAKulUj90jSqg=="
+    },
+    "endpoint": {
+      "scope": {
+        "type": "BearerToken",
+        "token": "some-token",
+        "localAccessToken": "premise-access-token"
+      },
+      "endpointId": "D6F2A9F3-52CF-4D79-A138-2A78C6F0BDF5",
+      "cookie": {
+          "path": "sys://Home/House/First/Den/MediaZone/MatrixSwitcherZone"
+      }
+    },
+    "payload": {
+      "volume": 20
+    }
+  }
+}

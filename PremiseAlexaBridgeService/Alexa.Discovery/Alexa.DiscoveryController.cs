@@ -1,24 +1,44 @@
-﻿using Alexa.Controller;
-using Alexa.SmartHomeAPI.V3;
-using PremiseAlexaBridgeService;
-using System;
+﻿using System;
+using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Runtime.Serialization;
-using System.Collections.Generic;
-using SYSWebSockClient;
 using System.Threading.Tasks;
+using Alexa.Controller;
+using Alexa.SmartHomeAPI.V3;
+using PremiseAlexaBridgeService;
+using SYSWebSockClient;
 
 namespace Alexa.Discovery
 {
     #region Discovery Data Contracts
 
-    #region Response 
+    #region Response
+
+    [DataContract]
+    public class AlexaDiscoveryResponsePayload : AlexaResponsePayload
+    {
+        #region Constructors
+
+        public AlexaDiscoveryResponsePayload()
+        {
+            endpoints = new List<DiscoveryEndpoint>();
+        }
+
+        #endregion Constructors
+
+        #region Properties
+
+        [DataMember(Name = "endpoints", EmitDefaultValue = false, IsRequired = false)]
+        public List<DiscoveryEndpoint> endpoints { get; set; }
+
+        #endregion Properties
+    }
 
     [DataContract]
     public class DiscoveryControllerResponse
     {
-        [DataMember(Name = "event", Order = 2)]
-        public DiscoveryControllerResponseEvent Event { get; set; }
+        #region Constructors
 
         public DiscoveryControllerResponse()
         {
@@ -26,92 +46,124 @@ namespace Alexa.Discovery
 
         public DiscoveryControllerResponse(Header header)
         {
-            Event = new DiscoveryControllerResponseEvent()
+            Event = new DiscoveryControllerResponseEvent
             {
                 header = header,
-                payload = new AlexaDiscoveryResponsePayload(),
+                payload = new AlexaDiscoveryResponsePayload()
             };
         }
+
+        #endregion Constructors
+
+        #region Properties
+
+        [DataMember(Name = "event", Order = 2)]
+        public DiscoveryControllerResponseEvent Event { get; set; }
+
+        #endregion Properties
     }
 
     [DataContract]
     public class DiscoveryControllerResponseEvent
     {
-        [DataMember(Name = "header", Order = 1)]
-        public Header header { get; set; }
-        [DataMember(Name = "payload", EmitDefaultValue = false, Order = 3)]
-        public AlexaDiscoveryResponsePayload payload { get; set; }
+        #region Constructors
 
         public DiscoveryControllerResponseEvent()
         {
             payload = new AlexaDiscoveryResponsePayload();
-
         }
+
+        #endregion Constructors
+
+        #region Properties
+
+        [DataMember(Name = "header", Order = 1)]
+        public Header header { get; set; }
+
+        [DataMember(Name = "payload", EmitDefaultValue = false, Order = 3)]
+        public AlexaDiscoveryResponsePayload payload { get; set; }
+
+        #endregion Properties
     }
 
-    [DataContract]
-    public class AlexaDiscoveryResponsePayload : AlexaResponsePayload
-    {
-        [DataMember(Name = "endpoints", EmitDefaultValue = false, IsRequired = false)]
-        public List<DiscoveryEndpoint> endpoints { get; set; }
-
-        public AlexaDiscoveryResponsePayload()
-        {
-            endpoints = new List<DiscoveryEndpoint>();
-        }
-    }
-
-    #endregion
+    #endregion Response
 
     #region Request
 
     [DataContract]
     public class AlexaDiscoveryControllerRequest
     {
+        #region Properties
+
         [DataMember(Name = "directive")]
         public AlexaDiscoveryControllerRequestDirective directive { get; set; }
+
+        #endregion Properties
     }
 
     [DataContract]
     public class AlexaDiscoveryControllerRequestDirective
     {
-        [DataMember(Name = "header", IsRequired = true, Order = 1)]
-        public Header header { get; set; }
-        [DataMember(Name = "payload", IsRequired = true, Order = 3)]
-        public DiscoveryControllerRequestDirectivePayload payload { get; set; }
+        #region Constructors
 
         public AlexaDiscoveryControllerRequestDirective()
         {
             header = new Header();
             payload = new DiscoveryControllerRequestDirectivePayload();
         }
+
+        #endregion Constructors
+
+        #region Properties
+
+        [DataMember(Name = "header", IsRequired = true, Order = 1)]
+        public Header header { get; set; }
+
+        [DataMember(Name = "payload", IsRequired = true, Order = 3)]
+        public DiscoveryControllerRequestDirectivePayload payload { get; set; }
+
+        #endregion Properties
     }
 
     [DataContract]
     public class DiscoveryControllerRequestDirectivePayload
     {
-        [DataMember(Name = "scope", EmitDefaultValue = false)]
-        public Scope scope { get; set; }
+        #region Constructors
 
         public DiscoveryControllerRequestDirectivePayload()
         {
             scope = new Scope();
         }
+
+        #endregion Constructors
+
+        #region Properties
+
+        [DataMember(Name = "scope", EmitDefaultValue = false)]
+        public Scope scope { get; set; }
+
+        #endregion Properties
     }
 
-    #endregion
+    #endregion Request
 
-    #endregion
+    #endregion Discovery Data Contracts
 
     public class AlexaDiscoveryController : AlexaControllerBase<
         DiscoveryControllerRequestDirectivePayload,
         DiscoveryControllerResponse,
         AlexaDiscoveryControllerRequest>, IAlexaController
     {
+        #region Fields
+
         public readonly string @namespace = "Alexa.Discovery";
         public readonly string[] directiveNames = { "Discover" };
-        private readonly string[] alexaProperties = { "Discover.Response" };
         public readonly string[] premiseProperties = { "none" };
+        private readonly string[] alexaProperties = { "Discover.Response" };
+
+        #endregion Fields
+
+        #region Constructors
 
         public AlexaDiscoveryController(AlexaDiscoveryControllerRequest request)
             : base(request)
@@ -122,19 +174,18 @@ namespace Alexa.Discovery
             : base(endpoint)
         {
         }
-        public string GetAssemblyTypeName()
-        {
-            return this.GetType().AssemblyQualifiedName;
-        }
 
         public AlexaDiscoveryController()
-            : base()
         {
         }
 
-        public string GetNameSpace()
+        #endregion Constructors
+
+        #region Methods
+
+        public string AssemblyTypeName()
         {
-            return @namespace;
+            return GetType().AssemblyQualifiedName;
         }
 
         public string[] GetAlexaProperties()
@@ -142,9 +193,24 @@ namespace Alexa.Discovery
             return alexaProperties;
         }
 
+        public string GetAssemblyTypeName()
+        {
+            return GetType().AssemblyQualifiedName;
+        }
+
         public string[] GetDirectiveNames()
         {
             return directiveNames;
+        }
+
+        public string GetNameSpace()
+        {
+            return @namespace;
+        }
+
+        public string[] GetPremiseProperties()
+        {
+            return premiseProperties;
         }
 
         public AlexaProperty GetPropertyState()
@@ -152,13 +218,19 @@ namespace Alexa.Discovery
             return null;
         }
 
+        public List<AlexaProperty> GetPropertyStates()
+        {
+            return null;
+        }
+
         public bool HasAlexaProperty(string property)
         {
-            return (this.alexaProperties.Contains(property));
+            return (alexaProperties.Contains(property));
         }
+
         public bool HasPremiseProperty(string property)
         {
-            foreach (string s in this.premiseProperties)
+            foreach (string s in premiseProperties)
             {
                 if (s == property)
                     return true;
@@ -166,19 +238,14 @@ namespace Alexa.Discovery
             return false;
         }
 
-        public string AssemblyTypeName()
-        {
-            return this.GetType().AssemblyQualifiedName;
-        }
-
         public void ProcessControllerDirective()
         {
             try
             {
-                response.Event.payload.endpoints = PremiseServer.GetEndpoints().GetAwaiter().GetResult();
+                Response.Event.payload.endpoints = PremiseServer.GetEndpoints().GetAwaiter().GetResult();
                 if (PremiseServer.IsAsyncEventsEnabled)
                 {
-                    Task t = Task.Run(() =>
+                    Task.Run(() =>
                     {
                         PremiseServer.Resubscribe();
                     });
@@ -186,13 +253,16 @@ namespace Alexa.Discovery
             }
             catch
             {
-                response.Event.payload.endpoints.Clear();
+                Response.Event.payload.endpoints.Clear();
             }
 
-            this.Response.Event.header.name = alexaProperties[0];
-            PremiseServer.HomeObject.SetValue("LastRefreshed", DateTime.Now.ToString()).GetAwaiter().GetResult();
-            PremiseServer.HomeObject.SetValue("HealthDescription", string.Format("Reported Devices and Scenes = {0}", response.Event.payload.endpoints.Count)).GetAwaiter().GetResult();
+            Response.Event.header.name = alexaProperties[0];
+            PremiseServer.HomeObject.SetValue("LastRefreshed", DateTime.Now.ToString(CultureInfo.InvariantCulture)).GetAwaiter().GetResult();
+            PremiseServer.HomeObject.SetValue("HealthDescription",
+                $"Reported Devices and Scenes = {Response.Event.payload.endpoints.Count}").GetAwaiter().GetResult();
             PremiseServer.HomeObject.SetValue("Health", "True").GetAwaiter().GetResult();
         }
+
+        #endregion Methods
     }
 }

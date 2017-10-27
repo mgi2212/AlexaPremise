@@ -1,15 +1,16 @@
-﻿using Alexa;
+﻿using System;
+using System.Globalization;
+using System.Linq;
+using System.ServiceModel;
+using System.ServiceModel.Web;
+using Alexa;
+using Alexa.AV;
 using Alexa.Discovery;
 using Alexa.HVAC;
 using Alexa.Lighting;
 using Alexa.Power;
 using Alexa.Scene;
 using Alexa.SmartHomeAPI.V3;
-using System;
-using System.Linq;
-using System.ServiceModel;
-using System.ServiceModel.Web;
-using System.Web.Script.Serialization;
 using SYSWebSockClient;
 
 namespace PremiseAlexaBridgeService
@@ -21,6 +22,16 @@ namespace PremiseAlexaBridgeService
     [ServiceContract(Name = "PremiseAlexaV3Service", Namespace = "https://PremiseAlexa.com")]
     public interface IPremiseAlexaV3Service
     {
+        #region Methods
+
+        [OperationContract]
+        ControlResponse AdjustBrightness(AlexaBrightnessControllerRequest request);
+
+        [OperationContract]
+        ControlResponse AdjustColorTemperature(AlexaColorTemperatureControllerRequest request);
+
+        [OperationContract]
+        ControlResponse AdjustTargetTemperature(AlexaThermostatControllerRequest request);
 
         [OperationContract]
         AuthorizationResponse Authorization(AuthorizationRequest request);
@@ -29,46 +40,52 @@ namespace PremiseAlexaBridgeService
         DiscoveryControllerResponse Discovery(AlexaDiscoveryControllerRequest request);
 
         [OperationContract]
-        ControlResponse SetPowerState(AlexaSetPowerStateControllerRequest request);
-
-        [OperationContract]
-        ControlResponse SetBrightness(AlexaSetBrightnessControllerRequest request);
-
-        [OperationContract]
-        ControlResponse AdjustBrightness(AlexaAdjustBrightnessControllerRequest request);
-
-        [OperationContract]
-        ControlResponse SetScene(AlexaSetSceneControllerRequest request);
-
-        [OperationContract]
-        ControlResponse AdjustColorTemperature(AlexaAdjustColorTemperatureControllerRequest request);
-
-        [OperationContract]
-        ControlResponse SetColorTemperature(AlexaSetColorTemperatureControllerRequest request);
-
-        [OperationContract]
-        ControlResponse SetColor(AlexaSetColorControllerRequest request);
-
-        [OperationContract]
-        ControlResponse SetTargetTemperature(AlexaSetTargetTemperatureControllerRequest request);
-
-        [OperationContract]
-        ControlResponse AdjustTargetTemperature(AlexaAdjustTargetTemperatureControllerRequest request);
-
-        [OperationContract]
-        ControlResponse SetThermostatMode(AlexaSetThermostatModeControllerRequest request);
+        ControlResponse InputController(AlexaInputControllerRequest request);
 
         [OperationContract]
         ReportStateResponse ReportState(ReportStateRequest request);
 
         [OperationContract]
+        ControlResponse SetBrightness(AlexaBrightnessControllerRequest request);
+
+        [OperationContract]
+        ControlResponse SetColor(AlexaColorControllerRequest request);
+
+        [OperationContract]
+        ControlResponse SetColorTemperature(AlexaColorTemperatureControllerRequest request);
+
+        [OperationContract]
+        ControlResponse SetPowerState(AlexaSetPowerStateControllerRequest request);
+
+        [OperationContract]
+        ControlResponse SetScene(AlexaSetSceneControllerRequest request);
+
+        [OperationContract]
+        ControlResponse SetTargetTemperature(AlexaThermostatControllerRequest request);
+
+        [OperationContract]
+        ControlResponse SetThermostatMode(AlexaThermostatControllerRequest request);
+
+        [OperationContract]
+        ControlResponse Speaker(AlexaSpeakerRequest request);
+
+        [OperationContract]
         SystemResponse System(SystemRequest request);
+
+        #endregion Methods
     }
 
     public class PremiseAlexaV3Service : PremiseAlexaBase, IPremiseAlexaV3Service
     {
-
         #region System
+
+        public SystemResponsePayload GetHealthCheckResponseV3()
+        {
+            SystemResponsePayload payload = new SystemResponsePayload();
+            payload.isHealthy = PremiseServer.HomeObject.GetValue<bool>("Health").GetAwaiter().GetResult();
+            payload.description = PremiseServer.HomeObject.GetValue<string>("HealthDescription").GetAwaiter().GetResult();
+            return payload;
+        }
 
         /// <summary>
         /// System messages
@@ -91,7 +108,7 @@ namespace PremiseAlexaBridgeService
             {
                 response.header.@namespace = Faults.Namespace;
                 response.header.name = Faults.DependentServiceUnavailableError;
-                response.payload.exception = new ExceptionResponsePayload()
+                response.payload.exception = new ExceptionResponsePayload
                 {
                     dependentServiceName = "Premise Server"
                 };
@@ -103,7 +120,7 @@ namespace PremiseAlexaBridgeService
                 case "HealthCheckRequest":
                     InformLastContact("System:HealthCheckRequest").GetAwaiter().GetResult();
                     response.header.name = "HealthCheckResponse";
-                    response.payload = this.GetHealthCheckResponseV3();
+                    response.payload = GetHealthCheckResponseV3();
                     break;
 
                 default:
@@ -115,28 +132,15 @@ namespace PremiseAlexaBridgeService
             return response;
         }
 
-        public SystemResponsePayload GetHealthCheckResponseV3()
-        {
-            SystemResponsePayload payload = new SystemResponsePayload();
-            var returnClause = new string[] { "Health", "HealthDescription" };
-            dynamic whereClause = new System.Dynamic.ExpandoObject();
-            payload.isHealthy = PremiseServer.HomeObject.GetValue<bool>("Health").GetAwaiter().GetResult();
-            payload.description = PremiseServer.HomeObject.GetValue<string>("HealthDescription").GetAwaiter().GetResult();
-            return payload;
-        }
-
-        #endregion
+        #endregion System
 
         #region Discovery
 
-
         /// <summary>
-        /// Discovery directives are processed here
+        /// Discovery happens heres
         /// </summary>
-        /// <param name="request", type="AlexaDiscoveryControllerRequest"></param>
-        /// <returns>ControlResponse</returns>
-        /// [WebInvoke(Method = "POST", RequestFormat = WebMessageFormat.Json, ResponseFormat = WebMessageFormat.Json, BodyStyle = WebMessageBodyStyle.Bare, UriTemplate = "/Discovery/")]
-        /// 
+        /// <param name="request"></param>
+        /// <returns></returns>
         [WebInvoke(Method = "POST", RequestFormat = WebMessageFormat.Json, ResponseFormat = WebMessageFormat.Json, BodyStyle = WebMessageBodyStyle.Bare, UriTemplate = "/Discovery/")]
         public DiscoveryControllerResponse Discovery(AlexaDiscoveryControllerRequest request)
         {
@@ -148,17 +152,17 @@ namespace PremiseAlexaBridgeService
             return controller.Response;
         }
 
-        #endregion
+        #endregion Discovery
 
         #region Control
 
         #region PowerState
 
         /// <summary>
-        /// Control Requests are processed here
+        /// Set Power State
         /// </summary>
-        /// <param name="request", type="AlexaSetPowerStateControllerRequest"></param>
-        /// <returns>ControlResponse</returns>
+        /// <param name="request"></param>
+        /// <returns></returns>
         [WebInvoke(Method = "POST", RequestFormat = WebMessageFormat.Json, ResponseFormat = WebMessageFormat.Json, BodyStyle = WebMessageBodyStyle.Bare, UriTemplate = "/Control/SetPowerState/")]
         public ControlResponse SetPowerState(AlexaSetPowerStateControllerRequest request)
         {
@@ -168,24 +172,22 @@ namespace PremiseAlexaBridgeService
                 controller.ProcessControllerDirective();
             }
 
-            var json = new JavaScriptSerializer().Serialize(controller.Response);
-
             return controller.Response;
         }
 
-        #endregion
+        #endregion PowerState
 
         #region Brightness
 
         /// <summary>
-        /// Control Requests are processed here
+        /// Adjust Brightness
         /// </summary>
-        /// <param name="request", type="AlexaSetBrightnessControllerRequest"></param>
-        /// <returns>ControlResponse</returns>
-        [WebInvoke(Method = "POST", RequestFormat = WebMessageFormat.Json, ResponseFormat = WebMessageFormat.Json, BodyStyle = WebMessageBodyStyle.Bare, UriTemplate = "/Control/SetBrightness/")]
-        public ControlResponse SetBrightness(AlexaSetBrightnessControllerRequest request)
+        /// <param name="request"></param>
+        /// <returns></returns>
+        [WebInvoke(Method = "POST", RequestFormat = WebMessageFormat.Json, ResponseFormat = WebMessageFormat.Json, BodyStyle = WebMessageBodyStyle.Bare, UriTemplate = "/Control/AdjustBrightness/")]
+        public ControlResponse AdjustBrightness(AlexaBrightnessControllerRequest request)
         {
-            AlexaSetBrightnessController controller = new AlexaSetBrightnessController(request);
+            AlexaBrightnessController controller = new AlexaBrightnessController(request);
             if (controller.ValidateDirective(controller.GetDirectiveNames(), controller.GetNameSpace()))
             {
                 controller.ProcessControllerDirective();
@@ -194,14 +196,14 @@ namespace PremiseAlexaBridgeService
         }
 
         /// <summary>
-        /// Control Requests are processed here
+        /// Set Brightness
         /// </summary>
-        /// <param name="request", type="AlexaAdjustBrightnessControllerRequest"></param>
-        /// <returns>ControlResponse</returns>
-        [WebInvoke(Method = "POST", RequestFormat = WebMessageFormat.Json, ResponseFormat = WebMessageFormat.Json, BodyStyle = WebMessageBodyStyle.Bare, UriTemplate = "/Control/AdjustBrightness/")]
-        public ControlResponse AdjustBrightness(AlexaAdjustBrightnessControllerRequest request)
+        /// <param name="request"></param>
+        /// <returns></returns>
+        [WebInvoke(Method = "POST", RequestFormat = WebMessageFormat.Json, ResponseFormat = WebMessageFormat.Json, BodyStyle = WebMessageBodyStyle.Bare, UriTemplate = "/Control/SetBrightness/")]
+        public ControlResponse SetBrightness(AlexaBrightnessControllerRequest request)
         {
-            AlexaAdjustBrightnessController controller = new AlexaAdjustBrightnessController(request);
+            AlexaBrightnessController controller = new AlexaBrightnessController(request);
             if (controller.ValidateDirective(controller.GetDirectiveNames(), controller.GetNameSpace()))
             {
                 controller.ProcessControllerDirective();
@@ -209,15 +211,15 @@ namespace PremiseAlexaBridgeService
             return controller.Response;
         }
 
-        #endregion
+        #endregion Brightness
 
         #region Scene
 
         /// <summary>
-        /// Control Requests are processed here
+        /// Set Scene
         /// </summary>
-        /// <param name="request", type="AlexaSetPowerStateControllerRequest"></param>
-        /// <returns>ControlResponse</returns>
+        /// <param name="request"></param>
+        /// <returns></returns>
         [WebInvoke(Method = "POST", RequestFormat = WebMessageFormat.Json, ResponseFormat = WebMessageFormat.Json, BodyStyle = WebMessageBodyStyle.Bare, UriTemplate = "/Control/Scene/")]
         public ControlResponse SetScene(AlexaSetSceneControllerRequest request)
         {
@@ -229,19 +231,19 @@ namespace PremiseAlexaBridgeService
             return controller.Response;
         }
 
-        #endregion
+        #endregion Scene
 
         #region ColorTemperature
 
         /// <summary>
-        /// Control Requests are processed here
+        /// Adjust Color Temp
         /// </summary>
-        /// <param name="request", type="AlexaAdjustColorTemperatureController"></param>
-        /// <returns>ControlResponse</returns>
+        /// <param name="request"></param>
+        /// <returns></returns>
         [WebInvoke(Method = "POST", RequestFormat = WebMessageFormat.Json, ResponseFormat = WebMessageFormat.Json, BodyStyle = WebMessageBodyStyle.Bare, UriTemplate = "/Control/AdjustColorTemperature/")]
-        public ControlResponse AdjustColorTemperature(AlexaAdjustColorTemperatureControllerRequest request)
+        public ControlResponse AdjustColorTemperature(AlexaColorTemperatureControllerRequest request)
         {
-            AlexaAdjustColorTemperatureController controller = new AlexaAdjustColorTemperatureController(request);
+            AlexaColorTemperatureController controller = new AlexaColorTemperatureController(request);
             if (controller.ValidateDirective(controller.GetDirectiveNames(), controller.GetNameSpace()))
             {
                 controller.ProcessControllerDirective();
@@ -250,14 +252,14 @@ namespace PremiseAlexaBridgeService
         }
 
         /// <summary>
-        /// Control Requests are processed here
+        /// Set Color Temp
         /// </summary>
-        /// <param name="request", type="AlexaAdjustColorTemperatureController"></param>
-        /// <returns>ControlResponse</returns>
+        /// <param name="request"></param>
+        /// <returns></returns>
         [WebInvoke(Method = "POST", RequestFormat = WebMessageFormat.Json, ResponseFormat = WebMessageFormat.Json, BodyStyle = WebMessageBodyStyle.Bare, UriTemplate = "/Control/SetColorTemperature/")]
-        public ControlResponse SetColorTemperature(AlexaSetColorTemperatureControllerRequest request)
+        public ControlResponse SetColorTemperature(AlexaColorTemperatureControllerRequest request)
         {
-            AlexaSetColorTemperatureController controller = new AlexaSetColorTemperatureController(request);
+            AlexaColorTemperatureController controller = new AlexaColorTemperatureController(request);
             if (controller.ValidateDirective(controller.GetDirectiveNames(), controller.GetNameSpace()))
             {
                 controller.ProcessControllerDirective();
@@ -265,19 +267,19 @@ namespace PremiseAlexaBridgeService
             return controller.Response;
         }
 
-        #endregion
+        #endregion ColorTemperature
 
         #region Color
 
         /// <summary>
-        /// Control Requests are processed here
+        /// Set Color
         /// </summary>
-        /// <param name="request", type="AlexaSetColorControllerRequest"></param>
-        /// <returns>ControlResponse</returns>
+        /// <param name="request"></param>
+        /// <returns></returns>
         [WebInvoke(Method = "POST", RequestFormat = WebMessageFormat.Json, ResponseFormat = WebMessageFormat.Json, BodyStyle = WebMessageBodyStyle.Bare, UriTemplate = "/Control/SetColor/")]
-        public ControlResponse SetColor(AlexaSetColorControllerRequest request)
+        public ControlResponse SetColor(AlexaColorControllerRequest request)
         {
-            AlexaSetColorController controller = new AlexaSetColorController(request);
+            AlexaColorController controller = new AlexaColorController(request);
             if (controller.ValidateDirective(controller.GetDirectiveNames(), controller.GetNameSpace()))
             {
                 controller.ProcessControllerDirective();
@@ -285,19 +287,19 @@ namespace PremiseAlexaBridgeService
             return controller.Response;
         }
 
-        #endregion
+        #endregion Color
 
         #region Thermostat
 
         /// <summary>
-        /// Control Requests are processed here
+        /// Adjust temp
         /// </summary>
-        /// <param name="request", type="AlexaSetTargetTemperatureControllerRequest"></param>
-        /// <returns>ControlResponse</returns>
+        /// <param name="request"></param>
+        /// <returns></returns>
         [WebInvoke(Method = "POST", RequestFormat = WebMessageFormat.Json, ResponseFormat = WebMessageFormat.Json, BodyStyle = WebMessageBodyStyle.Bare, UriTemplate = "/Control/AdjustTargetTemperature/")]
-        public ControlResponse AdjustTargetTemperature(AlexaAdjustTargetTemperatureControllerRequest request)
+        public ControlResponse AdjustTargetTemperature(AlexaThermostatControllerRequest request)
         {
-            AlexaAdjustTargetTemperatureController controller = new AlexaAdjustTargetTemperatureController(request);
+            AlexaThermostatController controller = new AlexaThermostatController(request);
             if (controller.ValidateDirective(controller.GetDirectiveNames(), controller.GetNameSpace()))
             {
                 controller.ProcessControllerDirective();
@@ -305,16 +307,15 @@ namespace PremiseAlexaBridgeService
             return controller.Response;
         }
 
-
         /// <summary>
-        /// Control Requests are processed here
+        /// Set Temp
         /// </summary>
-        /// <param name="request", type="AlexaSetTargetTemperatureControllerRequest"></param>
-        /// <returns>ControlResponse</returns>
+        /// <param name="request"></param>
+        /// <returns></returns>
         [WebInvoke(Method = "POST", RequestFormat = WebMessageFormat.Json, ResponseFormat = WebMessageFormat.Json, BodyStyle = WebMessageBodyStyle.Bare, UriTemplate = "/Control/SetTargetTemperature/")]
-        public ControlResponse SetTargetTemperature(AlexaSetTargetTemperatureControllerRequest request)
+        public ControlResponse SetTargetTemperature(AlexaThermostatControllerRequest request)
         {
-            SetTargetTemperatureController controller = new SetTargetTemperatureController(request);
+            AlexaThermostatController controller = new AlexaThermostatController(request);
             if (controller.ValidateDirective(controller.GetDirectiveNames(), controller.GetNameSpace()))
             {
                 controller.ProcessControllerDirective();
@@ -323,14 +324,14 @@ namespace PremiseAlexaBridgeService
         }
 
         /// <summary>
-        /// Control Requests are processed here
+        /// Set Tstat mode
         /// </summary>
-        /// <param name="request", type="AlexaSetThermostatModeControllerRequest"></param>
-        /// <returns>ControlResponse</returns>
+        /// <param name="request"></param>
+        /// <returns></returns>
         [WebInvoke(Method = "POST", RequestFormat = WebMessageFormat.Json, ResponseFormat = WebMessageFormat.Json, BodyStyle = WebMessageBodyStyle.Bare, UriTemplate = "/Control/SetThermostatMode/")]
-        public ControlResponse SetThermostatMode(AlexaSetThermostatModeControllerRequest request)
+        public ControlResponse SetThermostatMode(AlexaThermostatControllerRequest request)
         {
-            AlexaSetThermostatModeController controller = new AlexaSetThermostatModeController(request);
+            AlexaThermostatController controller = new AlexaThermostatController(request);
             if (controller.ValidateDirective(controller.GetDirectiveNames(), controller.GetNameSpace()))
             {
                 controller.ProcessControllerDirective();
@@ -338,9 +339,49 @@ namespace PremiseAlexaBridgeService
             return controller.Response;
         }
 
-        #endregion
+        #endregion Thermostat
 
-        #endregion
+        #region Speaker
+
+        /// <summary>
+        /// Speaker Controller
+        /// </summary>
+        /// <param name="request"></param>
+        /// <returns></returns>
+        [WebInvoke(Method = "POST", RequestFormat = WebMessageFormat.Json, ResponseFormat = WebMessageFormat.Json, BodyStyle = WebMessageBodyStyle.Bare, UriTemplate = "/Control/Speaker/")]
+        public ControlResponse Speaker(AlexaSpeakerRequest request)
+        {
+            AlexaSpeaker controller = new AlexaSpeaker(request);
+            if (controller.ValidateDirective(controller.GetDirectiveNames(), controller.GetNameSpace()))
+            {
+                controller.ProcessControllerDirective();
+            }
+            return controller.Response;
+        }
+
+        #endregion Speaker
+
+        #region InputController
+
+        /// <summary>
+        /// Input Controller
+        /// </summary>
+        /// <param name="request"></param>
+        /// <returns></returns>
+        [WebInvoke(Method = "POST", RequestFormat = WebMessageFormat.Json, ResponseFormat = WebMessageFormat.Json, BodyStyle = WebMessageBodyStyle.Bare, UriTemplate = "/Control/InputController/")]
+        public ControlResponse InputController(AlexaInputControllerRequest request)
+        {
+            AlexaInputController controller = new AlexaInputController(request);
+            if (controller.ValidateDirective(controller.GetDirectiveNames(), controller.GetNameSpace()))
+            {
+                controller.ProcessControllerDirective();
+            }
+            return controller.Response;
+        }
+
+        #endregion InputController
+
+        #endregion Control
 
         #region Report State
 
@@ -352,7 +393,6 @@ namespace PremiseAlexaBridgeService
         [WebInvoke(Method = "POST", RequestFormat = WebMessageFormat.Json, ResponseFormat = WebMessageFormat.Json, BodyStyle = WebMessageBodyStyle.Bare, UriTemplate = "/ReportState/")]
         public ReportStateResponse ReportState(ReportStateRequest request)
         {
-
             AlexaDirective directive = request.directive;
 
             var response = new ReportStateResponse(directive);
@@ -366,7 +406,7 @@ namespace PremiseAlexaBridgeService
                 return response;
             }
 
-            #endregion
+            #endregion Validate request
 
             #region Connect To Premise Server
 
@@ -386,7 +426,7 @@ namespace PremiseAlexaBridgeService
                 return response;
             }
 
-            #endregion
+            #endregion Connect To Premise Server
 
             #region Verify Access
 
@@ -405,7 +445,6 @@ namespace PremiseAlexaBridgeService
                     response.@event.payload = new AlexaErrorResponsePayload(AlexaErrorTypes.INVALID_AUTHORIZATION_CREDENTIAL, "Not authorized on local premise server.");
                     return response;
                 }
-
             }
             catch
             {
@@ -414,11 +453,11 @@ namespace PremiseAlexaBridgeService
                 return response;
             }
 
-            #endregion
+            #endregion Verify Access
 
             #region Get Premise Object
 
-            IPremiseObject endpoint = null;
+            IPremiseObject endpoint;
             try
             {
                 Guid premiseId = new Guid(directive.endpoint.endpointId);
@@ -442,7 +481,7 @@ namespace PremiseAlexaBridgeService
                 return response;
             }
 
-            #endregion
+            #endregion Get Premise Object
 
             DiscoveryEndpoint discoveryEndpoint = PremiseServer.GetDiscoveryEndpoint(endpoint).GetAwaiter().GetResult();
             if (discoveryEndpoint == null)
@@ -479,7 +518,7 @@ namespace PremiseAlexaBridgeService
                     {
                         case "Alexa.SceneController":
                             {
-                                AlexaSetSceneController controller = new AlexaSetSceneController("", endpoint);
+                                AlexaSetSceneController controller = new AlexaSetSceneController(endpoint);
                                 AlexaProperty prop = controller.GetPropertyState();
                                 response.@event.header.name = (string)prop.value;
                                 response.@event.payload.cause = new ChangeReportCause
@@ -489,12 +528,8 @@ namespace PremiseAlexaBridgeService
                                 response.@event.payload.timestamp = prop.timeOfSample;
                             }
                             break;
-
-                        default:
-                            break;
                     }
                 }
-
             }
             catch (Exception ex)
             {
@@ -504,10 +539,11 @@ namespace PremiseAlexaBridgeService
             }
 
             response.@event.header.name = "StateReport";
-            InformLastContact(string.Format("StateReport: {0}", response?.@event?.endpoint?.cookie?.path)).GetAwaiter().GetResult();
+            InformLastContact(string.Format("StateReport: {0}", response.@event?.endpoint?.cookie?.path)).GetAwaiter().GetResult();
             return response;
         }
-        #endregion
+
+        #endregion Report State
 
         #region Authorization
 
@@ -519,7 +555,6 @@ namespace PremiseAlexaBridgeService
         [WebInvoke(Method = "POST", RequestFormat = WebMessageFormat.Json, ResponseFormat = WebMessageFormat.Json, BodyStyle = WebMessageBodyStyle.Bare, UriTemplate = "/Authorization/")]
         public AuthorizationResponse Authorization(AuthorizationRequest request)
         {
-
             AuthorizationDirective directive = request.directive;
 
             var response = new AuthorizationResponse(directive);
@@ -532,7 +567,7 @@ namespace PremiseAlexaBridgeService
                 return response;
             }
 
-            #endregion
+            #endregion Validate request
 
             #region Verify Access
 
@@ -556,7 +591,7 @@ namespace PremiseAlexaBridgeService
                 return response;
             }
 
-            #endregion
+            #endregion Verify Access
 
             try
             {
@@ -568,8 +603,8 @@ namespace PremiseAlexaBridgeService
 
                 PremiseServer.HomeObject.SetValue("AlexaAsyncAuthorizationCode", directive.payload.grant.access_token).GetAwaiter().GetResult();
                 PremiseServer.HomeObject.SetValue("AlexaAsyncAuthorizationRefreshToken", directive.payload.grant.refresh_token).GetAwaiter().GetResult();
-                DateTime expiry = DateTime.UtcNow.AddSeconds((double)directive.payload.grant.expires_in);
-                PremiseServer.HomeObject.SetValue("AlexaAsyncAuthorizationCodeExpiry", expiry.ToString()).GetAwaiter().GetResult();
+                DateTime expiry = DateTime.UtcNow.AddSeconds(directive.payload.grant.expires_in);
+                PremiseServer.HomeObject.SetValue("AlexaAsyncAuthorizationCodeExpiry", expiry.ToString(CultureInfo.InvariantCulture)).GetAwaiter().GetResult();
                 PremiseServer.HomeObject.SetValue("AlexaAsyncAuthorizationClientId", directive.payload.grant.client_id).GetAwaiter().GetResult();
                 PremiseServer.HomeObject.SetValue("AlexaAsyncAuthorizationSecret", directive.payload.grant.client_secret).GetAwaiter().GetResult();
             }
@@ -582,6 +617,6 @@ namespace PremiseAlexaBridgeService
             return response;
         }
 
-        #endregion
+        #endregion Authorization
     }
 }

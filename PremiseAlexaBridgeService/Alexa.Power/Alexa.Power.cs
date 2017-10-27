@@ -1,15 +1,17 @@
-﻿using Alexa.EndpointHealth;
+﻿using System;
+using System.Collections.Generic;
+using Alexa.EndpointHealth;
 using Alexa.Lighting;
 using Alexa.SmartHomeAPI.V3;
 using PremiseAlexaBridgeService;
-using System;
-using System.Collections.Generic;
 using SYSWebSockClient;
 
 namespace Alexa.Power
 {
     public class AlexaPower : IAlexaDeviceType
     {
+        #region Methods
+
         public List<AlexaProperty> FindRelatedProperties(IPremiseObject endpoint, string currentController)
         {
             List<AlexaProperty> relatedProperties = new List<AlexaProperty>();
@@ -45,33 +47,29 @@ namespace Alexa.Power
 
                     case "Alexa.BrightnessController":
                         {
-                            AlexaSetBrightnessController controller = new AlexaSetBrightnessController(endpoint);
+                            AlexaBrightnessController controller = new AlexaBrightnessController(endpoint);
                             property = controller.GetPropertyState();
                         }
                         break;
 
                     case "Alexa.ColorController":
                         {
-                            AlexaSetColorController controller = new AlexaSetColorController(endpoint);
+                            AlexaColorController controller = new AlexaColorController(endpoint);
                             property = controller.GetPropertyState();
                         }
                         break;
 
                     case "Alexa.ColorTemperatureController":
                         {
-                            AlexaSetColorTemperatureController controller = new AlexaSetColorTemperatureController(endpoint);
+                            AlexaColorTemperatureController controller = new AlexaColorTemperatureController(endpoint);
                             property = controller.GetPropertyState();
                         }
-                        break;
-
-                    default:
                         break;
                 }
                 if (property != null)
                 {
                     relatedProperties.Add(property);
                 }
-
             }
             return relatedProperties;
         }
@@ -93,10 +91,7 @@ namespace Alexa.Power
                     switch (capability.@interface)
                     {
                         case "Alexa.PowerController":
-                            Type type = this.GetType();
-                            subscription = endpoint.Subscribe("PowerState", this.GetType().AssemblyQualifiedName, callback).GetAwaiter().GetResult();
-                            break;
-                        default:
+                            subscription = endpoint.Subscribe("PowerState", GetType().AssemblyQualifiedName, callback).GetAwaiter().GetResult();
                             break;
                     }
                 }
@@ -107,6 +102,7 @@ namespace Alexa.Power
             }
             return subscriptions;
         }
+
+        #endregion Methods
     }
 }
-

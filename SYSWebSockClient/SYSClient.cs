@@ -11,34 +11,59 @@
 
     public class Subscription
     {
-        public string sysObjectId;
-        public string clientSideSubscriptionId;
-        public string propertyName;
+        #region Fields
+
+        public dynamic @params;
         public string alexaControllerName;
         public Action<dynamic> callback;
-        public dynamic @params;
+        public string clientSideSubscriptionId;
+        public string propertyName;
+        public string sysObjectId;
+
+        #endregion Fields
+
+        #region Constructors
 
         public Subscription(string clientSideId)
         {
             clientSideSubscriptionId = clientSideId;
         }
+
+        #endregion Constructors
     }
 
     public class SYSClient : JsonWebSocket
     {
-        private ConcurrentDictionary<long, JsonRPCFuture> _futures;
-        private ConcurrentDictionary<string, Subscription> _subscriptions;
+        #region Fields
 
         // ToDo: CHRISBE: Let's make this use the Root by default at some point
         public static string HomeObjectId = "{4F846CA8-6603-4675-AC66-05A0AF6A8ACD}";
 
+        private ConcurrentDictionary<long, JsonRPCFuture> _futures;
+        private ConcurrentDictionary<string, Subscription> _subscriptions;
         private Future ConnectFuture;
         private Action<Exception, string> disconnectCallback;
+
+        #endregion Fields
+
+        #region Constructors
 
         public SYSClient()
         {
             this._futures = new ConcurrentDictionary<long, JsonRPCFuture>();
             this._subscriptions = new ConcurrentDictionary<string, Subscription>();
+        }
+
+        #endregion Constructors
+
+        #region Properties
+
+        public new System.Net.WebSockets.WebSocketState ConnectionState
+        {
+            get
+            {
+                return base.ConnectionState;
+            }
         }
 
         public ConcurrentDictionary<string, Subscription> Subscriptions
@@ -49,127 +74,40 @@
             }
         }
 
-        protected override void OnError(Exception error)
-        {
-            if (this.ConnectFuture == null)
-                return;
+        #endregion Properties
 
-            this.ConnectFuture.Notify(error, null);
+        #region Methods
+
+        public new Task<IPremiseObject> Connect(string uri)
+        {
+            this.ConnectFuture = new Future();
+
+            return Task.Run(
+                () =>
+                {
+                    try
+                    {
+                        base.Connect(uri);
+                        this.ConnectFuture.Await();
+                    }
+                    catch (Exception ex)
+                    {
+                        this.OnError(ex);
+                        return null;
+                    }
+                    return new PremiseObject(this, HomeObjectId) as IPremiseObject;
+                });
         }
 
-        protected override void OnConnect()
+        public void Disconnect(Action<Exception, string> callback)
         {
-            if (this.ConnectFuture == null)
-                return;
-
-            this.ConnectFuture.Notify(null, null);
+            this.disconnectCallback = callback;
+            base.Disconnect();
         }
 
-        protected override void OnDisconnect()
+        internal void AddSubscription(string clientSideSubscriptionId, Subscription subscription)
         {
-            if (this.disconnectCallback == null)
-                return;
-
-            try
-            {
-                this.disconnectCallback(null, null);
-            }
-            catch (Exception error)
-            {
-                try
-                {
-                    this.disconnectCallback(error, null);
-                }
-                catch (Exception finalError)
-                {
-                    // eat it in retail build
-                    Debug.WriteLine(finalError.ToString());
-                }
-            }
-        }
-        protected override void OnMessage(string message)
-        {
-            // Console.WriteLine("RECEIVED: {0}", message);
-            dynamic json;
-            try
-            {
-                json = JObject.Parse(message);
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex);
-                return;
-            }
-
-
-            if (!(json as JObject).TryGetValue("id", out JToken idObj))
-            {
-                // this is a notification from the server
-                // extract the method to call
-
-                if (!(json as JObject).TryGetValue("method", out JToken methodObj))
-                {
-                    Console.WriteLine("JSON RPC 2.0 notification received with no method specified");
-                    return;
-                }
-
-                // look up the callback function
-                var method = methodObj.ToString();
-
-                //Action<dynamic> callback;
-                this._subscriptions.TryGetValue(method, out Subscription subscription);
-
-                if (subscription.callback == null)
-                {
-                    Console.WriteLine("JSON RPC 2.0 notification received with no registered handler");
-                    return;
-                }
-
-                //dynamic @params = json.@params;
-
-                subscription.@params = json.@params;
-                dynamic @params = subscription;
-
-                subscription.callback(@params);
-
-                return;
-            }
-
-            bool idExists = long.TryParse(idObj.ToString(), out long id);
-            if (!idExists)
-            {
-                Console.WriteLine("ID set but is not long");
-                return;
-            }
-
-            this._futures.TryRemove(id, out JsonRPCFuture future);
-
-            if (future == null)
-            {
-                // probably a notification
-                return;
-            }
-
-            var error = json.error;
-            var result = json.result;
-
-            if (error != null)
-            {
-                JsonRPCException ex;
-
-                // we have an error
-                var errorMessage = (string) error.message;
-                if (errorMessage != null)
-                    ex = new JsonRPCException(errorMessage);
-                else
-                    ex = new JsonRPCException("Undefined exception");
-
-                future.Notify(ex, null);
-
-                return;
-            }
-
-            future.Notify(null, result);
+            this._subscriptions.TryAdd(clientSideSubscriptionId, subscription);
         }
 
         internal void Send(JsonRPCFuture future, out Task task)
@@ -213,7 +151,7 @@
                         return null;
                     }
 
-                    var premiseObject = new PremiseObject(this, (string) result);
+                    var premiseObject = new PremiseObject(this, (string)result);
                     return premiseObject as IPremiseObject;
                 });
         }
@@ -264,6 +202,10 @@
                         return null;
                     }
                     var premiseObjects = new List<IPremiseObject>();
+                    if (result == null)
+                    {
+                        return null;
+                    }
                     foreach (var item in result)
                     {
                         var premiseObject = new PremiseObject(this, (string)item);
@@ -316,45 +258,134 @@
                 });
         }
 
-        public new Task<IPremiseObject> Connect(string uri)
+        protected override void OnConnect()
         {
+            if (this.ConnectFuture == null)
+                return;
 
-            this.ConnectFuture = new Future();
-
-            return Task.Run(
-                () =>
-                {
-                    try
-                    {
-                        base.Connect(uri);
-                        this.ConnectFuture.Await();
-                    }
-                    catch (Exception ex)
-                    {
-                        this.OnError(ex);
-                        return null;
-                    }
-                    return new PremiseObject(this, HomeObjectId) as IPremiseObject;
-                });
+            this.ConnectFuture.Notify(null, null);
         }
 
-        public new System.Net.WebSockets.WebSocketState ConnectionState
+        protected override void OnDisconnect()
         {
-            get
+            if (this.disconnectCallback == null)
+                return;
+
+            try
             {
-                return base.ConnectionState;
+                this.disconnectCallback(null, null);
+            }
+            catch (Exception error)
+            {
+                try
+                {
+                    this.disconnectCallback(error, null);
+                }
+                catch (Exception finalError)
+                {
+                    // eat it in retail build
+                    Debug.WriteLine(finalError.ToString());
+                }
             }
         }
 
-        public void Disconnect(Action<Exception, string> callback)
+        protected override void OnError(Exception error)
         {
-            this.disconnectCallback = callback;
-            base.Disconnect();
+            if (this.ConnectFuture == null)
+                return;
+
+            this.ConnectFuture.Notify(error, null);
         }
 
-        internal void AddSubscription(string clientSideSubscriptionId, Subscription subscription)
+        protected override void OnMessage(string message)
         {
-            this._subscriptions.TryAdd(clientSideSubscriptionId, subscription);
+            // Console.WriteLine("RECEIVED: {0}", message);
+            dynamic json;
+            try
+            {
+                json = JObject.Parse(message);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex);
+                return;
+            }
+
+            if (!((JObject)json).TryGetValue("id", out JToken idObj))
+            {
+                // this is a notification from the server extract the method to call
+
+                if (!((JObject)json).TryGetValue("method", out JToken methodObj))
+                {
+                    Console.WriteLine("JSON RPC 2.0 notification received with no method specified");
+                    return;
+                }
+
+                // look up the callback function
+                var method = methodObj.ToString();
+
+                //Action<dynamic> callback;
+                this._subscriptions.TryGetValue(method, out Subscription subscription);
+
+                if (subscription == null)
+                {
+                    Console.WriteLine("JSON RPC 2.0 notification received null subscription.");
+                    return;
+                }
+
+                if (subscription.callback == null)
+                {
+                    Console.WriteLine("JSON RPC 2.0 notification received with no registered handler");
+                    return;
+                }
+
+                //dynamic @params = json.@params;
+
+                subscription.@params = json.@params;
+                dynamic @params = subscription;
+
+                subscription.callback(@params);
+
+                return;
+            }
+
+            bool idExists = long.TryParse(idObj.ToString(), out long id);
+            if (!idExists)
+            {
+                Console.WriteLine("ID set but is not long");
+                return;
+            }
+
+            this._futures.TryRemove(id, out JsonRPCFuture future);
+
+            if (future == null)
+            {
+                // probably a notification
+                return;
+            }
+
+            var error = json.error;
+            var result = json.result;
+
+            if (error != null)
+            {
+                JsonRPCException ex;
+
+                // we have an error
+                var errorMessage = (string)error.message;
+                if (errorMessage != null)
+                    ex = new JsonRPCException(errorMessage);
+                else
+                    ex = new JsonRPCException("Undefined exception");
+
+                future.Notify(ex, null);
+
+                return;
+            }
+
+            future.Notify(null, result);
         }
+
+        #endregion Methods
     }
 }
