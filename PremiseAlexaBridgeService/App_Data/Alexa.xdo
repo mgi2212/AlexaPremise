@@ -43,7 +43,7 @@
               <Object ID="{F87B15D5-5226-49DF-B905-7CA5C572890D}" Class="sys://Schema/System/SubClass" LinkObject="{C29FBF63-6F49-43CB-9584-E8C3EFB2D282}" />
             </Object>
             <Object ID="{E6802175-18AE-4CCF-8E7C-C719981705C0}" Name="Alexa.ExtendMediaZone" Class="sys://Schema/System/Class">
-              <Object ID="{99DB7157-3F74-4E74-9A92-82CFDF894201}" Name="displayCategories" Flags="0x900" Class="sys://Schema/System/Text" ReadOnly="-1" DefaultValue="&quot;SPEAKERS&quot;" />
+              <Object ID="{99DB7157-3F74-4E74-9A92-82CFDF894201}" Name="displayCategories" Flags="0x900" Class="sys://Schema/System/Text" ReadOnly="-1" DefaultValue="&quot;OTHER&quot;" />
               <Object ID="{8E26FD4E-B8AF-4735-A61F-752D81D77B49}" Class="sys://Schema/System/SuperClass" LinkObject="{3C3B4F0D-9DC5-42EA-9CE3-2150D2AD58CB}" />
               <Object ID="{A3DFFEB5-1571-4B1D-A8F8-848A12F8A9E8}" Name="renderDiscoveryJson" Class="sys://Schema/Scripting/ClassFunction">
                 <![CDATA[
@@ -63,6 +63,36 @@ end if
 
 set classes = switcher.GetClasses()
 for each cls in classes
+
+	if (cls.Name = "Alexa.EndpointHealth") then
+		if (json <> "") then
+			json = json + ","
+		end if
+		json = json + "{"
+		json = json + this.discoveryJsonProlog()
+		json = json + JsonNameValue("interface",cls.Name) + ","
+		json = json + chr(34) + "properties" + chr(34) + ": {" + chr(34) + "supported" + chr(34) + ": [ {"
+		json = json + JsonNameValue("name","connectivity") + "} ],"
+		json = json + chr(34) + "proactivelyReported" + chr(34) + ":" + LCase(CStr(this.proactivelyReported)) + ","
+		json = json + this.discoveryJsonEpilog()
+		json = json + "}"
+		json = json + "}"
+	end if
+
+	if (cls.Name = "Alexa.PowerController") then
+		if (json <> "") then
+			json = json + ","
+		end if
+		json = json + "{"
+		json = json + this.discoveryJsonProlog()
+		json = json + JsonNameValue("interface",cls.Name) + ","
+		json = json + chr(34) + "properties" + chr(34) + ": {" + chr(34) + "supported" + chr(34) + ": [ {"
+		json = json + JsonNameValue("name","powerState") + "} ],"
+		json = json + chr(34) + "proactivelyReported" + chr(34) + ":" + LCase(CStr(this.proactivelyReported)) + ","
+		json = json + this.discoveryJsonEpilog()
+		json = json + "}"
+		json = json + "}"
+	end if
 
 	if (cls.Name = "Alexa.ExtendMatrixSwitcherZone") then
 		if (json <> "") then
@@ -84,7 +114,9 @@ for each cls in classes
 			json = json + ","
 		end if
 		json = json + "{"
-		json = json + this.discoveryJsonProlog()
+		'json = json + this.discoveryJsonProlog()
+		json = json + JsonNameValue("type",this.alexatype) + "," ' bug workaround
+		json = json + JsonNameValue("version","1.0") + ","  'bug workaround
 		json = json + JsonNameValue("interface",cls.Name) + ","
 		json = json + chr(34) + "properties" + chr(34) + ": {" + chr(34) + "supported" + chr(34) + ": [ {"
 		json = json + JsonNameValue("name","volume") + "},{"
@@ -112,6 +144,8 @@ json = ""
               <Object ID="{E333843C-1F1C-41E6-B167-00C9DB93A4EE}" Class="sys://Schema/System/SubClass" LinkObject="{94152BFD-E544-4ED9-806C-E65D6CF5A4BC}" />
               <Object ID="{28905415-996C-4474-8334-91F0D42B6992}" Name="interface" Flags="0x900" Class="sys://Schema/System/Text" DefaultValue="Alexa.InputController" ReadOnly="-1" />
               <Object ID="{EBC6FD20-B043-4681-97D6-88FFCEDB76C4}" Name="properties" Flags="0x900" Class="sys://Schema/System/Text" DefaultValue="input" ReadOnly="-1" />
+              <Object ID="{FB299D18-A2F4-4ED8-B175-987CDFCBC2AF}" Class="sys://Schema/System/SuperClass" LinkObject="{3317BF5A-E61E-4E32-B6C8-5FD25B85C4E4}" />
+              <Object ID="{23F09F6B-E380-4CAA-8C29-0BCA24B2A8BC}" Class="sys://Schema/System/SuperClass" LinkObject="{1F5D079E-A373-499B-8130-F52DE07BD21F}" />
             </Object>
           </Object>
           <Object ID="{68F56332-8F7E-463A-B0F1-37C341301228}" Name="Templates" Flags="0x120000" Class="sys://Schema/System/TemplateFolder" />
