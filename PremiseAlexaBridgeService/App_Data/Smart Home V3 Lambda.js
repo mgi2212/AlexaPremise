@@ -11,7 +11,6 @@ function log(title, msg) {
 
 var skill_client_secret = 'd9bd211cb8c9af7b8db1eb3ba52cc9b31fab94604cbf6804110788e79fbb535e';
 var skill_client_id = 'amzn1.application-oa2-client.76f9bb6cb75a4eb18b9886f9c3d32631';
-var LWA_TOKEN_URI = "https://api.amazon.com/auth/o2/token";
 var LWA_HEADERS = {
     "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8"
 };
@@ -262,6 +261,13 @@ function cleanUpResponse(event, response) {
 
     if (event.directive.header.name === 'ReportState') {
         clean = true;
+    }
+
+    if (response.event.header.name === 'ErrorResponse') {
+        if (response.event.payload.hasOwnProperty('__type')) {
+            delete response.event.payload.__type;
+            return;
+        }
     }
 
     if (clean === true) {

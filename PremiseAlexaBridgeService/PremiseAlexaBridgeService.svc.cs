@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Threading.Tasks;
 using System.Web.Hosting;
 
@@ -9,7 +10,7 @@ namespace PremiseAlexaBridgeService
     {
         #region Methods
 
-        public static void AddUnique<List>(this IList<List> self, IEnumerable<List> items)
+        public static void AddUnique<TList>(this IList<TList> self, IEnumerable<TList> items)
         {
             foreach (var item in items)
                 if (!self.Contains(item))
@@ -48,19 +49,8 @@ namespace PremiseAlexaBridgeService
 
         public static async Task InformLastContact(string command)
         {
-            await PremiseServer.HomeObject.SetValue("LastHeardFromAlexa", DateTime.Now.ToString());
+            await PremiseServer.HomeObject.SetValue("LastHeardFromAlexa", DateTime.Now.ToString(CultureInfo.InvariantCulture));
             await PremiseServer.HomeObject.SetValue("LastHeardCommand", command);
-        }
-
-        public static string NormalizeDisplayName(string displayName)
-        {
-            displayName = displayName.Trim();
-
-            if ((!string.IsNullOrEmpty(displayName)) && (displayName.IndexOf("(Occupied)") != -1))
-            {
-                return displayName.Replace("(Occupied)", "").Trim();
-            }
-            return displayName;
         }
 
         #endregion Utility
@@ -72,7 +62,7 @@ namespace PremiseAlexaBridgeService
 
         public void Preload(string[] parameters)
         {
-            Task t = Task.Run(() => PremiseServer.WarmUpCache());
+            Task.Run(() => PremiseServer.WarmUpCache());
         }
 
         #endregion Methods

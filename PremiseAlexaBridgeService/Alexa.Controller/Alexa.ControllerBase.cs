@@ -194,6 +194,7 @@ namespace Alexa.Controller
         {
             if (Response.GetType() != typeof(ControlResponse)) return;
             ResponseContext = null;
+            ResponseEvent.header.name = "ErrorResponse";
             ResponseEvent.payload = new AlexaErrorResponsePayload(type, message);
         }
 

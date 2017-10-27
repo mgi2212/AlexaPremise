@@ -168,8 +168,13 @@ namespace Alexa.AV
                 IPremiseObject newInput = inputs[Request.directive.payload.input];
                 string newInputId = newInput.GetObjectID().GetAwaiter().GetResult();
                 switcher.SetValue("CurrentSource", newInputId).GetAwaiter().GetResult();
+                Response.context.properties.AddUnique(GetPropertyStates());
+                Response.Event.header.name = "Response";
             }
-            Response.context.properties.AddUnique(GetPropertyStates());
+            else
+            {
+                ReportError(AlexaErrorTypes.INVALID_VALUE, "Input not found!");
+            }
         }
 
         private Dictionary<string, IPremiseObject> GetAllInputs(IPremiseObject switcher)
