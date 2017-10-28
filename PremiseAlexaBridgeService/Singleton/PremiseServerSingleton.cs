@@ -558,7 +558,7 @@ namespace PremiseAlexaBridgeService
             if (string.IsNullOrEmpty(refresh_token) || string.IsNullOrEmpty(client_id) ||
                 string.IsNullOrEmpty(client_secret))
             {
-                NotifyError(EventLogEntryType.Warning, "Alexa authorization token missing. Re-enable Premise skill!", eventID).GetAwaiter().GetResult();
+                NotifyError(EventLogEntryType.Warning, "Alexa authorization token missing. Re-enable Premise skill!", eventID + 1).GetAwaiter().GetResult();
                 return;
             }
             string refreshData = $"grant_type=refresh_token&refresh_token={refresh_token}&client_id={client_id}&client_secret={client_secret}";
@@ -572,7 +572,7 @@ namespace PremiseAlexaBridgeService
                     if (httpResponse == null || !(httpResponse.StatusCode == HttpStatusCode.OK || httpResponse.StatusCode == HttpStatusCode.Accepted))
                     {
                         string message = $"Could not refresh async token! Error({httpResponse?.StatusCode})";
-                        NotifyError(EventLogEntryType.Warning, message, eventID).GetAwaiter().GetResult();
+                        NotifyError(EventLogEntryType.Warning, message, eventID + 2).GetAwaiter().GetResult();
                         return;
                     }
 
@@ -582,7 +582,7 @@ namespace PremiseAlexaBridgeService
                     {
                         if (response == null)
                         {
-                            NotifyError(EventLogEntryType.Warning, "Async Token Refresh: Null response from Amazon.", eventID).GetAwaiter().GetResult();
+                            NotifyError(EventLogEntryType.Warning, "Async Token Refresh: Null response from Amazon.", eventID + 3).GetAwaiter().GetResult();
                             return;
                         }
                         StreamReader reader = new StreamReader(response, Encoding.UTF8);
@@ -591,22 +591,21 @@ namespace PremiseAlexaBridgeService
 
                     JObject json = JObject.Parse(responseString);
 
-                    Debug.WriteLine("access_token={0}", json["access_token"].ToString());
-                    Debug.WriteLine("refresh_token={0}", json["refresh_token"].ToString());
-                    Debug.WriteLine("token_type={0}", json["token_type"].ToString());
-                    Debug.WriteLine("expirse_in={0}", json["expires_in"].ToString());
-
                     HomeObject.SetValue("AlexaAsyncAuthorizationCode", json["access_token"].ToString()).GetAwaiter().GetResult();
                     HomeObject.SetValue("AlexaAsyncAuthorizationRefreshToken", json["refresh_token"].ToString()).GetAwaiter().GetResult();
                     DateTime expiry = DateTime.UtcNow.AddSeconds((double)json["expires_in"]);
                     HomeObject.SetValue("AlexaAsyncAuthorizationCodeExpiry", expiry.ToString(CultureInfo.InvariantCulture)).GetAwaiter().GetResult();
-                    Debug.WriteLine("refresh response:" + responseString);
+                    Debug.WriteLine("async token refresh response:" + responseString);
                 }
             }
             catch (Exception e)
             {
                 NotifyError(EventLogEntryType.Error, $"Error: {e.Message} refreshing async token.", eventID + 5).GetAwaiter().GetResult();
+                return;
             }
+
+            WriteToWindowsApplicationEventLog(EventLogEntryType.Information, "Alexa async token successfully refreshed.", eventID);
+            Thread.Sleep(1000); // give amazon some time to register the refresh
         }
 
         private static void SendStateChangeReportsToAlexa()
@@ -618,6 +617,8 @@ namespace PremiseAlexaBridgeService
                 if (item.Sent)  // should never happen
                     continue;
 
+                WebRequest request;
+
                 try
                 {
                     string expiry = HomeObject.GetValue<string>("AlexaAsyncAuthorizationCodeExpiry").GetAwaiter().GetResult();
@@ -627,7 +628,6 @@ namespace PremiseAlexaBridgeService
                         if (DateTime.Compare(DateTime.UtcNow, expiryDateTime) >= 0)
                         {
                             RefreshAsyncToken();
-                            Thread.Sleep(1500); // give amazon some time to register the refresh
                         }
                     }
                     else
@@ -637,7 +637,7 @@ namespace PremiseAlexaBridgeService
                     }
 
                     item.Sent = true;
-                    WebRequest request = WebRequest.Create(item.uri);
+                    request = WebRequest.Create(item.uri);
                     request.Method = WebRequestMethods.Http.Post;
                     request.ContentType = @"application/json";
                     request.ContentLength = item.Json.Length;
@@ -645,12 +645,24 @@ namespace PremiseAlexaBridgeService
                     Stream stream = request.GetRequestStream();
                     stream.Write(item.Bytes, 0, item.Json.Length);
                     stream.Close();
+                }
+                catch (Exception ex)
+                {
+                    NotifyError(EventLogEntryType.Error, $"Async Update Error (request): {ex.Message}", eventID + 1).GetAwaiter().GetResult();
+                    continue;
+                }
+
+                try
+                {
                     using (HttpWebResponse httpResponse = request.GetResponse() as HttpWebResponse)
                     {
-                        if (httpResponse == null || !(httpResponse.StatusCode == HttpStatusCode.OK || httpResponse.StatusCode == HttpStatusCode.Accepted))
+                        if (httpResponse == null ||
+                            !(httpResponse.StatusCode == HttpStatusCode.OK ||
+                              httpResponse.StatusCode == HttpStatusCode.Accepted))
                         {
-                            string message = $"Could not send async state update. Error({httpResponse?.StatusCode})";
-                            NotifyError(EventLogEntryType.Warning, message, eventID).GetAwaiter().GetResult();
+                            string message =
+                                $"Could not send async state update. Error({httpResponse?.StatusCode})";
+                            NotifyError(EventLogEntryType.Warning, message, eventID + 2).GetAwaiter().GetResult();
                             continue;
                         }
 
@@ -661,7 +673,7 @@ namespace PremiseAlexaBridgeService
                             if (response == null)
                             {
                                 string message = "Async State Update: Null response from Amazon.";
-                                NotifyError(EventLogEntryType.Warning, message, eventID).GetAwaiter().GetResult();
+                                NotifyError(EventLogEntryType.Warning, message, eventID + 3).GetAwaiter().GetResult();
                                 continue;
                             }
                             StreamReader reader = new StreamReader(response, Encoding.UTF8);
@@ -673,9 +685,42 @@ namespace PremiseAlexaBridgeService
                         IncrementCounter("AlexaAsyncUpdateCount").GetAwaiter().GetResult();
                     }
                 }
+                catch (WebException e)
+                {
+                    using (WebResponse webresponse = e.Response)
+                    {
+                        HttpWebResponse httpResponse = (HttpWebResponse)webresponse;
+
+                        // The skill is enabled, but the authentication token has expired.
+                        if (httpResponse.StatusCode == HttpStatusCode.Unauthorized)
+                        {
+                            RefreshAsyncToken();
+                            continue;
+                        }
+
+                        // The skill has been disabled and authorization for that customer has been revoked.
+                        if (httpResponse.StatusCode == HttpStatusCode.Forbidden)
+                        {
+                            NotifyError(EventLogEntryType.Error, $"Async Update Error (response): Premise skill has been disabled.", eventID + 4).GetAwaiter().GetResult();
+                            continue;
+                        }
+
+                        // The message contains other invalid identifying information such as a
+                        // invalid endpoint Id or correlation token.
+                        if (httpResponse.StatusCode == HttpStatusCode.BadRequest)
+                        {
+                            NotifyError(EventLogEntryType.Error, $"Async Update Error (response): The message contains invalid identifying information such as a invalid endpoint Id or correlation token. Json={item.Json}", eventID + 5).GetAwaiter().GetResult();
+                            continue;
+                        }
+
+                        NotifyError(EventLogEntryType.Error, $"Async Update Error (response): {e.Message}", eventID + 6).GetAwaiter().GetResult();
+                        continue;
+                    }
+                }
                 catch (Exception ex)
                 {
-                    NotifyError(EventLogEntryType.Error, $"Async Update Error: {ex.Message}", eventID + 5).GetAwaiter().GetResult();
+                    NotifyError(EventLogEntryType.Error, $"Async Update Error (response): {ex.Message}", eventID + 7).GetAwaiter().GetResult();
+                    continue;
                 }
                 Debug.WriteLine(item.Json);
                 Thread.Sleep(100);
