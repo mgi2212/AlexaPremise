@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
 using System.Runtime.Serialization;
@@ -257,10 +258,11 @@ namespace Alexa.Discovery
             }
 
             Response.Event.header.name = alexaProperties[0];
+            string message = $"Discovery reported {Response.Event.payload.endpoints.Count} devices and scenes.";
             PremiseServer.HomeObject.SetValue("LastRefreshed", DateTime.Now.ToString(CultureInfo.InvariantCulture)).GetAwaiter().GetResult();
-            PremiseServer.HomeObject.SetValue("HealthDescription",
-                $"Reported Devices and Scenes = {Response.Event.payload.endpoints.Count}").GetAwaiter().GetResult();
+            PremiseServer.HomeObject.SetValue("HealthDescription", message).GetAwaiter().GetResult();
             PremiseServer.HomeObject.SetValue("Health", "True").GetAwaiter().GetResult();
+            PremiseServer.WriteToWindowsApplicationEventLog(EventLogEntryType.Information, message, 50);
         }
 
         #endregion Methods

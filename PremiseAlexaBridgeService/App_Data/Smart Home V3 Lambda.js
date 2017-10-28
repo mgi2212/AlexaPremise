@@ -208,7 +208,7 @@ function proxyEvent(event, context, command, customer_endpoint) {
     var protocol;
 
     // for debugging!
-    if ((post_options.host === 'alexa.quigleys.us') && (post_options.port === 3000)) {
+    if ((post_options.host === 'alexa.quigleys.us') && (post_options.port === '3000')) {
         protocol = http;
     }
     else {

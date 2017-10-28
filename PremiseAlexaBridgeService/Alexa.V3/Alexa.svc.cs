@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
 using System.ServiceModel;
@@ -609,6 +610,17 @@ namespace PremiseAlexaBridgeService
                 PremiseServer.HomeObject.SetValue("AlexaAsyncAuthorizationCodeExpiry", expiry.ToString(CultureInfo.InvariantCulture)).GetAwaiter().GetResult();
                 PremiseServer.HomeObject.SetValue("AlexaAsyncAuthorizationClientId", directive.payload.grant.client_id).GetAwaiter().GetResult();
                 PremiseServer.HomeObject.SetValue("AlexaAsyncAuthorizationSecret", directive.payload.grant.client_secret).GetAwaiter().GetResult();
+
+                const string message = "Skill is now enabled and authorized to send async updates to Alexa. A task has been started to subscribe to property change events.";
+                InformLastContact(message).GetAwaiter().GetResult();
+                PremiseServer.WriteToWindowsApplicationEventLog(EventLogEntryType.Information, message, 60);
+
+                // Generate Discovery Json
+                PremiseServer.HomeObject.SetValue("GenerateDiscoveryJson", "True").GetAwaiter().GetResult();
+
+                // Signal sending async property change events - this will also start a task to
+                // subscribe to all properties
+                PremiseServer.HomeObject.SetValue("SendAsyncEventsToAlexa", "True").GetAwaiter().GetResult();
             }
             catch (Exception ex)
             {
