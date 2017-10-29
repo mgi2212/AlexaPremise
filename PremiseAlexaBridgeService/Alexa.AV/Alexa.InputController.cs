@@ -173,7 +173,7 @@ namespace Alexa.AV
             }
             else
             {
-                ReportError(AlexaErrorTypes.INVALID_VALUE, "Input not found!");
+                ReportError(AlexaErrorTypes.INVALID_VALUE, $"Input {Request.directive.payload.input} not found!");
             }
         }
 

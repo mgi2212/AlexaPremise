@@ -288,10 +288,7 @@ namespace PremiseAlexaBridgeService
 
                 StateChangeReportWrapper item = new StateChangeReportWrapper
                 {
-                    Json = JsonConvert.SerializeObject(changeReport, new JsonSerializerSettings
-                    {
-                        NullValueHandling = NullValueHandling.Ignore
-                    })
+                    ChangeReport = changeReport
                 };
 
                 stateReportQueue.Enqueue(item);
@@ -563,7 +560,7 @@ namespace PremiseAlexaBridgeService
             });
         }
 
-        private static void RefreshAsyncToken()
+        private static void RefreshAsyncToken(out string newToken)
         {
             const int eventID = 10;
 
@@ -571,6 +568,7 @@ namespace PremiseAlexaBridgeService
             {
                 string previousToken;
                 WebRequest refreshRequest;
+                newToken = "";
 
                 try
                 {
@@ -625,14 +623,14 @@ namespace PremiseAlexaBridgeService
 
                         JObject json = JObject.Parse(responseString);
 
-                        string newToken = json["access_token"].ToString();
+                        newToken = json["access_token"].ToString();
                         HomeObject.SetValue("AlexaAsyncAuthorizationCode", newToken).GetAwaiter().GetResult();
                         HomeObject.SetValue("AlexaAsyncAuthorizationRefreshToken", json["refresh_token"].ToString()).GetAwaiter().GetResult();
                         DateTime expiry = DateTime.UtcNow.AddSeconds((double)json["expires_in"]);
                         HomeObject.SetValue("AlexaAsyncAuthorizationCodeExpiry", expiry.ToString(CultureInfo.InvariantCulture)).GetAwaiter().GetResult();
                         Debug.WriteLine("async token refresh response:" + responseString);
                         WriteToWindowsApplicationEventLog(EventLogEntryType.Information, $"Alexa async auth token successfully refreshed. Previous Token (hash):{previousToken.GetHashCode()} New Token (hash):{newToken.GetHashCode()}", eventID);
-                        Thread.Sleep(2000); // give amazon some time to register the refresh
+                        //Thread.Sleep(2000); // give amazon some time to register the refresh
                     }
                 }
                 catch (WebException e)
@@ -645,8 +643,11 @@ namespace PremiseAlexaBridgeService
                         if (httpResponse.StatusCode == HttpStatusCode.Unauthorized)
                         {
                             // skill has ben disabled so disable sending Async events to Alexa - this
-                            // will also unsubscribe all
-                            HomeObject.SetValue("SendAsyncEventsToAlexa", "False").GetAwaiter().GetResult();
+                            // will also unsubscribe
+                            Task.Run(async () =>
+                            {
+                                await HomeObject.SetValue("SendAsyncEventsToAlexa", "False");
+                            });
 
                             string responseString;
 
@@ -697,7 +698,12 @@ namespace PremiseAlexaBridgeService
                     {
                         if (DateTime.Compare(DateTime.UtcNow, expiryDateTime.AddSeconds(-60.0)) >= 0)
                         {
-                            RefreshAsyncToken();
+                            RefreshAsyncToken(out string newToken);
+                            item.ChangeReport.@event.endpoint.scope.token = newToken;
+                            foreach (var queuedItem in stateReportQueue.InternalQueue)
+                            {
+                                queuedItem.ChangeReport.@event.endpoint.scope.token = newToken;
+                            }
                         }
                     }
                     else
@@ -741,17 +747,14 @@ namespace PremiseAlexaBridgeService
                         {
                             if (response == null)
                             {
-                                string message = "Async State Update: Null response from Amazon.";
-                                NotifyError(EventLogEntryType.Warning, message, eventID + 3).GetAwaiter().GetResult();
+                                NotifyError(EventLogEntryType.Warning, "Async State Update: Null response from Amazon.", eventID + 3).GetAwaiter().GetResult();
                                 continue;
                             }
                             StreamReader reader = new StreamReader(response, Encoding.UTF8);
                             responseString = reader.ReadToEnd();
                         }
-
-                        Debug.WriteLine("response:" + responseString);
-
                         IncrementCounter("AlexaAsyncUpdateCount").GetAwaiter().GetResult();
+                        Debug.WriteLine($"PSU response status ({httpResponse.StatusCode}) ContentLength: {httpResponse.ContentLength} Content: {responseString}");
                     }
                 }
                 catch (WebException e)
@@ -761,34 +764,32 @@ namespace PremiseAlexaBridgeService
                         HttpWebResponse httpResponse = (HttpWebResponse)webresponse;
 
                         // The skill is enabled, but the authentication token has expired.
-                        if (httpResponse.StatusCode == HttpStatusCode.Unauthorized)
+                        switch (httpResponse.StatusCode)
                         {
-                            RefreshAsyncToken(); // blocks for 2 seconds
-
-                            // requeue the failed update.
-                            stateReportQueue.Enqueue(item);
-                            continue;
+                            case HttpStatusCode.Unauthorized:
+                                RefreshAsyncToken(out string newToken);
+                                item.ChangeReport.@event.endpoint.scope.token = newToken;
+                                foreach (var queuedItem in stateReportQueue.InternalQueue)
+                                {
+                                    queuedItem.ChangeReport.@event.endpoint.scope.token = newToken;
+                                }
+                                stateReportQueue.Enqueue(item);
+                                continue;
+                            case HttpStatusCode.Forbidden:
+                                // disable sending Async events to Alexa - this will also unsubscribe all
+                                Task.Run(async () =>
+                                {
+                                    await HomeObject.SetValue("SendAsyncEventsToAlexa", "False");
+                                });
+                                NotifyError(EventLogEntryType.Error, "Async Periodic State Update Update Error (response): Premise skill has been disabled.", eventID + 4).GetAwaiter().GetResult();
+                                continue;
+                            case HttpStatusCode.BadRequest:
+                                NotifyError(EventLogEntryType.Error, $"Async Periodic State Update Update Error (response): The message contains invalid identifying information such as a invalid endpoint Id or correlation token. Json={item.Json}", eventID + 5).GetAwaiter().GetResult();
+                                continue;
+                            default:
+                                NotifyError(EventLogEntryType.Error, $"Async Periodic State Update Update Error (response): {e.Message}", eventID + 6).GetAwaiter().GetResult();
+                                continue;
                         }
-
-                        // The skill has been disabled and authorization for that customer has been revoked.
-                        if (httpResponse.StatusCode == HttpStatusCode.Forbidden)
-                        {
-                            // disable sending Async events to Alexa - this will also unsubscribe all
-                            HomeObject.SetValue("SendAsyncEventsToAlexa", "False").GetAwaiter().GetResult();
-                            NotifyError(EventLogEntryType.Error, "Async Periodic State Update Update Error (response): Premise skill has been disabled.", eventID + 4).GetAwaiter().GetResult();
-                            continue;
-                        }
-
-                        // The message contains other invalid identifying information such as a
-                        // invalid endpoint Id or correlation token.
-                        if (httpResponse.StatusCode == HttpStatusCode.BadRequest)
-                        {
-                            NotifyError(EventLogEntryType.Error, $"Async Periodic State Update Update Error (response): The message contains invalid identifying information such as a invalid endpoint Id or correlation token. Json={item.Json}", eventID + 5).GetAwaiter().GetResult();
-                            continue;
-                        }
-
-                        NotifyError(EventLogEntryType.Error, $"Async Periodic State Update Update Error (response): {e.Message}", eventID + 6).GetAwaiter().GetResult();
-                        continue;
                     }
                 }
                 catch (Exception ex)
@@ -796,8 +797,8 @@ namespace PremiseAlexaBridgeService
                     NotifyError(EventLogEntryType.Error, $"Async Periodic State Update Update Error (response): {ex.Message}", eventID + 7).GetAwaiter().GetResult();
                     continue;
                 }
-                Debug.WriteLine(item.Json);
-                Thread.Sleep(100);
+
+                Thread.Sleep(100); // throttle per spec
             }
         }
 
@@ -877,7 +878,13 @@ namespace PremiseAlexaBridgeService
 
         public byte[] Bytes => Encoding.UTF8.GetBytes(Json);
 
-        public string Json { get; set; }
+        public AlexaChangeReport ChangeReport { get; set; }
+
+        public string Json => JsonConvert.SerializeObject(ChangeReport, new JsonSerializerSettings
+        {
+            NullValueHandling = NullValueHandling.Ignore
+        });
+
         public bool Sent { get; set; }
 
         #endregion Properties

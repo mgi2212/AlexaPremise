@@ -4,6 +4,7 @@ using System.Globalization;
 using System.Linq;
 using System.ServiceModel;
 using System.ServiceModel.Web;
+using System.Threading.Tasks;
 using Alexa;
 using Alexa.AV;
 using Alexa.Discovery;
@@ -618,12 +619,13 @@ namespace PremiseAlexaBridgeService
                 InformLastContact(message).GetAwaiter().GetResult();
                 PremiseServer.WriteToWindowsApplicationEventLog(EventLogEntryType.Information, message, 60);
 
-                // Generate Discovery Json
-                PremiseServer.HomeObject.SetValue("GenerateDiscoveryJson", "True").GetAwaiter().GetResult();
-
-                // Signal sending async property change events - this will also start a task to
-                // subscribe to all properties
-                PremiseServer.HomeObject.SetValue("SendAsyncEventsToAlexa", "True").GetAwaiter().GetResult();
+                Task.Run(async () =>
+                {
+                    // Generate Discovery Json
+                    await PremiseServer.HomeObject.SetValue("GenerateDiscoveryJson", "True");
+                    // Signal sending async property change events - this will also subscribe to all properties
+                    await PremiseServer.HomeObject.SetValue("SendAsyncEventsToAlexa", "True");
+                });
             }
             catch (Exception ex)
             {

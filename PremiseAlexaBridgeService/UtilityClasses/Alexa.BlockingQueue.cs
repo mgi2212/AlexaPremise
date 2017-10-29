@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
+using System.ServiceModel.Configuration;
 using System.Threading;
 
 namespace PremiseAlexaBridgeService
@@ -15,6 +17,18 @@ namespace PremiseAlexaBridgeService
         #endregion Fields
 
         #region Methods
+
+        public int Count => _queue.Count;
+
+        public List<T> InternalQueue => _queue.ToList();
+
+        public void Clear()
+        {
+            lock (_queue)
+            {
+                _queue.Clear();
+            }
+        }
 
         public T Dequeue()
         {
