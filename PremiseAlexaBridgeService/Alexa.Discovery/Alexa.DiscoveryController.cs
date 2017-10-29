@@ -262,7 +262,7 @@ namespace Alexa.Discovery
             PremiseServer.HomeObject.SetValue("LastRefreshed", DateTime.Now.ToString(CultureInfo.InvariantCulture)).GetAwaiter().GetResult();
             PremiseServer.HomeObject.SetValue("HealthDescription", message).GetAwaiter().GetResult();
             PremiseServer.HomeObject.SetValue("Health", "True").GetAwaiter().GetResult();
-            PremiseServer.WriteToWindowsApplicationEventLog(EventLogEntryType.Information, message, 50);
+            PremiseServer.WriteToWindowsApplicationEventLog(EventLogEntryType.Information, message + $" Client ip {GetClientIp()}", 50);
         }
 
         #endregion Methods

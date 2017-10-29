@@ -6,6 +6,8 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.Serialization.Json;
+using System.ServiceModel;
+using System.ServiceModel.Channels;
 using System.Threading.Tasks;
 using Alexa.SmartHomeAPI.V3;
 using PremiseAlexaBridgeService;
@@ -314,6 +316,35 @@ namespace Alexa.Controller
 
         #region Static Methods
 
+        public static string GetClientIp()
+        {
+            string address = "unavailable";
+            try
+            {
+                OperationContext context = OperationContext.Current;
+                MessageProperties properties = context.IncomingMessageProperties;
+
+                if (!(properties[RemoteEndpointMessageProperty.Name] is RemoteEndpointMessageProperty endpoint))
+                {
+                    return address;
+                }
+                if (properties.Keys.Contains(HttpRequestMessageProperty.Name))
+                {
+                    if (properties[HttpRequestMessageProperty.Name] is HttpRequestMessageProperty endpointLoadBalancer && endpointLoadBalancer.Headers["X-Forwarded-For"] != null)
+                        address = endpointLoadBalancer.Headers["X-Forwarded-For"];
+                }
+                if (address == "unavailable")
+                {
+                    address = endpoint.Address;
+                }
+            }
+            catch (Exception e)
+            {
+                PremiseServer.NotifyError(EventLogEntryType.Warning, $"Error obtaining client IP address: {e.Message}", 201).GetAwaiter().GetResult();
+            }
+            return address;
+        }
+
         public static void SerialiszationTest(TT response)
         {
             // Serialization Check
@@ -340,6 +371,7 @@ namespace Alexa.Controller
 
         protected static async Task InformLastContact(string command)
         {
+            command += $" Client ip: {GetClientIp()}";
             await PremiseServer.HomeObject.SetValue("LastHeardFromAlexa", DateTime.Now.ToString(CultureInfo.CurrentCulture));
             await PremiseServer.HomeObject.SetValue("LastHeardCommand", command);
         }

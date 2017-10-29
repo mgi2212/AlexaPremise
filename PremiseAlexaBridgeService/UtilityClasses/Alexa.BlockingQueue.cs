@@ -18,17 +18,7 @@ namespace PremiseAlexaBridgeService
 
         #region Methods
 
-        public int Count => _queue.Count;
-
         public List<T> InternalQueue => _queue.ToList();
-
-        public void Clear()
-        {
-            lock (_queue)
-            {
-                _queue.Clear();
-            }
-        }
 
         public T Dequeue()
         {

@@ -213,6 +213,9 @@
     <Compile Include="Alexa.EndpointHealth\Alexa.EndpointHealthController.cs" />
     <Compile Include="Alexa.Scene\Alexa.Scene.cs" />
     <Compile Include="Alexa.Scene\Alexa.SetSceneController.cs" />
+    <Compile Include="Singleton\PremiseServer.StateChangeReports.cs" />
+    <Compile Include="Singleton\PremiseServer.RefreshAuthToken.cs" />
+    <Compile Include="Singleton\PremiseServer.Subcriptions.cs" />
     <Compile Include="UtilityClasses\Alexa.BlockingQueue.cs" />
     <Compile Include="Alexa.Lighting\Alexa.BrightnessController.cs" />
     <Compile Include="Alexa.Controller\Alexa.ControllerBase.cs" />
@@ -227,7 +230,7 @@
       <DependentUpon>Alexa.svc</DependentUpon>
     </Compile>
     <Compile Include="GlobalSuppressions.cs" />
-    <Compile Include="Singleton\PremiseServerSingleton.cs" />
+    <Compile Include="Singleton\PremiseServer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="UtilityClasses\UtilityClasses.cs" />
   </ItemGroup>

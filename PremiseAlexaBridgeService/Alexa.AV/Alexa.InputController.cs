@@ -162,7 +162,7 @@ namespace Alexa.AV
 
             Dictionary<string, IPremiseObject> inputs = GetAllInputs(switcher);
 
-            if (inputs.ContainsKey(Request.directive.payload.input))
+            if (inputs.ContainsKey(Request.directive.payload.input.ToUpper()))
             {
                 // swtich inputs
                 IPremiseObject newInput = inputs[Request.directive.payload.input];
@@ -192,7 +192,7 @@ namespace Alexa.AV
             {
                 if (child.IsOfType(PremiseServer.AlexaAudioVideoInput).GetAwaiter().GetResult())
                 {
-                    string inputName = GetInputName(child);
+                    string inputName = GetInputName(child).ToUpper();
                     inputs.Add(inputName, child);
                 }
             }
