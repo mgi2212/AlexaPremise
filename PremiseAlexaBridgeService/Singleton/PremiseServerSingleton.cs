@@ -44,6 +44,7 @@ namespace PremiseAlexaBridgeService
         public static string PremiseUserName;
         public static string PremiseUserPassword;
         private static readonly SYSClient _sysClient = new SYSClient();
+        private static readonly AsyncLock asyncObjectsLock = new AsyncLock();
         private static readonly List<DiscoveryEndpoint> endpoints = new List<DiscoveryEndpoint>();
         private static readonly AsyncLock endpointsLock = new AsyncLock();
         private static readonly AsyncLock HomeObjectLock = new AsyncLock();
@@ -149,6 +150,8 @@ namespace PremiseAlexaBridgeService
 
         #region Properties
 
+        public static AsyncLock AsyncObjectsLock => asyncObjectsLock;
+
         public static Dictionary<string, IAlexaController> Controllers { get; set; }
         public static Dictionary<string, Subscription> DeDupeDictionary { get; set; } = new Dictionary<string, Subscription>();
 
@@ -214,7 +217,11 @@ namespace PremiseAlexaBridgeService
                     // object deleted!
                     return;
                 }
-                string authCode = (string)HomeObject.GetValue("AlexaAsyncAuthorizationCode").GetAwaiter().GetResult();
+                string authCode;
+                using (asyncObjectsLock.Lock())
+                {
+                    authCode = (string)HomeObject.GetValue("AlexaAsyncAuthorizationCode").GetAwaiter().GetResult();
+                }
                 AlexaChangeReport changeReport = new AlexaChangeReport();
                 changeReport.@event.header.messageID = Guid.NewGuid().ToString("D");
                 changeReport.@event.header.@namespace = "Alexa";
@@ -559,109 +566,115 @@ namespace PremiseAlexaBridgeService
         private static void RefreshAsyncToken()
         {
             const int eventID = 10;
-            string previousToken;
-            WebRequest refreshRequest;
-            try
-            {
-                refreshRequest = WebRequest.Create(AlexaEventTokenRefreshEndpoint);
-                refreshRequest.Method = WebRequestMethods.Http.Post;
-                refreshRequest.ContentType = "application/x-www-form-urlencoded;charset=UTF-8";
-                previousToken = HomeObject.GetValue<string>("AlexaAsyncAuthorizationCode").GetAwaiter().GetResult();
-                string refresh_token = HomeObject.GetValue<string>("AlexaAsyncAuthorizationRefreshToken").GetAwaiter().GetResult();
-                string client_id = HomeObject.GetValue<string>("AlexaAsyncAuthorizationClientId").GetAwaiter().GetResult();
-                string client_secret = HomeObject.GetValue<string>("AlexaAsyncAuthorizationSecret").GetAwaiter().GetResult();
-                if (string.IsNullOrEmpty(refresh_token) || string.IsNullOrEmpty(client_id) ||
-                    string.IsNullOrEmpty(client_secret))
-                {
-                    NotifyError(EventLogEntryType.Warning, "Alexa authorization token missing. Re-enable Premise skill!", eventID + 1).GetAwaiter().GetResult();
-                    return;
-                }
-                string refreshData = $"grant_type=refresh_token&refresh_token={refresh_token}&client_id={client_id}&client_secret={client_secret}";
-                Stream stream = refreshRequest.GetRequestStream();
-                stream.Write(Encoding.UTF8.GetBytes(refreshData), 0, Encoding.UTF8.GetByteCount(refreshData));
-                stream.Close();
-            }
-            catch (Exception e)
-            {
-                NotifyError(EventLogEntryType.Error, $"Refresh async auth token (request) : {e.Message}", eventID + 2).GetAwaiter().GetResult();
-                return;
-            }
 
-            try
+            using (asyncObjectsLock.Lock())
             {
-                using (HttpWebResponse httpResponse = refreshRequest.GetResponse() as HttpWebResponse)
+                string previousToken;
+                WebRequest refreshRequest;
+
+                try
                 {
-                    if (httpResponse == null || !(httpResponse.StatusCode == HttpStatusCode.OK || httpResponse.StatusCode == HttpStatusCode.Accepted))
+                    refreshRequest = WebRequest.Create(AlexaEventTokenRefreshEndpoint);
+                    refreshRequest.Method = WebRequestMethods.Http.Post;
+                    refreshRequest.ContentType = "application/x-www-form-urlencoded;charset=UTF-8";
+                    previousToken = HomeObject.GetValue<string>("AlexaAsyncAuthorizationCode").GetAwaiter().GetResult();
+                    string refresh_token = HomeObject.GetValue<string>("AlexaAsyncAuthorizationRefreshToken").GetAwaiter().GetResult();
+                    string client_id = HomeObject.GetValue<string>("AlexaAsyncAuthorizationClientId").GetAwaiter().GetResult();
+                    string client_secret = HomeObject.GetValue<string>("AlexaAsyncAuthorizationSecret").GetAwaiter().GetResult();
+                    if (string.IsNullOrEmpty(refresh_token) || string.IsNullOrEmpty(client_id) || string.IsNullOrEmpty(client_secret))
                     {
-                        string message = $"Could not refresh async token! Error({httpResponse?.StatusCode})";
-                        NotifyError(EventLogEntryType.Warning, message, eventID + 3).GetAwaiter().GetResult();
+                        NotifyError(EventLogEntryType.Warning, "Alexa authorization token missing. Re-enable Premise skill!", eventID + 1).GetAwaiter().GetResult();
                         return;
                     }
+                    string refreshData = $"grant_type=refresh_token&refresh_token={refresh_token}&client_id={client_id}&client_secret={client_secret}";
+                    Stream stream = refreshRequest.GetRequestStream();
+                    stream.Write(Encoding.UTF8.GetBytes(refreshData), 0, Encoding.UTF8.GetByteCount(refreshData));
+                    stream.Close();
+                }
+                catch (Exception e)
+                {
+                    NotifyError(EventLogEntryType.Error, $"Refresh async auth token (request) : {e.Message}",
+                        eventID + 2).GetAwaiter().GetResult();
+                    return;
+                }
 
-                    string responseString;
-
-                    using (Stream response = httpResponse.GetResponseStream())
+                try
+                {
+                    using (HttpWebResponse httpResponse = refreshRequest.GetResponse() as HttpWebResponse)
                     {
-                        if (response == null)
+                        if (httpResponse == null || !(httpResponse.StatusCode == HttpStatusCode.OK ||
+                                                      httpResponse.StatusCode == HttpStatusCode.Accepted))
                         {
-                            NotifyError(EventLogEntryType.Warning, "Async Token Refresh: Null response from Amazon.", eventID + 4).GetAwaiter().GetResult();
+                            string message = $"Could not refresh async token! Error({httpResponse?.StatusCode})";
+                            NotifyError(EventLogEntryType.Warning, message, eventID + 3).GetAwaiter().GetResult();
                             return;
                         }
-                        StreamReader reader = new StreamReader(response, Encoding.UTF8);
-                        responseString = reader.ReadToEnd();
-                    }
-
-                    JObject json = JObject.Parse(responseString);
-
-                    string newToken = json["access_token"].ToString();
-                    HomeObject.SetValue("AlexaAsyncAuthorizationCode", newToken).GetAwaiter().GetResult();
-                    HomeObject.SetValue("AlexaAsyncAuthorizationRefreshToken", json["refresh_token"].ToString()).GetAwaiter().GetResult();
-                    DateTime expiry = DateTime.UtcNow.AddSeconds((double)json["expires_in"]);
-                    HomeObject.SetValue("AlexaAsyncAuthorizationCodeExpiry", expiry.ToString(CultureInfo.InvariantCulture)).GetAwaiter().GetResult();
-                    Debug.WriteLine("async token refresh response:" + responseString);
-                    WriteToWindowsApplicationEventLog(EventLogEntryType.Information, $"Alexa async auth token successfully refreshed. Previous Token (hash):{previousToken.GetHashCode()} New Token (hash):{newToken.GetHashCode()}", eventID);
-                    Thread.Sleep(2000); // give amazon some time to register the refresh
-                }
-            }
-            catch (WebException e)
-            {
-                using (WebResponse webresponse = e.Response)
-                {
-                    HttpWebResponse httpResponse = (HttpWebResponse)webresponse;
-
-                    // The skill is enabled, but the authentication token has expired.
-                    if (httpResponse.StatusCode == HttpStatusCode.Unauthorized)
-                    {
-                        // skill has ben disabled so disable sending Async events to Alexa - this
-                        // will also unsubscribe all
-                        HomeObject.SetValue("SendAsyncEventsToAlexa", "False").GetAwaiter().GetResult();
 
                         string responseString;
 
-                        using (Stream response = e.Response.GetResponseStream())
+                        using (Stream response = httpResponse.GetResponseStream())
                         {
                             if (response == null)
                             {
-                                NotifyError(EventLogEntryType.Error, "Refresh async auth token error (response). Null response", eventID + 5).GetAwaiter().GetResult();
+                                NotifyError(EventLogEntryType.Warning, "Async Token Refresh: Null response from Amazon.", eventID + 4).GetAwaiter().GetResult();
                                 return;
                             }
-
                             StreamReader reader = new StreamReader(response, Encoding.UTF8);
                             responseString = reader.ReadToEnd();
                         }
+
                         JObject json = JObject.Parse(responseString);
-                        string message = $"Refresh async auth token error (response). Error: { json["error"]} Description: {json["error_description"]} More info: {json["error_uri"]}";
 
-                        NotifyError(EventLogEntryType.Error, message, eventID + 6).GetAwaiter().GetResult();
-
-                        return;
+                        string newToken = json["access_token"].ToString();
+                        HomeObject.SetValue("AlexaAsyncAuthorizationCode", newToken).GetAwaiter().GetResult();
+                        HomeObject.SetValue("AlexaAsyncAuthorizationRefreshToken", json["refresh_token"].ToString()).GetAwaiter().GetResult();
+                        DateTime expiry = DateTime.UtcNow.AddSeconds((double)json["expires_in"]);
+                        HomeObject.SetValue("AlexaAsyncAuthorizationCodeExpiry", expiry.ToString(CultureInfo.InvariantCulture)).GetAwaiter().GetResult();
+                        Debug.WriteLine("async token refresh response:" + responseString);
+                        WriteToWindowsApplicationEventLog(EventLogEntryType.Information, $"Alexa async auth token successfully refreshed. Previous Token (hash):{previousToken.GetHashCode()} New Token (hash):{newToken.GetHashCode()}", eventID);
+                        Thread.Sleep(2000); // give amazon some time to register the refresh
                     }
-                    NotifyError(EventLogEntryType.Error, $"Refresh async auth token error (response) ({httpResponse.StatusCode})", eventID + 7).GetAwaiter().GetResult();
                 }
-            }
-            catch (Exception e)
-            {
-                NotifyError(EventLogEntryType.Error, $"Error: {e.Message} refreshing async token.", eventID + 8).GetAwaiter().GetResult();
+                catch (WebException e)
+                {
+                    using (WebResponse webresponse = e.Response)
+                    {
+                        HttpWebResponse httpResponse = (HttpWebResponse)webresponse;
+
+                        // The skill is enabled, but the authentication token has expired.
+                        if (httpResponse.StatusCode == HttpStatusCode.Unauthorized)
+                        {
+                            // skill has ben disabled so disable sending Async events to Alexa - this
+                            // will also unsubscribe all
+                            HomeObject.SetValue("SendAsyncEventsToAlexa", "False").GetAwaiter().GetResult();
+
+                            string responseString;
+
+                            using (Stream response = e.Response.GetResponseStream())
+                            {
+                                if (response == null)
+                                {
+                                    NotifyError(EventLogEntryType.Error, "Refresh async auth token error (response). Null response", eventID + 5).GetAwaiter().GetResult();
+                                    return;
+                                }
+
+                                StreamReader reader = new StreamReader(response, Encoding.UTF8);
+                                responseString = reader.ReadToEnd();
+                            }
+                            JObject json = JObject.Parse(responseString);
+                            string message = $"Refresh async auth token error (response). Error: {json["error"]} Description: {json["error_description"]} More info: {json["error_uri"]}";
+
+                            NotifyError(EventLogEntryType.Error, message, eventID + 6).GetAwaiter().GetResult();
+
+                            return;
+                        }
+                        NotifyError(EventLogEntryType.Error, $"Refresh async auth token error (response) ({httpResponse.StatusCode})", eventID + 7).GetAwaiter().GetResult();
+                    }
+                }
+                catch (Exception e)
+                {
+                    NotifyError(EventLogEntryType.Error, $"Error: {e.Message} refreshing async token.", eventID + 8).GetAwaiter().GetResult();
+                }
             }
         }
 
@@ -674,7 +687,11 @@ namespace PremiseAlexaBridgeService
                 WebRequest request;
                 try
                 {
-                    string expiry = HomeObject.GetValue<string>("AlexaAsyncAuthorizationCodeExpiry").GetAwaiter().GetResult();
+                    string expiry;
+                    using (asyncObjectsLock.Lock())
+                    {
+                        expiry = HomeObject.GetValue<string>("AlexaAsyncAuthorizationCodeExpiry").GetAwaiter().GetResult();
+                    }
 
                     if (DateTime.TryParse(expiry, out var expiryDateTime))
                     {

@@ -604,12 +604,15 @@ namespace PremiseAlexaBridgeService
                     return response;
                 }
 
-                PremiseServer.HomeObject.SetValue("AlexaAsyncAuthorizationCode", directive.payload.grant.access_token).GetAwaiter().GetResult();
-                PremiseServer.HomeObject.SetValue("AlexaAsyncAuthorizationRefreshToken", directive.payload.grant.refresh_token).GetAwaiter().GetResult();
-                DateTime expiry = DateTime.UtcNow.AddSeconds(directive.payload.grant.expires_in);
-                PremiseServer.HomeObject.SetValue("AlexaAsyncAuthorizationCodeExpiry", expiry.ToString(CultureInfo.InvariantCulture)).GetAwaiter().GetResult();
-                PremiseServer.HomeObject.SetValue("AlexaAsyncAuthorizationClientId", directive.payload.grant.client_id).GetAwaiter().GetResult();
-                PremiseServer.HomeObject.SetValue("AlexaAsyncAuthorizationSecret", directive.payload.grant.client_secret).GetAwaiter().GetResult();
+                using (PremiseServer.AsyncObjectsLock.Lock())
+                {
+                    PremiseServer.HomeObject.SetValue("AlexaAsyncAuthorizationCode", directive.payload.grant.access_token).GetAwaiter().GetResult();
+                    PremiseServer.HomeObject.SetValue("AlexaAsyncAuthorizationRefreshToken", directive.payload.grant.refresh_token).GetAwaiter().GetResult();
+                    DateTime expiry = DateTime.UtcNow.AddSeconds(directive.payload.grant.expires_in);
+                    PremiseServer.HomeObject.SetValue("AlexaAsyncAuthorizationCodeExpiry", expiry.ToString(CultureInfo.InvariantCulture)).GetAwaiter().GetResult();
+                    PremiseServer.HomeObject.SetValue("AlexaAsyncAuthorizationClientId", directive.payload.grant.client_id).GetAwaiter().GetResult();
+                    PremiseServer.HomeObject.SetValue("AlexaAsyncAuthorizationSecret", directive.payload.grant.client_secret).GetAwaiter().GetResult();
+                }
 
                 const string message = "Skill is now enabled and authorized to send async updates to Alexa. A task has been started to subscribe to property change events.";
                 InformLastContact(message).GetAwaiter().GetResult();
