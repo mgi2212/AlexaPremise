@@ -172,13 +172,11 @@ namespace Alexa.Scene
                 {
                     valueToSend = "True";
                     Response.Event.header.name = "ActivationStarted";
-                    Endpoint.SetValue(premiseProperty, valueToSend).GetAwaiter().GetResult();
                 }
                 else if (Header.name == "Deactivate")
                 {
                     valueToSend = "False";
                     Response.Event.header.name = "DeactivationStarted";
-                    Endpoint.SetValue(premiseProperty, valueToSend).GetAwaiter().GetResult();
                 }
                 else
                 {
@@ -188,8 +186,8 @@ namespace Alexa.Scene
 
                 Endpoint.SetValue(premiseProperty, valueToSend).GetAwaiter().GetResult();
                 Response.context.properties = null;
-                Response.Event.payload.cause = new ChangeReportCause();
-                Response.Event.payload.cause.type = "VOICE_INTERACTION";
+                Response.Event.header.@namespace = "Alexa.SceneController";
+                Response.Event.payload.cause = new ChangeReportCause { type = "VOICE_INTERACTION" };
                 Response.Event.payload.timestamp = GetUtcTime();
                 Response.Event.endpoint.cookie.path = Endpoint.GetPath().GetAwaiter().GetResult();
             }

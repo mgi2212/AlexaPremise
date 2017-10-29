@@ -711,15 +711,14 @@ namespace Alexa.SmartHomeAPI.V3
         {
             context = new AlexaControlResponseContext();
             Event = new AlexaEventBody(args[0] as Header, args[1] as DirectiveEndpoint);
+            Event.header.@namespace = "Alexa";
         }
 
-        public ControlResponse(Header header, DirectiveEndpoint endpoint)
+        public ControlResponse(Header headerObject, DirectiveEndpoint endpoint)
         {
             context = new AlexaControlResponseContext();
-            Event = new AlexaEventBody(header, endpoint)
-            {
-                header = header
-            };
+            Event = new AlexaEventBody(headerObject, endpoint);
+            Event.header.@namespace = "Alexa";
         }
 
         #endregion Constructors
@@ -733,16 +732,6 @@ namespace Alexa.SmartHomeAPI.V3
         public AlexaEventBody Event { get; set; }
 
         #endregion Properties
-
-        #region Methods
-
-        [OnSerializing]
-        private void OnSerializing(StreamingContext streamContext)
-        {
-            Event.header.@namespace = "Alexa";
-        }
-
-        #endregion Methods
     }
 
     [DataContract]

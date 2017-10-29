@@ -77,8 +77,8 @@ namespace Alexa.Controller
 
         protected TT GetNewResponseObject(object[] args)
         {
-            _response = (TT)Activator.CreateInstance(typeof(TT), args);
-            return _response;
+            var response = (TT)Activator.CreateInstance(typeof(TT), args);
+            return response;
         }
 
         #endregion Reflection Code
