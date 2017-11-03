@@ -1,14 +1,20 @@
-﻿namespace SYSWebSockClient
-{
-    using System;
+﻿using System;
 
+namespace SYSWebSockClient
+{
     public static class ArrayUtils<T>
     {
+        #region Fields
+
         public static readonly T[] Empty = new T[0];
+
+        #endregion Fields
     }
 
     public static class ArrayUtils
     {
+        #region Methods
+
         public static void Add<T>(ref T[] array, T newItem)
         {
             if (array == null)
@@ -22,77 +28,6 @@
             T[] newArray = new T[count + 1];
             Array.Copy(array, newArray, count);
             newArray[count] = newItem;
-            array = newArray;
-        }
-
-        public static int Remove<T>(ref T[] array, T removedItem)
-        {
-            int count = array.Length;
-
-            if (count == 0)
-                return -1;
-
-            for (int i = 0; i < count; i++)
-            {
-                if (!Equals(array[i], removedItem))
-                    continue;
-
-                T[] newArray = new T[count - 1];
-                Array.Copy(array, 0, newArray, 0, i);
-                Array.Copy(array, i + 1, newArray, i, count - i - 1);
-                array = newArray;
-
-                return i;
-            }
-
-            return -1;
-        }
-
-        public static void Reserve<StorageType>(ref StorageType[] array, ref int count, int elementCount)
-        {
-            if (array == null)
-            {
-                array = new StorageType[elementCount];
-                count = 0;
-                return;
-            }
-
-            if (array.Length < elementCount)
-            {
-                int allocSize = HigherPower2(elementCount);
-
-                Array.Resize(ref array, allocSize);
-            }
-        }
-
-        public static void Reserve<StorageType>(ref StorageType[] array, int elementCount)
-        {
-            if (array == null)
-            {
-                array = new StorageType[elementCount];
-                return;
-            }
-
-            if (array.Length < elementCount)
-            {
-                int allocSize = HigherPower2(elementCount);
-
-                Array.Resize(ref array, allocSize);
-            }
-        }
-
-        public static int HigherPower2(int value)
-        {
-            return (int)PowerFuncs.GreaterPower2(value);
-        }
-
-        public static void RemoveAt<T>(ref T[] array, int index)
-        {
-            int count = array.Length;
-
-            T[] newArray = new T[count > 1 ? count - 1 : count];
-            Array.Copy(array, 0, newArray, 0, index);
-            Array.Copy(array, index + 1, newArray, index, count - index - 1);
             array = newArray;
         }
 
@@ -152,43 +87,6 @@
             count++;
         }
 
-        public static int CreateSlot<T>(ref T[] array, ref int count)
-        {
-            int entry;
-
-            // assumption for this function is
-            // the array passed in is never null
-            /*if (array == null)
-            {
-                array = new T[1];
-                count = 1;
-                return entry;
-            }*/
-
-            if (count < array.Length)
-            {
-                entry = count;
-                count++;
-                return entry;
-            }
-
-            // have to reallocate
-            int growth;
-            if (count < 2)
-                growth = 1;
-            else
-                growth = (int)Math.Log(count) + 1;
-
-            T[] newArray = new T[count + growth];
-            Array.Copy(array, newArray, count);
-            array = newArray;
-
-            entry = count;
-            count++;
-
-            return entry;
-        }
-
         public static void AddRange<StorageType>(ref StorageType[] array, ref int count, StorageType[] newItems, int newItemCount)
         {
             if (array == null)
@@ -246,6 +144,81 @@
             array = newArray;
         }
 
+        public static bool Contains<T>(T[] array, int count, T searchItem)
+        {
+            for (int i = 0; i < count; i++)
+            {
+                if (Equals(array[i], searchItem))
+                    return true;
+            }
+
+            return false;
+        }
+
+        public static int CreateSlot<T>(ref T[] array, ref int count)
+        {
+            int entry;
+
+            // assumption for this function is the array passed in is never null
+            /*if (array == null)
+            {
+                array = new T[1];
+                count = 1;
+                return entry;
+            }*/
+
+            if (count < array.Length)
+            {
+                entry = count;
+                count++;
+                return entry;
+            }
+
+            // have to reallocate
+            int growth;
+            if (count < 2)
+                growth = 1;
+            else
+                growth = (int)Math.Log(count) + 1;
+
+            T[] newArray = new T[count + growth];
+            Array.Copy(array, newArray, count);
+            array = newArray;
+
+            entry = count;
+            count++;
+
+            return entry;
+        }
+
+        public static int HigherPower2(int value)
+        {
+            return (int)PowerFuncs.GreaterPower2(value);
+        }
+
+        public static int Remove<T>(ref T[] array, T removedItem)
+        {
+            int count = array.Length;
+
+            if (count == 0)
+                return -1;
+
+            for (int i = 0; i < count; i++)
+            {
+                if (!Equals(array[i], removedItem))
+                    continue;
+
+                T[] newArray = new T[count - 1];
+                Array.Copy(array, 0, newArray, 0, i);
+                Array.Copy(array, i + 1, newArray, i, count - i - 1);
+                array = newArray;
+
+                return i;
+            }
+
+            return -1;
+        }
+
         public static void Remove<T>(ref T[] array, ref int count, T removedItem)
         {
             for (int i = 0; i < count; i++)
@@ -259,45 +232,85 @@
             }
         }
 
+        public static void RemoveAt<T>(ref T[] array, int index)
+        {
+            int count = array.Length;
+
+            T[] newArray = new T[count > 1 ? count - 1 : count];
+            Array.Copy(array, 0, newArray, 0, index);
+            Array.Copy(array, index + 1, newArray, index, count - index - 1);
+            array = newArray;
+        }
+
         public static void RemoveAt<T>(ref T[] array, ref int count, int index)
         {
             Array.Copy(array, index + 1, array, index, count - index - 1);
             count--;
         }
 
-        public static bool Contains<T>(T[] array, int count, T searchItem)
+        public static void Reserve<StorageType>(ref StorageType[] array, ref int count, int elementCount)
         {
-            for (int i = 0; i < count; i++)
+            if (array == null)
             {
-                if (Equals(array[i], searchItem))
-                    return true;
+                array = new StorageType[elementCount];
+                count = 0;
+                return;
             }
 
-            return false;
+            if (array.Length < elementCount)
+            {
+                int allocSize = HigherPower2(elementCount);
+
+                Array.Resize(ref array, allocSize);
+            }
         }
+
+        public static void Reserve<StorageType>(ref StorageType[] array, int elementCount)
+        {
+            if (array == null)
+            {
+                array = new StorageType[elementCount];
+                return;
+            }
+
+            if (array.Length < elementCount)
+            {
+                int allocSize = HigherPower2(elementCount);
+
+                Array.Resize(ref array, allocSize);
+            }
+        }
+
+        #endregion Methods
     }
 
     public class FreeListArray<StorageType> : IDisposable
     {
+        #region Fields
+
         public int Count;
         public StorageType[] Storage = ArrayUtils<StorageType>.Empty;
 
-        private int FreeListCount;
         private int[] FreeList = ArrayUtils<int>.Empty;
+        private int FreeListCount;
+
+        #endregion Fields
+
+        #region Methods
 
         public int Alloc()
         {
             int handleIndex;
 
-            if (this.FreeListCount > 0)
+            if (FreeListCount > 0)
             {
-                this.FreeListCount--;
-                handleIndex = this.FreeList[this.FreeListCount];
+                FreeListCount--;
+                handleIndex = FreeList[FreeListCount];
             }
             else
             {
-                handleIndex = this.Count;
-                ArrayUtils.Add(ref this.Storage, ref this.Count, default(StorageType));
+                handleIndex = Count;
+                ArrayUtils.Add(ref Storage, ref Count, default(StorageType));
             }
 
             return handleIndex;
@@ -305,23 +318,24 @@
 
         public void Free(int handle)
         {
-            this.Storage[handle] = default(StorageType);
-            ArrayUtils.Add(ref this.FreeList, ref this.FreeListCount, handle);
+            Storage[handle] = default(StorageType);
+            ArrayUtils.Add(ref FreeList, ref FreeListCount, handle);
         }
+
+        #endregion Methods
 
         #region IDisposable Members
 
         public void Dispose()
         {
-            int count = this.Count;
+            int count = Count;
             for (int i = 0; i < count; i++)
-                this.Storage[i] = default(StorageType);
+                Storage[i] = default(StorageType);
 
-            this.Count = 0;
-            this.FreeListCount = 0;
+            Count = 0;
+            FreeListCount = 0;
         }
 
-        #endregion
+        #endregion IDisposable Members
     }
-
 }

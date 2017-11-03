@@ -1,7 +1,7 @@
-﻿namespace SYSWebSockClient
-{
-    using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
+namespace SYSWebSockClient
+{
     #region SetName
 
     internal class SetNameFuture : JsonRPCFuture
@@ -17,7 +17,7 @@
         public SetNameFuture(string objectId, string name)
             : base(objectId, "setName")
         {
-            this.@params = name;
+            @params = name;
         }
 
         #endregion Constructors
@@ -56,7 +56,7 @@
         public SetDisplayNameFuture(string objectId, string name)
             : base(objectId, "setDisplayName")
         {
-            this.@params = name;
+            @params = name;
         }
 
         #endregion Constructors
@@ -95,7 +95,7 @@
         public SetDescriptionFuture(string objectId, string name)
             : base(objectId, "setDescription")
         {
-            this.@params = name;
+            @params = name;
         }
 
         #endregion Constructors
@@ -134,7 +134,7 @@
         public SetValueFuture(string objectId, string name, string value)
             : base(objectId, "setValue")
         {
-            this.@params = new Params(name, value);
+            @params = new Params(name, value);
         }
 
         #endregion Constructors
@@ -156,12 +156,12 @@
                 string propertyName,
                 string value)
             {
-                this.name = propertyName;
+                name = propertyName;
                 this.value = value;
             }
 
             #endregion Constructors
-        };
+        }
 
         #endregion Classes
     }
@@ -183,7 +183,7 @@
         public GetValueFuture(string objectId, string name)
             : base(objectId, "getValue")
         {
-            this.@params = name;
+            @params = name;
         }
 
         #endregion Constructors
@@ -206,7 +206,7 @@
         public GetPropertyAsTextFuture(string objectId, string propertyId)
             : base(objectId, "getPropertyAsText")
         {
-            this.@params = propertyId;
+            @params = propertyId;
         }
 
         #endregion Constructors
@@ -245,7 +245,7 @@
         public SetClassFuture(string objectId, string classObjectId)
             : base(objectId, "setClass")
         {
-            this.@params = classObjectId;
+            @params = classObjectId;
         }
 
         #endregion Constructors
@@ -357,7 +357,7 @@
         public GetObjectFuture(string objectId, string subObject)
             : base(objectId, "getObject")
         {
-            this.@params = subObject;
+            @params = subObject;
         }
 
         #endregion Constructors
@@ -540,7 +540,7 @@
         public CreateObjectFuture(string objectId, string type, string name)
             : base(objectId, "createObject")
         {
-            this.@params = new Params(type, name);
+            @params = new Params(type, name);
         }
 
         #endregion Constructors
@@ -567,7 +567,7 @@
             }
 
             #endregion Constructors
-        };
+        }
 
         #endregion Classes
     }
@@ -589,7 +589,7 @@
         public DeleteObjectFuture(string objectId, string subObjectId)
             : base(objectId, "deleteObject")
         {
-            this.@params = subObjectId;
+            @params = subObjectId;
         }
 
         #endregion Constructors
@@ -612,7 +612,7 @@
         public IsOfTypeFuture(string objectId, string typeId)
             : base(objectId, "isOfType")
         {
-            this.@params = typeId;
+            @params = typeId;
         }
 
         #endregion Constructors
@@ -635,7 +635,7 @@
         public SubscribeFuture(string objectId, string propertyName, string callbackMethod)
             : base(objectId, "subscribeToProperty")
         {
-            this.@params = new Params(objectId, propertyName, callbackMethod);
+            @params = new Params(objectId, propertyName, callbackMethod);
         }
 
         #endregion Constructors
@@ -665,7 +665,7 @@
             }
 
             #endregion Constructors
-        };
+        }
 
         #endregion Classes
     }
@@ -687,7 +687,7 @@
         public UnsubscribeFuture(string objectId, long subscriptionId)
             : base(objectId, "unsubscribe")
         {
-            this.@params = subscriptionId;
+            @params = subscriptionId;
         }
 
         #endregion Constructors
@@ -710,7 +710,7 @@
         public SelectFuture(string objectId, dynamic returnClause, dynamic whereClause)
             : base(objectId, "select")
         {
-            this.@params = new Params(returnClause, whereClause);
+            @params = new Params(returnClause, whereClause);
         }
 
         #endregion Constructors
@@ -722,7 +722,7 @@
             #region Fields
 
             public ICollection<string> @return;
-            public dynamic @where;
+            public dynamic where;
 
             #endregion Fields
 
@@ -730,12 +730,12 @@
 
             public Params(dynamic returnClause, dynamic whereClause)
             {
-                this.@return = returnClause;
-                this.@where = whereClause;
+                @return = returnClause;
+                where = whereClause;
             }
 
             #endregion Constructors
-        };
+        }
 
         #endregion Classes
     }

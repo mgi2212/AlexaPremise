@@ -458,7 +458,7 @@ namespace Alexa.SmartHomeAPI.V3
         public double minimumValue { get; set; }
 
         [DataMember(Name = "rateLimit", EmitDefaultValue = false, Order = 7)]
-        public int rateLimit { get; set; }  //An integer that represents the maximum number of requests a device will accept in the specifed time unit.
+        public int rateLimit { get; set; }  //An integer that represents the maximum number of requests a device will accept in the specified time unit.
 
         [DataMember(Name = "timeUnit", EmitDefaultValue = false, Order = 7)]
         public string timeUnit { get; set; }
@@ -711,14 +711,12 @@ namespace Alexa.SmartHomeAPI.V3
         {
             context = new AlexaControlResponseContext();
             Event = new AlexaEventBody(args[0] as Header, args[1] as DirectiveEndpoint);
-            Event.header.@namespace = "Alexa";
         }
 
         public ControlResponse(Header headerObject, DirectiveEndpoint endpoint)
         {
             context = new AlexaControlResponseContext();
             Event = new AlexaEventBody(headerObject, endpoint);
-            Event.header.@namespace = "Alexa";
         }
 
         #endregion Constructors

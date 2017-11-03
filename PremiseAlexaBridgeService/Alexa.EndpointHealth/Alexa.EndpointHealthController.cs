@@ -4,6 +4,7 @@ using System.Runtime.Serialization;
 using Alexa.Controller;
 using Alexa.SmartHomeAPI.V3;
 using SYSWebSockClient;
+using PremiseAlexaBridgeService;
 
 namespace Alexa.EndpointHealth
 {
@@ -64,7 +65,6 @@ namespace Alexa.EndpointHealth
 
         public AlexaEndpointHealthValue(string stateValue)
         {
-            //this.lastcontact = timestamp;
             value = stateValue;
         }
 
@@ -81,7 +81,7 @@ namespace Alexa.EndpointHealth
     #endregion Scene Data Contracts
 
     /// <summary>
-    /// there is no web service endpoint associated with class its pupose is to be accessed
+    /// there is no web service endpoint associated with class its purpose is to be accessed
     /// internally by other controller requests, state report requests and change reports
     /// </summary>
     public class AlexaEndpointHealthController : AlexaControllerBase<
@@ -119,11 +119,6 @@ namespace Alexa.EndpointHealth
 
         #region Methods
 
-        public string AssemblyTypeName()
-        {
-            return GetType().AssemblyQualifiedName;
-        }
-
         public string[] GetAlexaProperties()
         {
             return alexaProperties;
@@ -131,7 +126,7 @@ namespace Alexa.EndpointHealth
 
         public string GetAssemblyTypeName()
         {
-            return GetType().AssemblyQualifiedName;
+            return PropertyHelpers.GetType().AssemblyQualifiedName;
         }
 
         public string[] GetDirectiveNames()
@@ -149,22 +144,21 @@ namespace Alexa.EndpointHealth
             return premiseProperties;
         }
 
-        public AlexaProperty GetPropertyState()
+        public List<AlexaProperty> GetPropertyStates()
         {
+            List<AlexaProperty> properties = new List<AlexaProperty>();
+
             bool isReachable = Endpoint.GetValue<bool>(premiseProperties[0]).GetAwaiter().GetResult();
             AlexaProperty property = new AlexaProperty
             {
                 @namespace = @namespace,
                 name = alexaProperties[0],
-                timeOfSample = GetUtcTime(),
+                timeOfSample = PremiseServer.GetUtcTime(),
                 value = new AlexaEndpointHealthValue((isReachable ? "OK" : "UNREACHABLE"))
             };
-            return property;
-        }
+            properties.Add(property);
 
-        public List<AlexaProperty> GetPropertyStates()
-        {
-            return null;
+            return properties;
         }
 
         public bool HasAlexaProperty(string property)
@@ -177,8 +171,23 @@ namespace Alexa.EndpointHealth
             return premiseProperties.Contains(property);
         }
 
+        public string MapPremisePropertyToAlexaProperty(string premiseProperty)
+        {
+            return premiseProperties.Contains(premiseProperty) ? "connectivity" : "";
+        }
+
         public void ProcessControllerDirective()
         {
+        }
+
+        public void SetEndpoint(IPremiseObject premiseObject)
+        {
+            Endpoint = premiseObject;
+        }
+
+        public bool ValidateDirective()
+        {
+            return ValidateDirective(GetDirectiveNames(), GetNameSpace());
         }
 
         #endregion Methods

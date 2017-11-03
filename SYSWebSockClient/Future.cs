@@ -1,9 +1,9 @@
-﻿namespace SYSWebSockClient
-{
-    using Newtonsoft.Json;
-    using System;
-    using System.Threading;
+﻿using System;
+using System.Threading;
+using Newtonsoft.Json;
 
+namespace SYSWebSockClient
+{
     internal static class FutureId
     {
         #region Fields
@@ -36,7 +36,7 @@
 
         public Future()
         {
-            this.Event = new ManualResetEventSlim();
+            Event = new ManualResetEventSlim();
         }
 
         #endregion Constructors
@@ -47,22 +47,22 @@
         {
             // bool complete = this.Event.Wait(5000);
             bool complete = true;
-            this.Event.Wait();
+            Event.Wait();
 
             if (!complete)
                 throw new JsonRPCException("Operation timed out");
 
-            if (this.Exception == null)
-                return this.Result;
+            if (Exception == null)
+                return Result;
 
-            throw this.Exception;
+            throw Exception;
         }
 
         public void Notify(Exception exception, object result)
         {
-            this.Exception = exception;
-            this.Result = result;
-            this.Event.Set();
+            Exception = exception;
+            Result = result;
+            Event.Set();
         }
 
         #endregion Methods
@@ -86,7 +86,7 @@
 
         protected JsonRPCFuture(string objectId, string method)
         {
-            this.id = FutureId.Next();
+            id = FutureId.Next();
 
             if (string.IsNullOrEmpty(objectId))
             {

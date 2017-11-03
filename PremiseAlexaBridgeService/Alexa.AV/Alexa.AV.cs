@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using Alexa.Controller;
-using Alexa.Power;
 using Alexa.SmartHomeAPI.V3;
 using PremiseAlexaBridgeService;
 using SYSWebSockClient;
@@ -15,8 +14,9 @@ namespace Alexa.AV
         public List<AlexaProperty> FindRelatedProperties(IPremiseObject endpoint, string currentController)
         {
             List<AlexaProperty> relatedProperties = new List<AlexaProperty>();
+
             // walk through related and supported controllers and report state
-            DiscoveryEndpoint discoveryEndpoint = PremiseServer.GetDiscoveryEndpoint(endpoint).GetAwaiter().GetResult();
+            DiscoveryEndpoint discoveryEndpoint = PremiseServer.GetDiscoveryEndpointAsync(endpoint).GetAwaiter().GetResult();
             if (discoveryEndpoint == null)
             {
                 return relatedProperties;
@@ -27,53 +27,18 @@ namespace Alexa.AV
                 if (capability.@interface == currentController)
                     continue;
 
-                AlexaProperty property;
-
-                switch (capability.@interface)
+                if (PremiseServer.Controllers.ContainsKey(capability.@interface))
                 {
-                    case "Alexa.PowerController":
-                        {
-                            AlexaSetPowerStateController controller = new AlexaSetPowerStateController(endpoint);
-                            property = controller.GetPropertyState();
-                            relatedProperties.Add(property);
-                        }
-                        break;
-
-                    case "Alexa.ChannelController":
-                        {
-                            AlexaChannelController controller = new AlexaChannelController(endpoint);
-                            property = controller.GetPropertyState();
-                            relatedProperties.Add(property);
-                        }
-                        break;
-
-                    case "Alexa.InputController":
-                        {
-                            AlexaInputController controller = new AlexaInputController(endpoint);
-                            relatedProperties.AddUnique(controller.GetPropertyStates());
-                        }
-                        break;
-
-                    case "Alexa.PlaybackController":
-                        {
-                            AlexaPlaybackController controller = new AlexaPlaybackController(endpoint);
-                            property = controller.GetPropertyState();
-                            relatedProperties.Add(property);
-                        }
-                        break;
-
-                    case "Alexa.Speaker":
-                        {
-                            AlexaSpeaker controller = new AlexaSpeaker(endpoint);
-                            relatedProperties.AddUnique(controller.GetPropertyStates());
-                        }
-                        break;
+                    IAlexaController controller = PremiseServer.Controllers[capability.@interface];
+                    controller.SetEndpoint(endpoint);
+                    relatedProperties.AddRange(controller.GetPropertyStates());
                 }
             }
+
             return relatedProperties;
         }
 
-        public Dictionary<string, IPremiseSubscription> SubcribeToSupportedProperties(IPremiseObject endpoint, DiscoveryEndpoint discoveryEndpoint, Action<dynamic> callback)
+        public Dictionary<string, IPremiseSubscription> SubscribeToSupportedProperties(IPremiseObject endpoint, DiscoveryEndpoint discoveryEndpoint, Action<dynamic> callback)
         {
             Dictionary<string, IPremiseSubscription> subscriptions = new Dictionary<string, IPremiseSubscription>();
             foreach (Capability capability in discoveryEndpoint.capabilities)

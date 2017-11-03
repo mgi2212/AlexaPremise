@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Alexa;
+using Alexa.Controller;
 using Alexa.Scene;
 using Alexa.SmartHomeAPI.V3;
 using Nito.AsyncEx;
@@ -44,27 +45,35 @@ namespace PremiseAlexaBridgeService
             Subscription sub = (Subscription)@params;
             using (deDupeLock.Lock())
             {
+                // Premise can send multiple notifications for a single object, one for each
+                // subscribed property that changes. The state report function here will capture
+                // states of all properties, so the DeDupeDictionary prevents multiple state reports
+                // from being sent for essentially the same event.
                 if (DeDupeDictionary.ContainsKey(sub.sysObjectId))
                     return;
+
                 DeDupeDictionary.Add(sub.sysObjectId, sub);
             }
 
             Task.Run(() =>
             {
-                // build event notification
+                // get the endpoint and endpoint capabilities
                 Guid premiseId = new Guid(sub.sysObjectId);
                 IPremiseObject endpoint = RootObject.GetObject(premiseId.ToString("B")).GetAwaiter().GetResult();
-                DiscoveryEndpoint discoveryEndpoint = GetDiscoveryEndpoint(endpoint).GetAwaiter().GetResult();
+                DiscoveryEndpoint discoveryEndpoint = GetDiscoveryEndpointAsync(endpoint).GetAwaiter().GetResult();
                 if (discoveryEndpoint == null)
                 {
-                    // object deleted!
                     return;
                 }
+
+                // get the authorization code for the notification
                 string authCode;
                 using (asyncObjectsLock.Lock())
                 {
                     authCode = (string)HomeObject.GetValue("AlexaAsyncAuthorizationCode").GetAwaiter().GetResult();
                 }
+
+                // build the change report
                 AlexaChangeReport changeReport = new AlexaChangeReport();
                 changeReport.@event.header.messageID = Guid.NewGuid().ToString("D");
                 changeReport.@event.header.@namespace = "Alexa";
@@ -75,60 +84,75 @@ namespace PremiseAlexaBridgeService
                 changeReport.@event.endpoint.cookie = discoveryEndpoint.cookie;
                 changeReport.@event.payload.change.cause.type = "PHYSICAL_INTERACTION";
 
-                // use reflection to instantiate all device type controllers
-                var interfaceType = typeof(IAlexaDeviceType);
-                var all = AppDomain.CurrentDomain.GetAssemblies()
-                    .SelectMany(x => x.GetTypes())
-                    .Where(x => interfaceType.IsAssignableFrom(x) && !x.IsInterface && !x.IsAbstract)
-                    .Select(Activator.CreateInstance);
+                // get the device type and controller (e.g. AlexaAV, AlexaHVAC)
+                IAlexaDeviceType deviceType = null;
+                IAlexaController controller = null;
+                List<AlexaProperty> relatedPropertyStates = null;
 
-                string causeKey = "";
+                bool hasScene = false;
 
-                foreach (IAlexaDeviceType deviceType in all)
+                foreach (IAlexaController controllerToTest in Controllers.Values)
                 {
-                    var related = deviceType.FindRelatedProperties(endpoint, "");
-                    foreach (AlexaProperty prop in related)
+                    if (!controllerToTest.HasPremiseProperty(sub.propertyName))
                     {
-                        if (prop.@namespace == "Alexa.SceneController")
-                        {
-                            continue;
-                        }
-                        string propKey = prop.@namespace + "." + prop.name;
+                        continue;
+                    }
 
-                        dynamic controller = Controllers[prop.name];
-                        // filter for the property that triggered the actual change, unless it is the
-                        // beloved SceneController.
-                        if ((controller.HasPremiseProperty(sub.propertyName)) &&
-                            (changeReport.@event.payload.change.properties.Count == 0))
+                    controller = controllerToTest;
+                    Type type = Type.GetType(controller.GetAssemblyTypeName());
+                    if (type == null)
+                    {
+                        continue;
+                    }
+
+                    // found a controller, get an instance of the assembly
+                    deviceType = (IAlexaDeviceType)Activator.CreateInstance(type);
+
+                    // Determine if this deviceType supports the desired capability
+                    // note: This handles situation where the same property name is used by different
+                    // controllers. e.g. "brightness" is used in both ColorController and BrightnessController
+                    relatedPropertyStates = deviceType.FindRelatedProperties(endpoint, "");
+                    foreach (AlexaProperty property in relatedPropertyStates)
+                    {
+                        // if so, this is the correct type
+                        if (property.@namespace == controller.GetNameSpace())
                         {
-                            causeKey = propKey;
-                            changeReport.@event.payload.change.properties.Add(prop);
-                            if (changeReport.context.propertiesInternal.ContainsKey(causeKey))
-                            {
-                                changeReport.context.propertiesInternal.Remove(causeKey);
-                            }
+                            break;
                         }
-                        else if ((!changeReport.context.propertiesInternal.ContainsKey(propKey)) &&
-                                 (propKey != causeKey))
-                        {
-                            changeReport.context.propertiesInternal.Add(propKey, prop);
-                        }
+                    }
+                }
+
+                if ((deviceType == null) || (controller == null || relatedPropertyStates == null))
+                {
+                    return;
+                }
+
+                foreach (AlexaProperty prop in relatedPropertyStates)
+                {
+                    if (prop.@namespace == "Alexa.SceneController")
+                    {
+                        hasScene = true;
+                        continue;
+                    }
+
+                    if ((changeReport.@event.payload.change.properties.Count == 0) && (prop.name == controller.MapPremisePropertyToAlexaProperty(sub.propertyName)))
+                    {
+                        changeReport.@event.payload.change.properties.Add(prop);
+                    }
+                    else
+                    {
+                        string propKey = prop.@namespace + "." + prop.name;
+                        changeReport.context.propertiesInternal.Add(propKey, prop);
                     }
                 }
 
                 changeReport.@event.header.name = "ChangeReport";
 
-                foreach (Capability capability in discoveryEndpoint.capabilities)
+                // scenes are special case
+                if (hasScene)
                 {
-                    switch (capability.@interface) // scenes are special cased
-                    {
-                        case "Alexa.SceneController":
-                            {
-                                AlexaSetSceneController sceneController = new AlexaSetSceneController(endpoint);
-                                changeReport = sceneController.AlterChangeReport(changeReport);
-                            }
-                            break;
-                    }
+                    AlexaSetSceneController sceneController = new AlexaSetSceneController(endpoint);
+                    changeReport = sceneController.AlterChangeReport(changeReport);
                 }
 
                 StateChangeReportWrapper item = new StateChangeReportWrapper
@@ -137,6 +161,7 @@ namespace PremiseAlexaBridgeService
                 };
 
                 stateReportQueue.Enqueue(item);
+
                 using (deDupeLock.Lock())
                 {
                     DeDupeDictionary.Remove(sub.sysObjectId);
@@ -148,12 +173,12 @@ namespace PremiseAlexaBridgeService
         {
             if (IsAsyncEventsEnabled)
             {
-                UnsubscribeAll().GetAwaiter().GetResult();
-                SubscribeAll().GetAwaiter().GetResult();
+                UnsubscribeAllAsync().GetAwaiter().GetResult();
+                SubscribeAllAsync().GetAwaiter().GetResult();
             }
         }
 
-        public static async Task UnsubscribeAll()
+        public static async Task UnsubscribeAllAsync()
         {
             using (subscriptionsLock.Lock())
             {
@@ -161,7 +186,7 @@ namespace PremiseAlexaBridgeService
                 {
                     foreach (KeyValuePair<string, IPremiseSubscription> subscription in subscriptions)
                     {
-                        await subscription.Value.Unsubscribe();
+                        await subscription.Value.Unsubscribe().ConfigureAwait(false);
                     }
                     subscriptions.Clear();
                 }
@@ -191,27 +216,27 @@ namespace PremiseAlexaBridgeService
                     }
                     if (IsAsyncEventsEnabled)
                     {
-                        await SubscribeAll();
+                        await SubscribeAllAsync().ConfigureAwait(false);
                     }
                     else
                     {
-                        await UnsubscribeAll();
+                        await UnsubscribeAllAsync().ConfigureAwait(false);
                     }
                 }
             });
         }
 
-        private static async Task SubscribeAll()
+        private static async Task SubscribeAllAsync()
         {
             using (subscriptionsLock.Lock())
             {
                 if (endpoints.Count == 0)
                 {
-                    GetEndpoints().GetAwaiter().GetResult();
+                    await GetEndpointsAsync().ConfigureAwait(false);
                 }
                 if (subscriptions.Count != 0)
                 {
-                    UnsubscribeAll().GetAwaiter().GetResult();
+                    await UnsubscribeAllAsync().ConfigureAwait(false);
                 }
                 Action<dynamic> callback = AlexaPropertyChanged;
                 using (endpointsLock.Lock())
@@ -219,7 +244,7 @@ namespace PremiseAlexaBridgeService
                     foreach (DiscoveryEndpoint discoveryEndpoint in endpoints)
                     {
                         Guid premiseId = new Guid(discoveryEndpoint.endpointId);
-                        IPremiseObject endpoint = await RootObject.GetObject(premiseId.ToString("B"));
+                        IPremiseObject endpoint = await RootObject.GetObject(premiseId.ToString("B")).ConfigureAwait(false);
 
                         // use reflection to instantiate all device type controllers
                         var interfaceType = typeof(IAlexaDeviceType);
@@ -231,7 +256,7 @@ namespace PremiseAlexaBridgeService
                         foreach (IAlexaDeviceType deviceType in all)
                         {
                             Dictionary<string, IPremiseSubscription> subs =
-                                deviceType.SubcribeToSupportedProperties(endpoint, discoveryEndpoint, callback);
+                                deviceType.SubscribeToSupportedProperties(endpoint, discoveryEndpoint, callback);
                             foreach (string key in subs.Keys)
                             {
                                 subscriptions.Add(key, subs[key]);
@@ -249,8 +274,7 @@ namespace PremiseAlexaBridgeService
                 if (_asyncEventSubscription == null)
                 {
                     _asyncEventSubscription = HomeObject
-                        .Subscribe("SendAsyncEventsToAlexa", "NoController", EnableAsyncPropertyChanged).GetAwaiter()
-                        .GetResult();
+                        .Subscribe("SendAsyncEventsToAlexa", "NoController", EnableAsyncPropertyChanged).GetAwaiter().GetResult();
                 }
             }
         }

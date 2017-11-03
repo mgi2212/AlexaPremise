@@ -111,7 +111,7 @@ namespace Alexa.Lighting
 
         public string GetAssemblyTypeName()
         {
-            return GetType().AssemblyQualifiedName;
+            return PropertyHelpers.GetType().AssemblyQualifiedName;
         }
 
         public string[] GetDirectiveNames()
@@ -129,22 +129,21 @@ namespace Alexa.Lighting
             return _premiseProperties;
         }
 
-        public AlexaProperty GetPropertyState()
+        public List<AlexaProperty> GetPropertyStates()
         {
+            List<AlexaProperty> properties = new List<AlexaProperty>();
+
             double brightness = Endpoint.GetValue<double>(_premiseProperties[0]).GetAwaiter().GetResult();
             AlexaProperty property = new AlexaProperty
             {
                 @namespace = Namespace,
                 name = _alexaProperties[0],
                 value = (int)((brightness * 100)).LimitToRange(0, 100),
-                timeOfSample = GetUtcTime()
+                timeOfSample = PremiseServer.GetUtcTime()
             };
-            return property;
-        }
+            properties.Add(property);
 
-        public List<AlexaProperty> GetPropertyStates()
-        {
-            return null;
+            return properties;
         }
 
         public bool HasAlexaProperty(string property)
@@ -157,14 +156,13 @@ namespace Alexa.Lighting
             return _premiseProperties.Contains(property);
         }
 
+        public string MapPremisePropertyToAlexaProperty(string premiseProperty)
+        {
+            return _premiseProperties.Contains(premiseProperty) ? "brightness" : "";
+        }
+
         public void ProcessControllerDirective()
         {
-            AlexaProperty property = new AlexaProperty(Header)
-            {
-                name = _alexaProperties[0]
-            };
-            Response.Event.header.@namespace = "Alexa";
-
             try
             {
                 switch (Header.name)
@@ -174,17 +172,11 @@ namespace Alexa.Lighting
                         double currentValue = Math.Round(Endpoint.GetValue<double>(_premiseProperties[0]).GetAwaiter().GetResult(), 2);
                         double valueToSend = Math.Round(currentValue + adjustValue, 2).LimitToRange(0.00, 1.00);
                         Endpoint.SetValue(_premiseProperties[0], valueToSend.ToString(CultureInfo.InvariantCulture)).GetAwaiter().GetResult();
-                        property.timeOfSample = GetUtcTime();
-                        property.value = (int)(valueToSend * 100);
-                        Response.context.properties.Add(property);
                         break;
 
                     case "SetBrightness":
                         double setValue = (Payload.brightness / 100.00).LimitToRange(0.00, 1.000);
                         Endpoint.SetValue(_premiseProperties[0], setValue.ToString(CultureInfo.InvariantCulture)).GetAwaiter().GetResult();
-                        property.timeOfSample = GetUtcTime();
-                        property.value = ((int)(setValue * 100)).LimitToRange(0, 100);
-                        Response.context.properties.Add(property);
                         break;
 
                     default:
@@ -192,12 +184,22 @@ namespace Alexa.Lighting
                         return;
                 }
                 Response.Event.header.name = "Response";
-                Response.context.properties.AddRange(PropertyHelpers.FindRelatedProperties(Endpoint, Namespace));
+                Response.context.properties.AddRange(PropertyHelpers.FindRelatedProperties(Endpoint, ""));
             }
             catch (Exception ex)
             {
                 ReportError(AlexaErrorTypes.INTERNAL_ERROR, ex.Message);
             }
+        }
+
+        public void SetEndpoint(IPremiseObject premiseObject)
+        {
+            Endpoint = premiseObject;
+        }
+
+        public bool ValidateDirective()
+        {
+            return ValidateDirective(GetDirectiveNames(), GetNameSpace());
         }
 
         #endregion Methods

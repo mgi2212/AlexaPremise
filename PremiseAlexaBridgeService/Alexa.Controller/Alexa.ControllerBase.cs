@@ -1,23 +1,18 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using Alexa.SmartHomeAPI.V3;
+using PremiseAlexaBridgeService;
+using System;
 using System.Diagnostics;
-using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.Serialization.Json;
-using System.ServiceModel;
-using System.ServiceModel.Channels;
-using System.Threading.Tasks;
-using Alexa.SmartHomeAPI.V3;
-using PremiseAlexaBridgeService;
 using SYSWebSockClient;
 
 namespace Alexa.Controller
 {
     /// <summary>
-    /// Templated base class for Alexa controllers T is the response payload (accounts for
-    /// differences in payloads) TT is the response object TTT is the request object
+    /// Template base class for Alexa controllers T is the response payload (accounts for differences
+    /// in payloads) TT is the response object TTT is the request object
     /// </summary>
     public class AlexaControllerBase<T, TT, TTt> where TT : new()
     {
@@ -25,9 +20,8 @@ namespace Alexa.Controller
 
         private readonly DirectiveEndpoint _directiveEndpoint;
         private readonly Header _header;
-        private readonly T _payload;
         private readonly TTt _request;
-        private TT _response;
+        private readonly TT _response;
 
         #endregion Fields
 
@@ -41,7 +35,7 @@ namespace Alexa.Controller
         {
             _request = requestObject;
             _header = RequestHeader;
-            _payload = (T)RequestPayload;
+            Payload = (T)RequestPayload;
             _directiveEndpoint = RequestDirectiveEndpoint;
 
             if (_directiveEndpoint == null)
@@ -85,9 +79,9 @@ namespace Alexa.Controller
 
         #region Properties
 
-        public IPremiseObject Endpoint { get; private set; }
+        public IPremiseObject Endpoint { get; set; }
         public Header Header => _header;
-        public T Payload => _payload;
+        public T Payload { get; }
         public TTt Request => _request;
         public TT Response => _response;
 
@@ -207,6 +201,7 @@ namespace Alexa.Controller
 
                 case AlexaErrorTypes.INVALID_VALUE:
                 case AlexaErrorTypes.VALUE_OUT_OF_RANGE:
+                case AlexaErrorTypes.NO_SUCH_ENDPOINT:
                     errorType = EventLogEntryType.Warning;
                     break;
 
@@ -214,10 +209,10 @@ namespace Alexa.Controller
                     errorType = EventLogEntryType.Information;
                     break;
             }
-            PremiseServer.NotifyError(errorType, $"Controller Error: Controller:{RequestHeader.@namespace} ErrorType:{type} ErrorMessage:{message}", 200).GetAwaiter().GetResult();
+            PremiseServer.NotifyErrorAsync(errorType, $"Controller Error: Controller:{RequestHeader.@namespace} ErrorType:{type} ErrorMessage:{message}", 200).GetAwaiter().GetResult();
         }
 
-        public bool ValidateDirective(string[] directiveNames, string @namespace)
+        protected bool ValidateDirective(string[] directiveNames, string @namespace)
         {
             #region Validate request
 
@@ -252,7 +247,7 @@ namespace Alexa.Controller
             try
             {
                 Scope testScope;
-                // must be an endpointeless directive (like Discovery) see if there is a scope in the payload
+                // must be an endpoint-less directive (like Discovery) see if there is a scope in the payload
                 if ((_directiveEndpoint == null) && (RequestPayloadScope != null))
                 {
                     testScope = RequestPayloadScope;
@@ -267,7 +262,7 @@ namespace Alexa.Controller
                     ReportError(AlexaErrorTypes.INVALID_DIRECTIVE, "Invalid bearer token.");
                     return false;
                 }
-                if (!CheckAccessToken(testScope.localAccessToken).GetAwaiter().GetResult())
+                if (!PremiseServer.CheckAccessTokenAsync(testScope.localAccessToken).GetAwaiter().GetResult())
                 {
                     ReportError(AlexaErrorTypes.INVALID_AUTHORIZATION_CREDENTIAL, "Not authorized on local premise server.");
                     return false;
@@ -307,7 +302,7 @@ namespace Alexa.Controller
 
             #endregion Get Premise Object
 
-            InformLastContact($"{_header?.name}: {RequestDirectiveEndpoint?.cookie?.path}").GetAwaiter().GetResult();
+            PremiseServer.InformLastContactAsync($"{_header?.name}: {RequestDirectiveEndpoint?.cookie?.path}").GetAwaiter().GetResult();
 
             return true;
         }
@@ -316,36 +311,7 @@ namespace Alexa.Controller
 
         #region Static Methods
 
-        public static string GetClientIp()
-        {
-            string address = "unavailable";
-            try
-            {
-                OperationContext context = OperationContext.Current;
-                MessageProperties properties = context.IncomingMessageProperties;
-
-                if (!(properties[RemoteEndpointMessageProperty.Name] is RemoteEndpointMessageProperty endpoint))
-                {
-                    return address;
-                }
-                if (properties.Keys.Contains(HttpRequestMessageProperty.Name))
-                {
-                    if (properties[HttpRequestMessageProperty.Name] is HttpRequestMessageProperty endpointLoadBalancer && endpointLoadBalancer.Headers["X-Forwarded-For"] != null)
-                        address = endpointLoadBalancer.Headers["X-Forwarded-For"];
-                }
-                if (address == "unavailable")
-                {
-                    address = endpoint.Address;
-                }
-            }
-            catch (Exception e)
-            {
-                PremiseServer.NotifyError(EventLogEntryType.Warning, $"Error obtaining client IP address: {e.Message}", 201).GetAwaiter().GetResult();
-            }
-            return address;
-        }
-
-        public static void SerialiszationTest(TT response)
+        public static void SerializationTest(TT response)
         {
             // Serialization Check
             var memoryStream = new MemoryStream();
@@ -355,25 +321,6 @@ namespace Alexa.Controller
             var streamReader = new StreamReader(memoryStream);
             Debug.WriteLine("JSON serialized response object");
             Debug.WriteLine(streamReader.ReadToEnd());
-        }
-
-        protected static async Task<bool> CheckAccessToken(string token)
-        {
-            var accessToken = await PremiseServer.HomeObject.GetValue<string>("AccessToken");
-            var tokens = new List<string>(accessToken.Split(','));
-            return (-1 != tokens.IndexOf(token));
-        }
-
-        protected static string GetUtcTime()
-        {
-            return DateTime.UtcNow.ToUniversalTime().ToString("yyyy-MM-dd'T'HH:mm:ss.ffZ");
-        }
-
-        protected static async Task InformLastContact(string command)
-        {
-            command += $" Client ip: {GetClientIp()}";
-            await PremiseServer.HomeObject.SetValue("LastHeardFromAlexa", DateTime.Now.ToString(CultureInfo.CurrentCulture));
-            await PremiseServer.HomeObject.SetValue("LastHeardCommand", command);
         }
 
         #endregion Static Methods

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using Alexa.Controller;
 using Alexa.SmartHomeAPI.V3;
 using PremiseAlexaBridgeService;
 using SYSWebSockClient;
@@ -14,36 +15,29 @@ namespace Alexa.EndpointHealth
         {
             List<AlexaProperty> relatedProperties = new List<AlexaProperty>();
 
-            DiscoveryEndpoint discoveryEndpoint = PremiseServer.GetDiscoveryEndpoint(endpoint).GetAwaiter().GetResult();
+            DiscoveryEndpoint discoveryEndpoint = PremiseServer.GetDiscoveryEndpointAsync(endpoint).GetAwaiter().GetResult();
             if (discoveryEndpoint == null)
             {
                 return relatedProperties;
             }
+
             foreach (Capability capability in discoveryEndpoint.capabilities)
             {
                 if (capability.@interface == currentController)
                     continue;
 
-                AlexaProperty property = null;
-
-                switch (capability.@interface)
+                if (PremiseServer.Controllers.ContainsKey(capability.@interface))
                 {
-                    case "Alexa.EndpointHealth":
-                        {
-                            AlexaEndpointHealthController controller = new AlexaEndpointHealthController(endpoint);
-                            property = controller.GetPropertyState();
-                        }
-                        break;
-                }
-                if (property != null)
-                {
-                    relatedProperties.Add(property);
+                    IAlexaController controller = PremiseServer.Controllers[capability.@interface];
+                    controller.SetEndpoint(endpoint);
+                    relatedProperties.AddRange(controller.GetPropertyStates());
                 }
             }
+
             return relatedProperties;
         }
 
-        public Dictionary<string, IPremiseSubscription> SubcribeToSupportedProperties(IPremiseObject endpoint, DiscoveryEndpoint discoveryEndpoint, Action<dynamic> callback)
+        public Dictionary<string, IPremiseSubscription> SubscribeToSupportedProperties(IPremiseObject endpoint, DiscoveryEndpoint discoveryEndpoint, Action<dynamic> callback)
         {
             Dictionary<string, IPremiseSubscription> subscriptions = new Dictionary<string, IPremiseSubscription>();
             foreach (Capability capability in discoveryEndpoint.capabilities)

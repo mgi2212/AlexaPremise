@@ -115,7 +115,7 @@ namespace Alexa.AV
 
         public string GetAssemblyTypeName()
         {
-            return GetType().AssemblyQualifiedName;
+            return PropertyHelpers.GetType().AssemblyQualifiedName;
         }
 
         public string[] GetDirectiveNames()
@@ -133,11 +133,6 @@ namespace Alexa.AV
             return _premiseProperties;
         }
 
-        public AlexaProperty GetPropertyState()
-        {
-            return null;
-        }
-
         public List<AlexaProperty> GetPropertyStates()
         {
             List<AlexaProperty> properties = new List<AlexaProperty>();
@@ -148,7 +143,7 @@ namespace Alexa.AV
                 @namespace = Namespace,
                 name = _alexaProperties[0],
                 value = (int)((volume * 100)).LimitToRange(0, 100),
-                timeOfSample = GetUtcTime()
+                timeOfSample = PremiseServer.GetUtcTime()
             };
             properties.Add(volumeProperty);
 
@@ -158,7 +153,7 @@ namespace Alexa.AV
                 @namespace = Namespace,
                 name = _alexaProperties[1],
                 value = mute,
-                timeOfSample = GetUtcTime()
+                timeOfSample = PremiseServer.GetUtcTime()
             };
             properties.Add(muteProperty);
 
@@ -173,6 +168,20 @@ namespace Alexa.AV
         public bool HasPremiseProperty(string property)
         {
             return (_premiseProperties.Contains(property));
+        }
+
+        public string MapPremisePropertyToAlexaProperty(string premiseProperty)
+        {
+            int x = 0;
+            foreach (string property in _premiseProperties)
+            {
+                if (premiseProperty == property)
+                {
+                    return _alexaProperties[x];
+                }
+                x++;
+            }
+            return "";
         }
 
         public void ProcessControllerDirective()
@@ -205,12 +214,22 @@ namespace Alexa.AV
                         return;
                 }
                 Response.Event.header.name = "Response";
-                Response.context.properties.AddUnique(GetPropertyStates());
+                Response.context.properties.AddRange(PropertyHelpers.FindRelatedProperties(Endpoint, ""));
             }
             catch (Exception ex)
             {
                 ReportError(AlexaErrorTypes.INTERNAL_ERROR, ex.Message);
             }
+        }
+
+        public void SetEndpoint(IPremiseObject premiseObject)
+        {
+            Endpoint = premiseObject;
+        }
+
+        public bool ValidateDirective()
+        {
+            return ValidateDirective(GetDirectiveNames(), GetNameSpace());
         }
 
         #endregion Methods

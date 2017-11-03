@@ -157,10 +157,10 @@ namespace Alexa.Discovery
     {
         #region Fields
 
-        public readonly string @namespace = "Alexa.Discovery";
-        public readonly string[] directiveNames = { "Discover" };
-        public readonly string[] premiseProperties = { "none" };
-        private readonly string[] alexaProperties = { "Discover.Response" };
+        private const string Namespace = "Alexa.Discovery";
+        private readonly string[] _alexaProperties = { "Discover.Response" };
+        private readonly string[] _directiveNames = { "Discover" };
+        private readonly string[] _premiseProperties = { "none" };
 
         #endregion Fields
 
@@ -184,39 +184,29 @@ namespace Alexa.Discovery
 
         #region Methods
 
-        public string AssemblyTypeName()
-        {
-            return GetType().AssemblyQualifiedName;
-        }
-
         public string[] GetAlexaProperties()
         {
-            return alexaProperties;
+            return _alexaProperties;
         }
 
         public string GetAssemblyTypeName()
         {
-            return GetType().AssemblyQualifiedName;
+            return null; // PropertyHelpers.GetType().AssemblyQualifiedName;
         }
 
         public string[] GetDirectiveNames()
         {
-            return directiveNames;
+            return _directiveNames;
         }
 
         public string GetNameSpace()
         {
-            return @namespace;
+            return Namespace;
         }
 
         public string[] GetPremiseProperties()
         {
-            return premiseProperties;
-        }
-
-        public AlexaProperty GetPropertyState()
-        {
-            return null;
+            return _premiseProperties;
         }
 
         public List<AlexaProperty> GetPropertyStates()
@@ -226,24 +216,24 @@ namespace Alexa.Discovery
 
         public bool HasAlexaProperty(string property)
         {
-            return (alexaProperties.Contains(property));
+            return (_alexaProperties.Contains(property));
         }
 
         public bool HasPremiseProperty(string property)
         {
-            foreach (string s in premiseProperties)
-            {
-                if (s == property)
-                    return true;
-            }
-            return false;
+            return (_premiseProperties.Contains(property));
+        }
+
+        public string MapPremisePropertyToAlexaProperty(string premiseProperty)
+        {
+            throw new NotImplementedException();
         }
 
         public void ProcessControllerDirective()
         {
             try
             {
-                Response.Event.payload.endpoints = PremiseServer.GetEndpoints().GetAwaiter().GetResult();
+                Response.Event.payload.endpoints = PremiseServer.GetEndpointsAsync().GetAwaiter().GetResult();
                 if (PremiseServer.IsAsyncEventsEnabled)
                 {
                     Task.Run(() =>
@@ -257,12 +247,22 @@ namespace Alexa.Discovery
                 Response.Event.payload.endpoints.Clear();
             }
 
-            Response.Event.header.name = alexaProperties[0];
+            Response.Event.header.name = _alexaProperties[0];
             string message = $"Discovery reported {Response.Event.payload.endpoints.Count} devices and scenes.";
             PremiseServer.HomeObject.SetValue("LastRefreshed", DateTime.Now.ToString(CultureInfo.InvariantCulture)).GetAwaiter().GetResult();
             PremiseServer.HomeObject.SetValue("HealthDescription", message).GetAwaiter().GetResult();
             PremiseServer.HomeObject.SetValue("Health", "True").GetAwaiter().GetResult();
-            PremiseServer.WriteToWindowsApplicationEventLog(EventLogEntryType.Information, message + $" Client ip {GetClientIp()}", 50);
+            PremiseServer.WriteToWindowsApplicationEventLog(EventLogEntryType.Information, message + $" Client ip {PremiseServer.GetClientIp()}", 50);
+        }
+
+        public void SetEndpoint(IPremiseObject premiseObject)
+        {
+            Endpoint = premiseObject;
+        }
+
+        public bool ValidateDirective()
+        {
+            return ValidateDirective(GetDirectiveNames(), GetNameSpace());
         }
 
         #endregion Methods

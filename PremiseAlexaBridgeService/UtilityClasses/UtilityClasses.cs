@@ -6,7 +6,7 @@ namespace PremiseAlexaBridgeService
     {
         #region Fields
 
-        private const double CAbsTempC = 273.15;//absolute temperature in Celcius
+        private const double CAbsTempC = 273.15;//absolute temperature in Celsius
         private const double CAbsTempF = 459.67;//absolute temperature in Fahrenheit
         private double _kelvin;
 
@@ -31,8 +31,8 @@ namespace PremiseAlexaBridgeService
                     Fahrenheit = value;
                     break;
 
-                case "CELCIUS":
-                    Celcius = value;
+                case "CELSIUS":
+                    Celsius = value;
                     break;
 
                 case "KELVIN":
@@ -45,7 +45,7 @@ namespace PremiseAlexaBridgeService
 
         #region Properties
 
-        public double Celcius
+        public double Celsius
         {
             get => Math.Round(_kelvin - CAbsTempC, 2);
             set => _kelvin = value + CAbsTempC;

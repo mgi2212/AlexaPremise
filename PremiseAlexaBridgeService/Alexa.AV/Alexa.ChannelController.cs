@@ -101,7 +101,7 @@ namespace Alexa.AV
 
         public string GetAssemblyTypeName()
         {
-            return GetType().AssemblyQualifiedName;
+            return PropertyHelpers.GetType().AssemblyQualifiedName;
         }
 
         public string[] GetDirectiveNames()
@@ -119,13 +119,14 @@ namespace Alexa.AV
             return _premiseProperties;
         }
 
-        public AlexaProperty GetPropertyState()
-        {
-            return null;
-        }
-
         public List<AlexaProperty> GetPropertyStates()
         {
+            throw new NotImplementedException();
+        }
+
+        public List<AlexaProperty> GetPropertyStates(IPremiseObject premiseObject)
+        {
+            Endpoint = premiseObject;
             List<AlexaProperty> properties = new List<AlexaProperty>();
 
             //double volume = this.endpoint.GetValue<double>(_premiseProperties[0]).GetAwaiter().GetResult();
@@ -151,9 +152,24 @@ namespace Alexa.AV
             return (_premiseProperties.Contains(property));
         }
 
+        public string MapPremisePropertyToAlexaProperty(string premiseProperty)
+        {
+            throw new NotImplementedException();
+        }
+
         public void ProcessControllerDirective()
         {
             throw new NotImplementedException();
+        }
+
+        public void SetEndpoint(IPremiseObject premiseObject)
+        {
+            Endpoint = premiseObject;
+        }
+
+        public bool ValidateDirective()
+        {
+            return ValidateDirective(GetDirectiveNames(), GetNameSpace());
         }
 
         #endregion Methods

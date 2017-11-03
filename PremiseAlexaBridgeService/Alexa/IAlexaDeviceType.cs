@@ -11,7 +11,7 @@ namespace Alexa
 
         List<AlexaProperty> FindRelatedProperties(IPremiseObject endpoint, string currentController);
 
-        Dictionary<string, IPremiseSubscription> SubcribeToSupportedProperties(IPremiseObject endpoint, DiscoveryEndpoint discoveryEndpoint, Action<dynamic> callback);
+        Dictionary<string, IPremiseSubscription> SubscribeToSupportedProperties(IPremiseObject endpoint, DiscoveryEndpoint discoveryEndpoint, Action<dynamic> callback);
 
         #endregion Methods
     }

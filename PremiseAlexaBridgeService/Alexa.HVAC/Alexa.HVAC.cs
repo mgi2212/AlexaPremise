@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using Alexa.EndpointHealth;
 using Alexa.SmartHomeAPI.V3;
 using PremiseAlexaBridgeService;
 using SYSWebSockClient;
@@ -17,49 +16,29 @@ namespace Alexa.HVAC
         {
             List<AlexaProperty> relatedProperties = new List<AlexaProperty>();
             // walk through related and supported controllers and report state
-            DiscoveryEndpoint discoveryEndpoint = PremiseServer.GetDiscoveryEndpoint(endpoint).GetAwaiter().GetResult();
+            DiscoveryEndpoint discoveryEndpoint = PremiseServer.GetDiscoveryEndpointAsync(endpoint).GetAwaiter().GetResult();
             if (discoveryEndpoint == null)
             {
                 return relatedProperties;
             }
+
             foreach (Capability capability in discoveryEndpoint.capabilities)
             {
-                switch (capability.@interface)
+                if (capability.@interface == currentController)
+                    continue;
+
+                if (PremiseServer.Controllers.ContainsKey(capability.@interface))
                 {
-                    case "Alexa.EndpointHealth":
-                        {
-                            AlexaEndpointHealthController controller = new AlexaEndpointHealthController(endpoint);
-                            AlexaProperty property = controller.GetPropertyState();
-                            if (property != null)
-                            {
-                                relatedProperties.Add(property);
-                            }
-                        }
-                        break;
-
-                    case "Alexa.TemperatureSensor":
-                        {
-                            AlexaTemperatureSensor controller = new AlexaTemperatureSensor(endpoint);
-                            AlexaProperty property = controller.GetPropertyState();
-                            if (property != null)
-                            {
-                                relatedProperties.Add(property);
-                            }
-                        }
-                        break;
-
-                    case "Alexa.ThermostatController":
-                        {
-                            AlexaThermostatController controller = new AlexaThermostatController(endpoint);
-                            relatedProperties.AddRange(controller.GetPropertyStates());
-                        }
-                        break;
+                    IAlexaController controller = PremiseServer.Controllers[capability.@interface];
+                    controller.SetEndpoint(endpoint);
+                    relatedProperties.AddRange(controller.GetPropertyStates());
                 }
             }
+
             return relatedProperties;
         }
 
-        public Dictionary<string, IPremiseSubscription> SubcribeToSupportedProperties(IPremiseObject endpoint, DiscoveryEndpoint discoveryEndpoint, Action<dynamic> callback)
+        public Dictionary<string, IPremiseSubscription> SubscribeToSupportedProperties(IPremiseObject endpoint, DiscoveryEndpoint discoveryEndpoint, Action<dynamic> callback)
         {
             Dictionary<string, IPremiseSubscription> subscriptions = new Dictionary<string, IPremiseSubscription>();
             foreach (Capability capability in discoveryEndpoint.capabilities)

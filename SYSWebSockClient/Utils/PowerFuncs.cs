@@ -1,7 +1,7 @@
-﻿namespace SYSWebSockClient
-{
-    using System.Runtime.InteropServices;
+﻿using System.Runtime.InteropServices;
 
+namespace SYSWebSockClient
+{
     /// <summary>
     /// Provides fast nearest, lesser and greater power of 2 functions.
     /// </summary>
@@ -20,48 +20,44 @@
 
         private float GreaterPower2Helper()
         {
-            int n = this.IntVal;
+            int n = IntVal;
 
             if (n << 9 == 0)
             {
                 // already a power of 2
-                return this.FloatVal;
+                return FloatVal;
             }
 
             n >>= 23; // remove fractional part of floating point number
             n -= 127; // subtract the bias from the exponent
 
-            // regenerate new value 
+            // regenerate new value
             return 1 << (n + 1);
         }
 
         private float LesserPower2Helper()
         {
-            int n = this.IntVal;
+            int n = IntVal;
 
-            // i'm assuming it's quicker to avoid early out test
-            // that we did in the GreaterPower2 method in this
-            // case but it really depends on input data set
+            // i'm assuming it's quicker to avoid early out test that we did in the GreaterPower2
+            // method in this case but it really depends on input data set
 
             n >>= 23; // remove fractional part of floating point number
             n -= 127; // subtract the bias from the exponent
 
-            // regenerate new value 
+            // regenerate new value
             return 1 << n;
         }
 
         private float NearestPower2Helper()
         {
-            // not sure if we can do better
-            // than this with bit twiddling
-            // maybe a LUT would be better
-            int n = this.IntVal;
+            // not sure if we can do better than this with bit twiddling maybe a LUT would be better
+            int n = IntVal;
 
             if (n << 9 == 0)
             {
-                // already a power of 2
-                // so, lower power and upper power are identical
-                return this.FloatVal;
+                // already a power of 2 so, lower power and upper power are identical
+                return FloatVal;
             }
 
             n >>= 23; // remove fractional part of floating point number
@@ -71,7 +67,7 @@
             int upper = lower << 1;
 
             // distance calculation
-            float f = this.FloatVal;
+            float f = FloatVal;
 
             float dUpper = upper - f;
             float dLower = f - lower;
@@ -90,11 +86,9 @@
         /// Calculates the next largest (superior) power of 2 of a float.
         /// </summary>
         /// <remarks>
-        /// Fractional and negative negative numbers are handled specially.
-        /// This is very handy for general purpose grid snapping.
-        /// 0.12 => 0.125 and -0.12 => -0.125
-        /// NB. An input value of 0 is mapped to 0 rather than 1
-        /// which is generally more useful.
+        /// Fractional and negative negative numbers are handled specially. This is very handy for
+        /// general purpose grid snapping. 0.12 =&gt; 0.125 and -0.12 =&gt; -0.125 NB. An input value
+        /// of 0 is mapped to 0 rather than 1 which is generally more useful.
         /// </remarks>
         /// <param name="f">The input floating point number.</param>
         /// <returns></returns>
@@ -153,11 +147,9 @@
         /// Calculates the next lower (inferior) power of 2 of a float.
         /// </summary>
         /// <remarks>
-        /// Fractional and negative negative numbers are handled specially.
-        /// This is very handy for general purpose grid snapping.
-        /// For example 0.127 => 0.125 and -0.127 => -0.125
-        /// NB. An input value of 0 is mapped to 0 rather than 1
-        /// which is generally more useful.
+        /// Fractional and negative negative numbers are handled specially. This is very handy for
+        /// general purpose grid snapping. For example 0.127 =&gt; 0.125 and -0.127 =&gt; -0.125 NB.
+        /// An input value of 0 is mapped to 0 rather than 1 which is generally more useful.
         /// </remarks>
         /// <param name="f">The input floating point number.</param>
         /// <returns></returns>
@@ -216,11 +208,9 @@
         /// Calculates the nearest (closest) power of 2 of a float.
         /// </summary>
         /// <remarks>
-        /// Fractional and negative negative numbers are handled specially.
-        /// This is very handy for general purpose grid snapping.
-        /// For example 0.127 => 0.125 and -0.127 => -0.125
-        /// NB. An input value of 0 is mapped to 0 rather than 1
-        /// which is generally more useful.
+        /// Fractional and negative negative numbers are handled specially. This is very handy for
+        /// general purpose grid snapping. For example 0.127 =&gt; 0.125 and -0.127 =&gt; -0.125 NB.
+        /// An input value of 0 is mapped to 0 rather than 1 which is generally more useful.
         /// </remarks>
         /// <param name="f">The input floating point number.</param>
         /// <returns></returns>

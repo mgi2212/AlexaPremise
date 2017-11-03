@@ -19,7 +19,7 @@ namespace PremiseAlexaBridgeService
             const int eventID = 20;
             const string errorPrefix = "Proactive state update error:";
 
-            // This queue blocks in the enumerator so this is essentially an infinate loop.
+            // This queue blocks in the enumerator so this is essentially an infinite loop.
             foreach (StateChangeReportWrapper item in stateReportQueue)
             {
                 WebRequest request;
@@ -33,15 +33,15 @@ namespace PremiseAlexaBridgeService
                     }
                     if (string.IsNullOrEmpty(expiry))
                     {
-                        Task.Run(async () => { await HomeObject.SetValue("SendAsyncEventsToAlexa", "False"); });
-                        NotifyError(EventLogEntryType.Error,
+                        Task.Run(async () => { await HomeObject.SetValue("SendAsyncEventsToAlexa", "False").ConfigureAwait(false); });
+                        NotifyErrorAsync(EventLogEntryType.Error,
                             $"{errorPrefix}: no PSU expiry datetime. PSUs are now disabled. Enable premise skill.",
                             eventID + 1).GetAwaiter().GetResult();
                     }
                     if (!DateTime.TryParse(expiry, out var expiryDateTime))
                     {
-                        Task.Run(async () => { await HomeObject.SetValue("SendAsyncEventsToAlexa", "False"); });
-                        NotifyError(EventLogEntryType.Error,
+                        Task.Run(async () => { await HomeObject.SetValue("SendAsyncEventsToAlexa", "False").ConfigureAwait(false); });
+                        NotifyErrorAsync(EventLogEntryType.Error,
                             $"{errorPrefix} Cannot parse expiry date. PSUs are now disabled. Enable premise skill.",
                             eventID + 1).GetAwaiter().GetResult();
                         continue;
@@ -52,7 +52,7 @@ namespace PremiseAlexaBridgeService
                     {
                         RefreshAsyncToken(out string newToken);
                         if (string.IsNullOrEmpty(newToken)
-                        ) // Error occured during refresh - error logged in that method.
+                        ) // Error occurred during refresh - error logged in that method.
                         {
                             continue;
                         }
@@ -74,7 +74,7 @@ namespace PremiseAlexaBridgeService
                 }
                 catch (Exception ex)
                 {
-                    NotifyError(EventLogEntryType.Error, $"{errorPrefix}: Unexpected error: {ex.Message}", eventID + 1)
+                    NotifyErrorAsync(EventLogEntryType.Error, $"{errorPrefix}: Unexpected error: {ex.Message}", eventID + 1)
                         .GetAwaiter().GetResult();
                     continue;
                 }
@@ -87,7 +87,7 @@ namespace PremiseAlexaBridgeService
                             !(httpResponse.StatusCode == HttpStatusCode.OK ||
                               httpResponse.StatusCode == HttpStatusCode.Accepted))
                         {
-                            NotifyError(EventLogEntryType.Error,
+                            NotifyErrorAsync(EventLogEntryType.Error,
                                     $"{errorPrefix} Unexpected status ({httpResponse?.StatusCode})", eventID + 2)
                                 .GetAwaiter().GetResult();
                             continue;
@@ -99,14 +99,14 @@ namespace PremiseAlexaBridgeService
                         {
                             if (response == null)
                             {
-                                NotifyError(EventLogEntryType.Warning, $"{errorPrefix} Null response from request.",
+                                NotifyErrorAsync(EventLogEntryType.Warning, $"{errorPrefix} Null response from request.",
                                     eventID + 3).GetAwaiter().GetResult();
                                 continue;
                             }
                             StreamReader reader = new StreamReader(response, Encoding.UTF8);
                             responseString = reader.ReadToEnd();
                         }
-                        IncrementCounter("AlexaAsyncUpdateCount").GetAwaiter().GetResult();
+                        IncrementCounterAsync("AlexaAsyncUpdateCount").GetAwaiter().GetResult();
                         Debug.WriteLine($"PSU Response Status ({httpResponse.StatusCode}) ContentLength: {httpResponse.ContentLength} Content: {responseString}");
                         Debug.WriteLine(item.Json);
                     }
@@ -123,7 +123,7 @@ namespace PremiseAlexaBridgeService
                             : // The skill is enabled, but the authentication token has expired.
                                 RefreshAsyncToken(out string newToken);
                                 if (string.IsNullOrEmpty(newToken)
-                                ) // Error occured during refresh - error logged in that method.
+                                ) // Error occurred during refresh - error logged in that method.
                                 {
                                     continue;
                                 }
@@ -136,18 +136,18 @@ namespace PremiseAlexaBridgeService
                                 continue;
                             case HttpStatusCode.Forbidden
                             : // The skill is disabled so disable sending Async events to Alexa
-                                Task.Run(async () => { await HomeObject.SetValue("SendAsyncEventsToAlexa", "False"); });
-                                NotifyError(EventLogEntryType.Error,
+                                Task.Run(async () => { await HomeObject.SetValue("SendAsyncEventsToAlexa", "False").ConfigureAwait(false); });
+                                NotifyErrorAsync(EventLogEntryType.Error,
                                     $"{errorPrefix} Premise skill has been disabled. PSUs are now disabled. Enable premise skill.",
                                     eventID + 4).GetAwaiter().GetResult();
                                 continue;
                             case HttpStatusCode.BadRequest:
-                                NotifyError(EventLogEntryType.Warning,
+                                NotifyErrorAsync(EventLogEntryType.Warning,
                                     $"{errorPrefix} The message contains invalid identifying information such as a invalid endpoint Id or correlation token. Message:\r\n {item.Json}",
                                     eventID + 5).GetAwaiter().GetResult();
                                 continue;
                             default:
-                                NotifyError(EventLogEntryType.Error, $"{errorPrefix} Unexpected status: {e.Message}",
+                                NotifyErrorAsync(EventLogEntryType.Error, $"{errorPrefix} Unexpected status: {e.Message}",
                                     eventID + 6).GetAwaiter().GetResult();
                                 continue;
                         }
@@ -155,7 +155,7 @@ namespace PremiseAlexaBridgeService
                 }
                 catch (Exception ex)
                 {
-                    NotifyError(EventLogEntryType.Error, $"{errorPrefix} Unexpected error: {ex.Message}", eventID + 7)
+                    NotifyErrorAsync(EventLogEntryType.Error, $"{errorPrefix} Unexpected error: {ex.Message}", eventID + 7)
                         .GetAwaiter().GetResult();
                     continue;
                 }

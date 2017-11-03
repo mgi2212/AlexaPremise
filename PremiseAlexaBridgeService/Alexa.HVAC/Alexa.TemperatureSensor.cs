@@ -94,11 +94,6 @@ namespace Alexa.HVAC
 
         #region Methods
 
-        public string AssemblyTypeName()
-        {
-            return GetType().AssemblyQualifiedName;
-        }
-
         public string[] GetAlexaProperties()
         {
             return _alexaProperties;
@@ -106,7 +101,7 @@ namespace Alexa.HVAC
 
         public string GetAssemblyTypeName()
         {
-            return GetType().AssemblyQualifiedName;
+            return PropertyHelpers.GetType().AssemblyQualifiedName;
         }
 
         public string[] GetDirectiveNames()
@@ -124,8 +119,10 @@ namespace Alexa.HVAC
             return _premiseProperties;
         }
 
-        public AlexaProperty GetPropertyState()
+        public List<AlexaProperty> GetPropertyStates()
         {
+            List<AlexaProperty> properties = new List<AlexaProperty>();
+
             double temperature = Endpoint.GetValue<double>(_premiseProperties[0]).GetAwaiter().GetResult();
             Temperature temp = new Temperature(temperature);
             AlexaProperty property = new AlexaProperty
@@ -133,14 +130,11 @@ namespace Alexa.HVAC
                 @namespace = Namespace,
                 name = _alexaProperties[0],
                 value = new AlexaTemperature(Math.Round(temp.Fahrenheit, 1), "FAHRENHEIT"),
-                timeOfSample = GetUtcTime()
+                timeOfSample = PremiseServer.GetUtcTime()
             };
-            return property;
-        }
+            properties.Add(property);
 
-        public List<AlexaProperty> GetPropertyStates()
-        {
-            return null;
+            return properties;
         }
 
         public bool HasAlexaProperty(string property)
@@ -150,16 +144,26 @@ namespace Alexa.HVAC
 
         public bool HasPremiseProperty(string property)
         {
-            foreach (string s in _premiseProperties)
-            {
-                if (s == property)
-                    return true;
-            }
-            return false;
+            return _premiseProperties.Contains(property);
+        }
+
+        public string MapPremisePropertyToAlexaProperty(string premiseProperty)
+        {
+            return _premiseProperties.Contains(premiseProperty) ? "temperature" : "";
         }
 
         public void ProcessControllerDirective()
         {
+        }
+
+        public void SetEndpoint(IPremiseObject premiseObject)
+        {
+            Endpoint = premiseObject;
+        }
+
+        public bool ValidateDirective()
+        {
+            return ValidateDirective(GetDirectiveNames(), GetNameSpace());
         }
 
         #endregion Methods

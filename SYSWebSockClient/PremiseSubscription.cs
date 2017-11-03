@@ -27,10 +27,10 @@ namespace SYSWebSockClient
 
         internal PremiseSubscription(SYSClient sysClient, string objectId, long subscriptionId, string clientSubscriptionId)
         {
-            this.SysClient = sysClient;
-            this.ObjectId = objectId;
-            this.SubscriptionId = subscriptionId;
-            this.clientSideSubscriptionId = clientSubscriptionId;
+            SysClient = sysClient;
+            ObjectId = objectId;
+            SubscriptionId = subscriptionId;
+            clientSideSubscriptionId = clientSubscriptionId;
         }
 
         #endregion Constructors
@@ -39,12 +39,12 @@ namespace SYSWebSockClient
 
         Task IPremiseSubscription.Unsubscribe()
         {
-            var future = new UnsubscribeFuture(this.ObjectId, this.SubscriptionId);
+            var future = new UnsubscribeFuture(ObjectId, SubscriptionId);
 
-            this.SysClient.Send(future, out Task task);
-            if (!this.SysClient.Subscriptions.TryRemove(this.clientSideSubscriptionId, out Subscription _))
+            SysClient.Send(future, out Task task);
+            if (!SysClient.Subscriptions.TryRemove(clientSideSubscriptionId, out Subscription _))
             {
-                Debug.WriteLine($"Subscription {this.clientSideSubscriptionId} Not Found");
+                Debug.WriteLine($"Subscription {clientSideSubscriptionId} Not Found");
             }
             return task;
         }

@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using Alexa.EndpointHealth;
-using Alexa.Lighting;
+using Alexa.Controller;
 using Alexa.SmartHomeAPI.V3;
 using PremiseAlexaBridgeService;
 using SYSWebSockClient;
@@ -16,7 +15,7 @@ namespace Alexa.Power
         {
             List<AlexaProperty> relatedProperties = new List<AlexaProperty>();
 
-            DiscoveryEndpoint discoveryEndpoint = PremiseServer.GetDiscoveryEndpoint(endpoint).GetAwaiter().GetResult();
+            DiscoveryEndpoint discoveryEndpoint = PremiseServer.GetDiscoveryEndpointAsync(endpoint).GetAwaiter().GetResult();
             if (discoveryEndpoint == null)
             {
                 return relatedProperties;
@@ -27,54 +26,18 @@ namespace Alexa.Power
                 if (capability.@interface == currentController)
                     continue;
 
-                AlexaProperty property = null;
-
-                switch (capability.@interface)
+                if (PremiseServer.Controllers.ContainsKey(capability.@interface))
                 {
-                    case "Alexa.PowerController":
-                        {
-                            AlexaSetPowerStateController controller = new AlexaSetPowerStateController(endpoint);
-                            property = controller.GetPropertyState();
-                        }
-                        break;
-
-                    case "Alexa.EndpointHealth":
-                        {
-                            AlexaEndpointHealthController controller = new AlexaEndpointHealthController(endpoint);
-                            property = controller.GetPropertyState();
-                        }
-                        break;
-
-                    case "Alexa.BrightnessController":
-                        {
-                            AlexaBrightnessController controller = new AlexaBrightnessController(endpoint);
-                            property = controller.GetPropertyState();
-                        }
-                        break;
-
-                    case "Alexa.ColorController":
-                        {
-                            AlexaColorController controller = new AlexaColorController(endpoint);
-                            property = controller.GetPropertyState();
-                        }
-                        break;
-
-                    case "Alexa.ColorTemperatureController":
-                        {
-                            AlexaColorTemperatureController controller = new AlexaColorTemperatureController(endpoint);
-                            property = controller.GetPropertyState();
-                        }
-                        break;
-                }
-                if (property != null)
-                {
-                    relatedProperties.Add(property);
+                    IAlexaController controller = PremiseServer.Controllers[capability.@interface];
+                    controller.SetEndpoint(endpoint);
+                    relatedProperties.AddRange(controller.GetPropertyStates());
                 }
             }
+
             return relatedProperties;
         }
 
-        public Dictionary<string, IPremiseSubscription> SubcribeToSupportedProperties(IPremiseObject endpoint, DiscoveryEndpoint discoveryEndpoint, Action<dynamic> callback)
+        public Dictionary<string, IPremiseSubscription> SubscribeToSupportedProperties(IPremiseObject endpoint, DiscoveryEndpoint discoveryEndpoint, Action<dynamic> callback)
         {
             Dictionary<string, IPremiseSubscription> subscriptions = new Dictionary<string, IPremiseSubscription>();
             foreach (Capability capability in discoveryEndpoint.capabilities)

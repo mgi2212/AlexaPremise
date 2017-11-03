@@ -1,12 +1,12 @@
-﻿namespace SYSWebSockClient
-{
-    using System;
-    using System.Collections.Concurrent;
-    using System.Net.WebSockets;
-    using System.Text;
-    using System.Threading;
-    using Alexa.RegisteredTasks;
+﻿using System;
+using System.Collections.Concurrent;
+using System.Net.WebSockets;
+using System.Text;
+using System.Threading;
+using Alexa.RegisteredTasks;
 
+namespace SYSWebSockClient
+{
     public class JsonWebSocket
     {
         #region Fields
@@ -26,7 +26,7 @@
 
         public JsonWebSocket()
         {
-            this.WebSocket = null;
+            WebSocket = null;
         }
 
         #endregion Constructors
@@ -39,12 +39,9 @@
             {
                 if (WebSocket != null)
                 {
-                    return this.WebSocket.State;
+                    return WebSocket.State;
                 }
-                else
-                {
-                    return WebSocketState.None;
-                }
+                return WebSocketState.None;
             }
         }
 
@@ -54,9 +51,9 @@
 
         public void Disconnect(WebSocketCloseStatus status = WebSocketCloseStatus.NormalClosure)
         {
-            this.SendQueue.CompleteAdding();
+            SendQueue.CompleteAdding();
 
-            this.WebSocket.CloseAsync(status, "Closing Connection", CancellationToken.None);
+            WebSocket.CloseAsync(status, "Closing Connection", CancellationToken.None);
         }
 
         public void Send(string message)
@@ -65,48 +62,48 @@
 
             Interlocked.Increment(ref sendCount);
 
-            this.SendQueue.Add(sendBuffer);
+            SendQueue.Add(sendBuffer);
         }
 
         protected async void Connect(string uri)
         {
-            if (this.WebSocket != null)
+            if (WebSocket != null)
             {
-                if (this.WebSocket.State == WebSocketState.Open)
+                if (WebSocket.State == WebSocketState.Open)
                 {
-                    this.Disconnect();
+                    Disconnect();
                 }
-                this.WebSocket = null;
+                WebSocket = null;
             }
 
-            this.WebSocket = new ClientWebSocket();
-            this.WebSocket.Options.KeepAliveInterval = new TimeSpan(0, 0, 10);
+            WebSocket = new ClientWebSocket();
+            WebSocket.Options.KeepAliveInterval = new TimeSpan(0, 0, 10);
 
             SendQueue = null;
             SendQueue = new BlockingCollection<byte[]>();
 
-            await this.WebSocket.ConnectAsync(new Uri(uri), CancellationToken.None)
+            await WebSocket.ConnectAsync(new Uri(uri), CancellationToken.None)
                 .ContinueWith(
-                (task) =>
-                {
-                    if (this.WebSocket.State != WebSocketState.Open)
+                    task =>
                     {
-                        this.OnError(new Exception("Cannot open Premise Connection!"));
-                        return;
-                    }
+                        if (WebSocket.State != WebSocketState.Open)
+                        {
+                            OnError(new Exception("Cannot open Premise Connection!"));
+                            return;
+                        }
 
-                    this.OnConnect();
+                        OnConnect();
 
-                    BackgroundTaskManager.Run(() =>
-                    {
-                        this.StartSending();
-                    });
+                        BackgroundTaskManager.Run(() =>
+                        {
+                            StartSending();
+                        });
 
-                    BackgroundTaskManager.Run(() =>
-                    {
-                        this.StartReceiving();
-                    });
-                });
+                        BackgroundTaskManager.Run(() =>
+                        {
+                            StartReceiving();
+                        });
+                    }).ConfigureAwait(false);
         }
 
         protected virtual void OnConnect()
@@ -127,9 +124,9 @@
 
         private void Accumulate(byte[] buffer, int count, bool endOfMessage)
         {
-            lock (this.AccumulatorLock)
+            lock (AccumulatorLock)
             {
-                ArrayUtils.AddRange(ref this.Accumulator, ref this.AccumulatorLength, buffer, count);
+                ArrayUtils.AddRange(ref Accumulator, ref AccumulatorLength, buffer, count);
             }
 
             if (!endOfMessage)
@@ -137,16 +134,16 @@
 
             string message;
 
-            lock (this.AccumulatorLock)
+            lock (AccumulatorLock)
             {
-                message = Encoding.UTF8.GetString(this.Accumulator, 0, this.AccumulatorLength);
-                this.AccumulatorLength = 0;
+                message = Encoding.UTF8.GetString(Accumulator, 0, AccumulatorLength);
+                AccumulatorLength = 0;
             }
 
             try
             {
                 //Debug.WriteLine(message);
-                this.OnMessage(message);
+                OnMessage(message);
             }
             catch
             {
@@ -157,7 +154,7 @@
         private void StartReceiving()
         {
             loop:
-            if (this.WebSocket.State != WebSocketState.Open)
+            if (WebSocket.State != WebSocketState.Open)
                 return;
 
             byte[] buffer = new byte[4096];
@@ -165,7 +162,7 @@
             WebSocketReceiveResult result;
             try
             {
-                result = this.WebSocket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None).GetAwaiter().GetResult();
+                result = WebSocket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None).GetAwaiter().GetResult();
             }
             catch (Exception)
             {
@@ -178,19 +175,19 @@
             switch (result.MessageType)
             {
                 case WebSocketMessageType.Text:
-                    this.Accumulate(buffer, result.Count, result.EndOfMessage);
+                    Accumulate(buffer, result.Count, result.EndOfMessage);
                     break;
 
                 case WebSocketMessageType.Binary:
-                    this.Disconnect();
+                    Disconnect();
                     break;
 
                 case WebSocketMessageType.Close:
-                    this.Disconnect();
+                    Disconnect();
                     break;
 
                 default:
-                    this.Disconnect();
+                    Disconnect();
                     break;
             }
 
@@ -199,18 +196,18 @@
 
         private void StartSending()
         {
-            foreach (var sendBuffer in this.SendQueue.GetConsumingEnumerable())
+            foreach (var sendBuffer in SendQueue.GetConsumingEnumerable())
             {
                 // Note: CHRISBE: ClientWebSocket SendAsync can be called from any thread, but
                 // SendAsync isn't thread safe - so you can't issue overlapped calls kind of lame
                 // ...sooo have to wait for it to complete
                 try
                 {
-                    this.WebSocket.SendAsync(new ArraySegment<byte>(sendBuffer), WebSocketMessageType.Text, true, CancellationToken.None).GetAwaiter().GetResult();
+                    WebSocket.SendAsync(new ArraySegment<byte>(sendBuffer), WebSocketMessageType.Text, true, CancellationToken.None).GetAwaiter().GetResult();
                 }
                 catch (Exception ex)
                 {
-                    this.OnError(ex);
+                    OnError(ex);
                 }
             }
         }

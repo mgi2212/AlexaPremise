@@ -1,16 +1,17 @@
-﻿namespace SYSWebSockClient
+﻿using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+
+namespace SYSWebSockClient
 {
-    using System;
-    using System.Collections.Generic;
-    using System.Threading.Tasks;
-    using IPremiseObjectCollection = System.Collections.Generic.ICollection<IPremiseObject>;
+    using IPremiseObjectCollection = ICollection<IPremiseObject>;
 
     public class PremiseObject : IPremiseObject
     {
         #region Fields
 
-        private SYSClient Client;
-        private string ObjectId;
+        private readonly SYSClient _client;
+        private readonly string _objectId;
 
         #endregion Fields
 
@@ -18,14 +19,15 @@
 
         public PremiseObject(string objectId)
         {
-            this.Client = null;
-            this.ObjectId = objectId;
+            _client = null;
+            _objectId = objectId;
         }
 
         public PremiseObject(SYSClient client, string objectId)
         {
-            this.Client = client;
-            this.ObjectId = objectId;
+            _client = client ?? throw new ArgumentNullException(nameof(client));
+
+            _objectId = objectId;
         }
 
         #endregion Constructors
@@ -34,337 +36,388 @@
 
         Task<IPremiseObject> IPremiseObject.CreateObject(IPremiseObject type, string name)
         {
-            var future = new CreateObjectFuture(this.ObjectId, (type as PremiseObject)?.ObjectId, name);
+            var future = new CreateObjectFuture(_objectId, (type as PremiseObject)?._objectId, name);
 
-            this.Client.Send(future, out Task<IPremiseObject> task);
+            _client.Send(future, out Task<IPremiseObject> task);
             return task;
         }
 
         Task<IPremiseObject> IPremiseObject.CreateObject(string type, string name)
         {
-            var future = new CreateObjectFuture(this.ObjectId, type, name);
+            var future = new CreateObjectFuture(_objectId, type, name);
 
-            this.Client.Send(future, out Task<IPremiseObject> task);
+            _client.Send(future, out Task<IPremiseObject> task);
             return task;
         }
 
         Task IPremiseObject.Delete()
         {
-            var future = new DeleteObjectFuture(this.ObjectId, string.Empty);
+            var future = new DeleteObjectFuture(_objectId, string.Empty);
 
-            this.Client.Send(future, out Task task);
+            _client.Send(future, out Task task);
             return task;
         }
 
         Task IPremiseObject.DeleteChildObject(string subObjectId)
         {
-            if (string.IsNullOrEmpty(subObjectId))
-                throw new ArgumentException("Invalid parameter", "subObjectId");
+            if (!IsValidObjectId(subObjectId))
+            {
+                throw new ArgumentException("Invalid parameter", nameof(subObjectId));
+            }
 
-            var future = new DeleteObjectFuture(this.ObjectId, subObjectId);
+            var future = new DeleteObjectFuture(_objectId, subObjectId);
 
-            this.Client.Send(future, out Task task);
+            _client.Send(future, out Task task);
             return task;
         }
 
         Task<IPremiseObjectCollection> IPremiseObject.GetAggregatedProperties()
         {
-            var future = new GetAggregatedPropertiesFuture(this.ObjectId);
+            var future = new GetAggregatedPropertiesFuture(_objectId);
 
-            this.Client.Send(future, out Task<IPremiseObjectCollection> task);
+            _client.Send(future, out Task<IPremiseObjectCollection> task);
             return task;
         }
 
         Task<IPremiseObjectCollection> IPremiseObject.GetAll()
         {
-            var future = new GetAllFuture(this.ObjectId);
+            var future = new GetAllFuture(_objectId);
 
-            this.Client.Send(future, out Task<IPremiseObjectCollection> task);
+            _client.Send(future, out Task<IPremiseObjectCollection> task);
             return task;
         }
 
         Task<IPremiseObjectCollection> IPremiseObject.GetChildren()
         {
-            var future = new GetChildrenFuture(this.ObjectId);
+            var future = new GetChildrenFuture(_objectId);
 
-            this.Client.Send(future, out Task<IPremiseObjectCollection> task);
+            _client.Send(future, out Task<IPremiseObjectCollection> task);
             return task;
         }
 
         Task<IPremiseObject> IPremiseObject.GetClass()
         {
-            var future = new GetClassFuture(this.ObjectId);
+            var future = new GetClassFuture(_objectId);
 
-            this.Client.Send(future, out Task<IPremiseObject> task);
+            _client.Send(future, out Task<IPremiseObject> task);
             return task;
         }
 
         Task<IPremiseObjectCollection> IPremiseObject.GetClasses()
         {
-            var future = new GetClassesFuture(this.ObjectId);
+            var future = new GetClassesFuture(_objectId);
 
-            this.Client.Send(future, out Task<IPremiseObjectCollection> task);
+            _client.Send(future, out Task<IPremiseObjectCollection> task);
             return task;
         }
 
         Task<IPremiseObjectCollection> IPremiseObject.GetConnectedObjects()
         {
-            var future = new GetConnectedObjectsFuture(this.ObjectId);
+            var future = new GetConnectedObjectsFuture(_objectId);
 
-            this.Client.Send(future, out Task<IPremiseObjectCollection> task);
+            _client.Send(future, out Task<IPremiseObjectCollection> task);
             return task;
         }
 
         Task<IPremiseObjectCollection> IPremiseObject.GetCreatableObjects()
         {
-            var future = new GetCreatableObjectsFuture(this.ObjectId);
+            var future = new GetCreatableObjectsFuture(_objectId);
 
-            this.Client.Send(future, out Task<IPremiseObjectCollection> task);
+            _client.Send(future, out Task<IPremiseObjectCollection> task);
             return task;
         }
 
         Task<string> IPremiseObject.GetDescription()
         {
-            var future = new GetDescriptionFuture(this.ObjectId);
+            var future = new GetDescriptionFuture(_objectId);
 
-            this.Client.Send(future, out Task<string> task);
+            _client.Send(future, out Task<string> task);
             return task;
         }
 
         Task<string> IPremiseObject.GetDisplayName()
         {
-            var future = new GetDisplayNameFuture(this.ObjectId);
+            var future = new GetDisplayNameFuture(_objectId);
 
-            this.Client.Send(future, out Task<string> task);
+            _client.Send(future, out Task<string> task);
             return task;
         }
 
         Task<IPremiseObjectCollection> IPremiseObject.GetMethods()
         {
-            var future = new GetMethodsFuture(this.ObjectId);
+            var future = new GetMethodsFuture(_objectId);
 
-            this.Client.Send(future, out Task<IPremiseObjectCollection> task);
+            _client.Send(future, out Task<IPremiseObjectCollection> task);
             return task;
         }
 
         Task<string> IPremiseObject.GetName()
         {
-            var future = new GetNameFuture(this.ObjectId);
+            var future = new GetNameFuture(_objectId);
 
-            this.Client.Send(future, out Task<string> task);
+            _client.Send(future, out Task<string> task);
             return task;
         }
 
         Task<IPremiseObject> IPremiseObject.GetObject(string subObject)
         {
-            var future = new GetObjectFuture(this.ObjectId, subObject);
+            var future = new GetObjectFuture(_objectId, subObject);
 
-            this.Client.Send(future, out Task<IPremiseObject> task);
+            _client.Send(future, out Task<IPremiseObject> task);
             return task;
         }
 
         Task<string> IPremiseObject.GetObjectID()
         {
-            var future = new GetObjectIDFuture(this.ObjectId);
+            var future = new GetObjectIDFuture(_objectId);
 
-            this.Client.Send(future, out Task<string> task);
+            _client.Send(future, out Task<string> task);
             return task;
         }
 
         Task<IPremiseObject> IPremiseObject.GetParent()
         {
-            var future = new GetParentFuture(this.ObjectId);
+            var future = new GetParentFuture(_objectId);
 
-            this.Client.Send(future, out Task<IPremiseObject> task);
+            _client.Send(future, out Task<IPremiseObject> task);
             return task;
         }
 
         Task<string> IPremiseObject.GetPath()
         {
-            var future = new GetPathFuture(this.ObjectId);
+            var future = new GetPathFuture(_objectId);
 
-            this.Client.Send(future, out Task<string> task);
+            _client.Send(future, out Task<string> task);
             return task;
         }
 
         Task<IPremiseObjectCollection> IPremiseObject.GetProperties()
         {
-            var future = new GetPropertiesFuture(this.ObjectId);
+            var future = new GetPropertiesFuture(_objectId);
 
-            this.Client.Send(future, out Task<IPremiseObjectCollection> task);
+            _client.Send(future, out Task<IPremiseObjectCollection> task);
             return task;
         }
 
         Task<string> IPremiseObject.GetPropertyAsText(string propertyId)
         {
-            var future = new GetPropertyAsTextFuture(this.ObjectId, propertyId);
+            var future = new GetPropertyAsTextFuture(_objectId, propertyId);
 
-            this.Client.Send(future, out Task<string> task);
+            _client.Send(future, out Task<string> task);
             return task;
         }
 
         Task<string> IPremiseObject.GetPropertyAsText(IPremiseObject property)
         {
-            var future = new GetPropertyAsTextFuture(this.ObjectId, (property as PremiseObject)?.ObjectId);
+            var future = new GetPropertyAsTextFuture(_objectId, (property as PremiseObject)?._objectId);
 
-            this.Client.Send(future, out Task<string> task);
+            _client.Send(future, out Task<string> task);
             return task;
         }
 
         Task<IPremiseObject> IPremiseObject.GetRefValue(string name)
         {
-            var future = new GetValueFuture(this.ObjectId, name);
+            if (string.IsNullOrEmpty(name))
+            {
+                throw new ArgumentNullException(nameof(name));
+            }
+            var future = new GetValueFuture(_objectId, name);
 
-            this.Client.Send(future, out Task<IPremiseObject> task);
+            _client.Send(future, out Task<IPremiseObject> task);
             return task;
         }
 
         Task<IPremiseObject> IPremiseObject.GetRoot()
         {
-            var future = new GetRootFuture(this.ObjectId);
+            var future = new GetRootFuture(_objectId);
 
-            this.Client.Send(future, out Task<IPremiseObject> task);
+            _client.Send(future, out Task<IPremiseObject> task);
             return task;
         }
 
         Task<IPremiseObjectCollection> IPremiseObject.GetSubClasses()
         {
-            var future = new GetSubClassesFuture(this.ObjectId);
+            var future = new GetSubClassesFuture(_objectId);
 
-            this.Client.Send(future, out Task<IPremiseObjectCollection> task);
+            _client.Send(future, out Task<IPremiseObjectCollection> task);
             return task;
         }
 
         Task<IPremiseObjectCollection> IPremiseObject.GetSuperClasses()
         {
-            var future = new GetSuperClassesFuture(this.ObjectId);
+            var future = new GetSuperClassesFuture(_objectId);
 
-            this.Client.Send(future, out Task<IPremiseObjectCollection> task);
+            _client.Send(future, out Task<IPremiseObjectCollection> task);
             return task;
         }
 
         Task<ExpectedReturnType> IPremiseObject.GetValue<ExpectedReturnType>(string name)
         {
-            var future = new GetValueFuture(this.ObjectId, name);
+            if (string.IsNullOrEmpty(name))
+            {
+                throw new ArgumentNullException(nameof(name));
+            }
 
-            this.Client.Send(future, out Task<ExpectedReturnType> task);
+            var future = new GetValueFuture(_objectId, name);
+
+            _client.Send(future, out Task<ExpectedReturnType> task);
             return task;
         }
 
         Task<dynamic> IPremiseObject.GetValue(string name)
         {
-            var future = new GetValueFuture(this.ObjectId, name);
+            if (string.IsNullOrEmpty(name))
+            {
+                throw new ArgumentNullException(nameof(name));
+            }
+
+            var future = new GetValueFuture(_objectId, name);
             // TODO - DANQ: find out why this will not return when a property is not found and fix
-            this.Client.Send(future, out Task<dynamic> task);
+            _client.Send(future, out Task<dynamic> task);
             return task;
         }
 
         Task<bool> IPremiseObject.IsChildOf()
         {
-            return null;
+            throw new NotImplementedException();
         }
 
         Task<bool> IPremiseObject.IsOfType(string typeId)
         {
-            var future = new IsOfTypeFuture(this.ObjectId, typeId);
+            if (string.IsNullOrEmpty(typeId))
+            {
+                throw new ArgumentNullException(nameof(typeId));
+            }
 
-            this.Client.Send(future, out Task<bool> task);
+            var future = new IsOfTypeFuture(_objectId, typeId);
+
+            _client.Send(future, out Task<bool> task);
             return task;
         }
 
         Task<bool> IPremiseObject.IsOfType(IPremiseObject typeId)
         {
-            var future = new IsOfTypeFuture(this.ObjectId, (typeId as PremiseObject)?.ObjectId);
+            var future = new IsOfTypeFuture(_objectId, (typeId as PremiseObject)?._objectId);
 
-            this.Client.Send(future, out Task<bool> task);
+            _client.Send(future, out Task<bool> task);
             return task;
+        }
+
+        public bool IsValidObject()
+        {
+            return IsValidObjectId(_objectId);
         }
 
         Task<dynamic> IPremiseObject.Select(ICollection<string> returnClause, dynamic whereClause)
         {
-            var future = new SelectFuture(this.ObjectId, returnClause, whereClause);
+            var future = new SelectFuture(_objectId, returnClause, whereClause);
 
-            this.Client.Send(future, out Task<dynamic> task);
+            _client.Send(future, out Task<dynamic> task);
             return task;
         }
 
-        Task<IPremiseObject> IPremiseObject.SetClass(IPremiseObject classObjectId)
+        Task<IPremiseObject> IPremiseObject.SetClass(IPremiseObject classObject)
         {
-            var future = new SetClassFuture(this.ObjectId, (classObjectId as PremiseObject)?.ObjectId);
+            var future = new SetClassFuture(_objectId, (classObject as PremiseObject)?._objectId);
 
-            this.Client.Send(future, out Task<IPremiseObject> task);
+            _client.Send(future, out Task<IPremiseObject> task);
             return task;
         }
 
         Task<IPremiseObject> IPremiseObject.SetClass(string classObjectId)
         {
-            var future = new SetClassFuture(this.ObjectId, classObjectId);
+            if (string.IsNullOrEmpty(classObjectId))
+            {
+                throw new ArgumentNullException(nameof(classObjectId));
+            }
 
-            this.Client.Send(future, out Task<IPremiseObject> task);
+            var future = new SetClassFuture(_objectId, classObjectId);
+
+            _client.Send(future, out Task<IPremiseObject> task);
             return task;
         }
 
         Task IPremiseObject.SetDescription(string name)
         {
-            var future = new SetDescriptionFuture(this.ObjectId, name);
+            var future = new SetDescriptionFuture(_objectId, name);
 
-            this.Client.Send(future, out Task task);
+            _client.Send(future, out Task task);
             return task;
         }
 
         Task IPremiseObject.SetDisplayName(string name)
         {
-            var future = new SetDisplayNameFuture(this.ObjectId, name);
+            var future = new SetDisplayNameFuture(_objectId, name);
 
-            this.Client.Send(future, out Task task);
+            _client.Send(future, out Task task);
             return task;
         }
 
         Task IPremiseObject.SetName(string name)
         {
-            var future = new SetNameFuture(this.ObjectId, name);
+            if (string.IsNullOrEmpty(name))
+            {
+                throw new ArgumentException(nameof(name));
+            }
 
-            this.Client.Send(future, out Task task);
+            var future = new SetNameFuture(_objectId, name);
+
+            _client.Send(future, out Task task);
             return task;
         }
 
         Task IPremiseObject.SetValue(string name, string value)
         {
-            var future = new SetValueFuture(this.ObjectId, name, value);
+            if (string.IsNullOrEmpty(name))
+            {
+                throw new ArgumentException(nameof(name));
+            }
 
-            this.Client.Send(future, out Task task);
+            var future = new SetValueFuture(_objectId, name, value);
+
+            _client.Send(future, out Task task);
             return task;
         }
 
         Task<IPremiseSubscription> IPremiseObject.Subscribe(string propertyName, string alexaController, Action<dynamic> callback)
         {
+            if (string.IsNullOrEmpty(propertyName))
+            {
+                throw new ArgumentException(nameof(propertyName));
+            }
+
             string clientSideSubscriptionId = FutureId.Next().ToString();
 
             Subscription subscription = new Subscription(clientSideSubscriptionId)
             {
-                sysObjectId = this.ObjectId,
+                sysObjectId = _objectId,
                 propertyName = propertyName,
                 alexaControllerName = alexaController,
                 callback = callback
             };
 
-            this.Client.AddSubscription(clientSideSubscriptionId, subscription);
+            _client.AddSubscription(clientSideSubscriptionId, subscription);
 
-            var future = new SubscribeFuture(this.ObjectId, propertyName, clientSideSubscriptionId);
+            var future = new SubscribeFuture(_objectId, propertyName, clientSideSubscriptionId);
 
-            this.Client.Send(future, clientSideSubscriptionId, out Task<IPremiseSubscription> task);
+            _client.Send(future, clientSideSubscriptionId, out Task<IPremiseSubscription> task);
             return task;
         }
 
         public override string ToString()
         {
-            return this.ObjectId;
+            return _objectId;
         }
 
         IPremiseObject IPremiseObject.WrapObjectId(string objectId)
         {
-            var premiseObject = new PremiseObject(this.Client, objectId);
+            var premiseObject = new PremiseObject(_client, objectId);
             return premiseObject;
+        }
+
+        private static bool IsValidObjectId(string objectId)
+        {
+            return !(string.IsNullOrEmpty(objectId) || objectId == "{00000000-0000-0000-0000-000000000000}");
         }
 
         #endregion Methods

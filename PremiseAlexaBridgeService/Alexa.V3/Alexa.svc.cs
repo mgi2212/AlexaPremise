@@ -77,15 +77,17 @@ namespace PremiseAlexaBridgeService
         #endregion Methods
     }
 
-    public class PremiseAlexaV3Service : PremiseAlexaBase, IPremiseAlexaV3Service
+    public class PremiseAlexaV3Service : IPremiseAlexaV3Service
     {
         #region System
 
         public SystemResponsePayload GetHealthCheckResponseV3()
         {
-            SystemResponsePayload payload = new SystemResponsePayload();
-            payload.isHealthy = PremiseServer.HomeObject.GetValue<bool>("Health").GetAwaiter().GetResult();
-            payload.description = PremiseServer.HomeObject.GetValue<string>("HealthDescription").GetAwaiter().GetResult();
+            SystemResponsePayload payload = new SystemResponsePayload
+            {
+                isHealthy = PremiseServer.HomeObject.GetValue<bool>("Health").GetAwaiter().GetResult(),
+                description = PremiseServer.HomeObject.GetValue<string>("HealthDescription").GetAwaiter().GetResult()
+            };
             return payload;
         }
 
@@ -120,7 +122,7 @@ namespace PremiseAlexaBridgeService
             switch (alexaRequest.header.name)
             {
                 case "HealthCheckRequest":
-                    InformLastContact("System:HealthCheckRequest").GetAwaiter().GetResult();
+                    PremiseServer.InformLastContactAsync("System:HealthCheckRequest").GetAwaiter().GetResult();
                     response.header.name = "HealthCheckResponse";
                     response.payload = GetHealthCheckResponseV3();
                     break;
@@ -139,7 +141,7 @@ namespace PremiseAlexaBridgeService
         #region Discovery
 
         /// <summary>
-        /// Discovery happens heres
+        /// Discovery happens here
         /// </summary>
         /// <param name="request"></param>
         /// <returns></returns>
@@ -147,7 +149,7 @@ namespace PremiseAlexaBridgeService
         public DiscoveryControllerResponse Discovery(AlexaDiscoveryControllerRequest request)
         {
             AlexaDiscoveryController controller = new AlexaDiscoveryController(request);
-            if (controller.ValidateDirective(controller.directiveNames, controller.@namespace))
+            if (controller.ValidateDirective())
             {
                 controller.ProcessControllerDirective();
             }
@@ -169,7 +171,7 @@ namespace PremiseAlexaBridgeService
         public ControlResponse SetPowerState(AlexaSetPowerStateControllerRequest request)
         {
             AlexaSetPowerStateController controller = new AlexaSetPowerStateController(request);
-            if (controller.ValidateDirective(controller.GetDirectiveNames(), controller.GetNameSpace()))
+            if (controller.ValidateDirective())
             {
                 controller.ProcessControllerDirective();
             }
@@ -190,7 +192,7 @@ namespace PremiseAlexaBridgeService
         public ControlResponse AdjustBrightness(AlexaBrightnessControllerRequest request)
         {
             AlexaBrightnessController controller = new AlexaBrightnessController(request);
-            if (controller.ValidateDirective(controller.GetDirectiveNames(), controller.GetNameSpace()))
+            if (controller.ValidateDirective())
             {
                 controller.ProcessControllerDirective();
             }
@@ -206,7 +208,7 @@ namespace PremiseAlexaBridgeService
         public ControlResponse SetBrightness(AlexaBrightnessControllerRequest request)
         {
             AlexaBrightnessController controller = new AlexaBrightnessController(request);
-            if (controller.ValidateDirective(controller.GetDirectiveNames(), controller.GetNameSpace()))
+            if (controller.ValidateDirective())
             {
                 controller.ProcessControllerDirective();
             }
@@ -226,7 +228,7 @@ namespace PremiseAlexaBridgeService
         public ControlResponse SetScene(AlexaSetSceneControllerRequest request)
         {
             AlexaSetSceneController controller = new AlexaSetSceneController(request);
-            if (controller.ValidateDirective(controller.GetDirectiveNames(), controller.GetNameSpace()))
+            if (controller.ValidateDirective())
             {
                 controller.ProcessControllerDirective();
             }
@@ -246,7 +248,7 @@ namespace PremiseAlexaBridgeService
         public ControlResponse AdjustColorTemperature(AlexaColorTemperatureControllerRequest request)
         {
             AlexaColorTemperatureController controller = new AlexaColorTemperatureController(request);
-            if (controller.ValidateDirective(controller.GetDirectiveNames(), controller.GetNameSpace()))
+            if (controller.ValidateDirective())
             {
                 controller.ProcessControllerDirective();
             }
@@ -262,7 +264,7 @@ namespace PremiseAlexaBridgeService
         public ControlResponse SetColorTemperature(AlexaColorTemperatureControllerRequest request)
         {
             AlexaColorTemperatureController controller = new AlexaColorTemperatureController(request);
-            if (controller.ValidateDirective(controller.GetDirectiveNames(), controller.GetNameSpace()))
+            if (controller.ValidateDirective())
             {
                 controller.ProcessControllerDirective();
             }
@@ -282,7 +284,7 @@ namespace PremiseAlexaBridgeService
         public ControlResponse SetColor(AlexaColorControllerRequest request)
         {
             AlexaColorController controller = new AlexaColorController(request);
-            if (controller.ValidateDirective(controller.GetDirectiveNames(), controller.GetNameSpace()))
+            if (controller.ValidateDirective())
             {
                 controller.ProcessControllerDirective();
             }
@@ -302,7 +304,7 @@ namespace PremiseAlexaBridgeService
         public ControlResponse AdjustTargetTemperature(AlexaThermostatControllerRequest request)
         {
             AlexaThermostatController controller = new AlexaThermostatController(request);
-            if (controller.ValidateDirective(controller.GetDirectiveNames(), controller.GetNameSpace()))
+            if (controller.ValidateDirective())
             {
                 controller.ProcessControllerDirective();
             }
@@ -318,7 +320,7 @@ namespace PremiseAlexaBridgeService
         public ControlResponse SetTargetTemperature(AlexaThermostatControllerRequest request)
         {
             AlexaThermostatController controller = new AlexaThermostatController(request);
-            if (controller.ValidateDirective(controller.GetDirectiveNames(), controller.GetNameSpace()))
+            if (controller.ValidateDirective())
             {
                 controller.ProcessControllerDirective();
             }
@@ -326,7 +328,7 @@ namespace PremiseAlexaBridgeService
         }
 
         /// <summary>
-        /// Set Tstat mode
+        /// Set Thermostat mode
         /// </summary>
         /// <param name="request"></param>
         /// <returns></returns>
@@ -334,7 +336,7 @@ namespace PremiseAlexaBridgeService
         public ControlResponse SetThermostatMode(AlexaThermostatControllerRequest request)
         {
             AlexaThermostatController controller = new AlexaThermostatController(request);
-            if (controller.ValidateDirective(controller.GetDirectiveNames(), controller.GetNameSpace()))
+            if (controller.ValidateDirective())
             {
                 controller.ProcessControllerDirective();
             }
@@ -354,7 +356,7 @@ namespace PremiseAlexaBridgeService
         public ControlResponse Speaker(AlexaSpeakerRequest request)
         {
             AlexaSpeaker controller = new AlexaSpeaker(request);
-            if (controller.ValidateDirective(controller.GetDirectiveNames(), controller.GetNameSpace()))
+            if (controller.ValidateDirective())
             {
                 controller.ProcessControllerDirective();
             }
@@ -374,7 +376,7 @@ namespace PremiseAlexaBridgeService
         public ControlResponse InputController(AlexaInputControllerRequest request)
         {
             AlexaInputController controller = new AlexaInputController(request);
-            if (controller.ValidateDirective(controller.GetDirectiveNames(), controller.GetNameSpace()))
+            if (controller.ValidateDirective())
             {
                 controller.ProcessControllerDirective();
             }
@@ -441,7 +443,7 @@ namespace PremiseAlexaBridgeService
                     return response;
                 }
 
-                if (!CheckAccessToken(directive.endpoint.scope.localAccessToken).GetAwaiter().GetResult())
+                if (!PremiseServer.CheckAccessTokenAsync(directive.endpoint.scope.localAccessToken).GetAwaiter().GetResult())
                 {
                     response.context = null;
                     response.@event.payload = new AlexaErrorResponsePayload(AlexaErrorTypes.INVALID_AUTHORIZATION_CREDENTIAL, "Not authorized on local premise server.");
@@ -486,7 +488,7 @@ namespace PremiseAlexaBridgeService
 
             #endregion Get Premise Object
 
-            DiscoveryEndpoint discoveryEndpoint = PremiseServer.GetDiscoveryEndpoint(endpoint).GetAwaiter().GetResult();
+            DiscoveryEndpoint discoveryEndpoint = PremiseServer.GetDiscoveryEndpointAsync(endpoint).GetAwaiter().GetResult();
             if (discoveryEndpoint == null)
             {
                 response.context = null;
@@ -502,7 +504,7 @@ namespace PremiseAlexaBridgeService
                 var all = AppDomain.CurrentDomain.GetAssemblies()
                   .SelectMany(x => x.GetTypes())
                   .Where(x => interfaceType.IsAssignableFrom(x) && !x.IsInterface && !x.IsAbstract)
-                  .Select(x => Activator.CreateInstance(x));
+                  .Select(Activator.CreateInstance);
 
                 foreach (IAlexaDeviceType deviceType in all)
                 {
@@ -523,7 +525,7 @@ namespace PremiseAlexaBridgeService
                         case "Alexa.SceneController":
                             {
                                 AlexaSetSceneController controller = new AlexaSetSceneController(endpoint);
-                                AlexaProperty prop = controller.GetPropertyState();
+                                AlexaProperty prop = controller.GetPropertyStates()[0];
                                 response.@event.header.name = (string)prop.value;
                                 response.@event.payload.cause = new ChangeReportCause
                                 {
@@ -543,7 +545,7 @@ namespace PremiseAlexaBridgeService
             }
 
             response.@event.header.name = "StateReport";
-            InformLastContact($"StateReport: {response.@event?.endpoint?.cookie?.path}").GetAwaiter().GetResult();
+            PremiseServer.InformLastContactAsync($"StateReport: {response.@event?.endpoint?.cookie?.path}").GetAwaiter().GetResult();
             return response;
         }
 
@@ -583,7 +585,7 @@ namespace PremiseAlexaBridgeService
 
             try
             {
-                if (!CheckAccessToken(directive.payload.grantee.localAccessToken).GetAwaiter().GetResult())
+                if (!PremiseServer.CheckAccessTokenAsync(directive.payload.grantee.localAccessToken).GetAwaiter().GetResult())
                 {
                     response.@event.payload = new AlexaErrorResponsePayload(AlexaErrorTypes.INVALID_AUTHORIZATION_CREDENTIAL, "Not authorized on local premise server.");
                     return response;
@@ -609,22 +611,23 @@ namespace PremiseAlexaBridgeService
                 {
                     PremiseServer.HomeObject.SetValue("AlexaAsyncAuthorizationCode", directive.payload.grant.access_token).GetAwaiter().GetResult();
                     PremiseServer.HomeObject.SetValue("AlexaAsyncAuthorizationRefreshToken", directive.payload.grant.refresh_token).GetAwaiter().GetResult();
-                    DateTime expiry = DateTime.UtcNow.AddSeconds(directive.payload.grant.expires_in);
-                    PremiseServer.HomeObject.SetValue("AlexaAsyncAuthorizationCodeExpiry", expiry.ToString(CultureInfo.InvariantCulture)).GetAwaiter().GetResult();
                     PremiseServer.HomeObject.SetValue("AlexaAsyncAuthorizationClientId", directive.payload.grant.client_id).GetAwaiter().GetResult();
                     PremiseServer.HomeObject.SetValue("AlexaAsyncAuthorizationSecret", directive.payload.grant.client_secret).GetAwaiter().GetResult();
+
+                    DateTime expiry = DateTime.UtcNow.AddSeconds(directive.payload.grant.expires_in);
+                    PremiseServer.HomeObject.SetValue("AlexaAsyncAuthorizationCodeExpiry", expiry.ToString(CultureInfo.InvariantCulture)).GetAwaiter().GetResult();
                 }
 
                 const string message = "Skill is now enabled and authorized to send async updates to Alexa. A task has been started to subscribe to property change events.";
-                InformLastContact(message).GetAwaiter().GetResult();
+                PremiseServer.InformLastContactAsync(message).GetAwaiter().GetResult();
                 PremiseServer.WriteToWindowsApplicationEventLog(EventLogEntryType.Information, message, 60);
 
                 Task.Run(async () =>
                 {
                     // Generate Discovery Json
-                    await PremiseServer.HomeObject.SetValue("GenerateDiscoveryJson", "True");
+                    await PremiseServer.HomeObject.SetValue("GenerateDiscoveryJson", "True").ConfigureAwait(false);
                     // Signal sending async property change events - this will also subscribe to all properties
-                    await PremiseServer.HomeObject.SetValue("SendAsyncEventsToAlexa", "True");
+                    await PremiseServer.HomeObject.SetValue("SendAsyncEventsToAlexa", "True").ConfigureAwait(false);
                 });
             }
             catch (Exception ex)

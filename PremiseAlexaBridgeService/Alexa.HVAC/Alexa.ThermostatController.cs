@@ -141,11 +141,6 @@ namespace Alexa.HVAC
 
         #region Methods
 
-        public string AssemblyTypeName()
-        {
-            return GetType().AssemblyQualifiedName;
-        }
-
         public string[] GetAlexaProperties()
         {
             return _alexaProperties;
@@ -153,7 +148,7 @@ namespace Alexa.HVAC
 
         public string GetAssemblyTypeName()
         {
-            return GetType().AssemblyQualifiedName;
+            return PropertyHelpers.GetType().AssemblyQualifiedName;
         }
 
         public string[] GetDirectiveNames()
@@ -171,11 +166,6 @@ namespace Alexa.HVAC
             return _premiseProperties;
         }
 
-        public AlexaProperty GetPropertyState()
-        {
-            return null;
-        }
-
         public List<AlexaProperty> GetPropertyStates()
         {
             List<AlexaProperty> properties = new List<AlexaProperty>();
@@ -188,7 +178,7 @@ namespace Alexa.HVAC
                     @namespace = Namespace,
                     name = _alexaProperties[x],
                     value = new AlexaTemperature(Math.Round(temp.Fahrenheit, 1), "FAHRENHEIT"),
-                    timeOfSample = GetUtcTime()
+                    timeOfSample = PremiseServer.GetUtcTime()
                 };
                 properties.Add(property);
             }
@@ -199,7 +189,7 @@ namespace Alexa.HVAC
                 @namespace = Namespace,
                 name = _alexaProperties[3],
                 value = ModeToString(mode),
-                timeOfSample = GetUtcTime()
+                timeOfSample = PremiseServer.GetUtcTime()
             };
             properties.Add(thermostatMode);
 
@@ -216,9 +206,22 @@ namespace Alexa.HVAC
             return _premiseProperties.Contains(property);
         }
 
+        public string MapPremisePropertyToAlexaProperty(string premiseProperty)
+        {
+            int x = 0;
+            foreach (string property in _premiseProperties)
+            {
+                if (premiseProperty == property)
+                {
+                    return _alexaProperties[x];
+                }
+                x++;
+            }
+            return "";
+        }
+
         public void ProcessControllerDirective()
         {
-            Response.Event.header.@namespace = "Alexa";
             try
             {
                 if (Payload.targetSetpoint != null)
@@ -229,14 +232,12 @@ namespace Alexa.HVAC
                 if (Payload.lowerSetpoint != null)
                 {
                     Temperature lower = new Temperature(Payload.lowerSetpoint.scale, Payload.lowerSetpoint.value);
-                    Endpoint.SetValue("HeatingSetPoint", Math.Round(lower.Kelvin, 1).ToString(CultureInfo.InvariantCulture)).GetAwaiter()
-                        .GetResult();
+                    Endpoint.SetValue("HeatingSetPoint", Math.Round(lower.Kelvin, 1).ToString(CultureInfo.InvariantCulture)).GetAwaiter().GetResult();
                 }
                 if (Payload.upperSetpoint != null)
                 {
                     Temperature upper = new Temperature(Payload.upperSetpoint.scale, Payload.upperSetpoint.value);
-                    Endpoint.SetValue("CoolingSetPoint", Math.Round(upper.Kelvin, 1).ToString(CultureInfo.InvariantCulture)).GetAwaiter()
-                        .GetResult();
+                    Endpoint.SetValue("CoolingSetPoint", Math.Round(upper.Kelvin, 1).ToString(CultureInfo.InvariantCulture)).GetAwaiter().GetResult();
                 }
                 if (Payload.thermostatMode != null)
                 {
@@ -269,8 +270,8 @@ namespace Alexa.HVAC
                             target.Fahrenheit += Payload.targetSetpointDelta.value;
                             break;
 
-                        case "CELCIUS":
-                            target.Celcius += Payload.targetSetpointDelta.value;
+                        case "CELSIUS":
+                            target.Celsius += Payload.targetSetpointDelta.value;
                             break;
 
                         case "KELVIN":
@@ -280,7 +281,7 @@ namespace Alexa.HVAC
                     Endpoint.SetValue("CurrentSetPoint", Math.Round(target.Kelvin, 1).ToString(CultureInfo.InvariantCulture)).GetAwaiter().GetResult();
                 }
                 Response.Event.header.name = "Response";
-                Response.context.properties.AddRange(PropertyHelpers.FindRelatedProperties(Endpoint, Namespace));
+                Response.context.properties.AddRange(PropertyHelpers.FindRelatedProperties(Endpoint, ""));
             }
             catch (Exception ex)
             {
@@ -288,18 +289,34 @@ namespace Alexa.HVAC
             }
         }
 
+        public void SetEndpoint(IPremiseObject premiseObject)
+        {
+            Endpoint = premiseObject;
+        }
+
+        public bool ValidateDirective()
+        {
+            return ValidateDirective(GetDirectiveNames(), GetNameSpace());
+        }
+
         #endregion Methods
 
         public static string ModeToString(int mode)
         {
-            if (mode == 0)
-                return "AUTO";
-            if (mode == 1)
-                return "HEAT";
-            if (mode == 2)
-                return "COOL";
-            if (mode == 4)
-                return "OFF";
+            switch (mode)
+            {
+                case 0:
+                    return "AUTO";
+
+                case 1:
+                    return "HEAT";
+
+                case 2:
+                    return "COOL";
+
+                case 4:
+                    return "OFF";
+            }
 
             return "ERROR";
         }

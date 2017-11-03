@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using Alexa.SmartHomeAPI.V3;
+using SYSWebSockClient;
 
 namespace Alexa.Controller
 {
@@ -17,15 +18,19 @@ namespace Alexa.Controller
 
         string[] GetPremiseProperties();
 
-        AlexaProperty GetPropertyState();
-
         List<AlexaProperty> GetPropertyStates();
 
         bool HasAlexaProperty(string property);
 
         bool HasPremiseProperty(string property);
 
+        string MapPremisePropertyToAlexaProperty(string premiseProperty);
+
         void ProcessControllerDirective();
+
+        void SetEndpoint(IPremiseObject premiseObject);
+
+        bool ValidateDirective();
 
         #endregion Methods
     }

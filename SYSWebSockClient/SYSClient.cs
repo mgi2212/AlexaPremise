@@ -1,13 +1,15 @@
-﻿namespace SYSWebSockClient
+﻿using System;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Net.WebSockets;
+using System.Threading.Tasks;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+
+namespace SYSWebSockClient
 {
-    using Newtonsoft.Json;
-    using Newtonsoft.Json.Linq;
-    using System;
-    using System.Collections.Concurrent;
-    using System.Collections.Generic;
-    using System.Diagnostics;
-    using System.Threading.Tasks;
-    using IPremiseObjectCollection = System.Collections.Generic.ICollection<IPremiseObject>;
+    using IPremiseObjectCollection = ICollection<IPremiseObject>;
 
     public class Subscription
     {
@@ -50,15 +52,15 @@
 
         public SYSClient()
         {
-            this._futures = new ConcurrentDictionary<long, JsonRPCFuture>();
-            this._subscriptions = new ConcurrentDictionary<string, Subscription>();
+            _futures = new ConcurrentDictionary<long, JsonRPCFuture>();
+            _subscriptions = new ConcurrentDictionary<string, Subscription>();
         }
 
         #endregion Constructors
 
         #region Properties
 
-        public new System.Net.WebSockets.WebSocketState ConnectionState
+        public new WebSocketState ConnectionState
         {
             get
             {
@@ -70,7 +72,7 @@
         {
             get
             {
-                return this._subscriptions;
+                return _subscriptions;
             }
         }
 
@@ -80,7 +82,7 @@
 
         public new Task<IPremiseObject> Connect(string uri)
         {
-            this.ConnectFuture = new Future();
+            ConnectFuture = new Future();
 
             return Task.Run(
                 () =>
@@ -88,11 +90,11 @@
                     try
                     {
                         base.Connect(uri);
-                        this.ConnectFuture.Await();
+                        ConnectFuture.Await();
                     }
                     catch (Exception ex)
                     {
-                        this.OnError(ex);
+                        OnError(ex);
                         return null;
                     }
                     return new PremiseObject(this, HomeObjectId) as IPremiseObject;
@@ -101,18 +103,18 @@
 
         public void Disconnect(Action<Exception, string> callback)
         {
-            this.disconnectCallback = callback;
+            disconnectCallback = callback;
             base.Disconnect();
         }
 
         internal void AddSubscription(string clientSideSubscriptionId, Subscription subscription)
         {
-            this._subscriptions.TryAdd(clientSideSubscriptionId, subscription);
+            _subscriptions.TryAdd(clientSideSubscriptionId, subscription);
         }
 
         internal void Send(JsonRPCFuture future, out Task task)
         {
-            this._futures[future.id] = future;
+            _futures[future.id] = future;
 
             task = Task.Run(
                 () =>
@@ -125,14 +127,14 @@
                     }
                     catch (Exception ex)
                     {
-                        this.OnError(ex);
+                        OnError(ex);
                     }
                 });
         }
 
         internal void Send(JsonRPCFuture future, out Task<IPremiseObject> task)
         {
-            this._futures[future.id] = future;
+            _futures[future.id] = future;
 
             task = Task.Run(
                 () =>
@@ -147,7 +149,7 @@
                     }
                     catch (Exception ex)
                     {
-                        this.OnError(ex);
+                        OnError(ex);
                         return null;
                     }
 
@@ -158,7 +160,7 @@
 
         internal void Send(JsonRPCFuture future, string clientSideSubscriptionId, out Task<IPremiseSubscription> task)
         {
-            this._futures[future.id] = future;
+            _futures[future.id] = future;
 
             task = Task.Run(
                 () =>
@@ -173,7 +175,7 @@
                     }
                     catch (Exception ex)
                     {
-                        this.OnError(ex);
+                        OnError(ex);
                         return null;
                     }
                     var premiseObject = new PremiseSubscription(this, HomeObjectId, (long)result, clientSideSubscriptionId);
@@ -183,7 +185,7 @@
 
         internal void Send(JsonRPCFuture future, out Task<IPremiseObjectCollection> task)
         {
-            this._futures[future.id] = future;
+            _futures[future.id] = future;
 
             task = Task.Run(
                 () =>
@@ -198,7 +200,7 @@
                     }
                     catch (Exception ex)
                     {
-                        this.OnError(ex);
+                        OnError(ex);
                         return null;
                     }
                     var premiseObjects = new List<IPremiseObject>();
@@ -218,7 +220,7 @@
 
         internal void Send(JsonRPCFuture future, out Task<dynamic> task)
         {
-            this._futures[future.id] = future;
+            _futures[future.id] = future;
 
             task = Task.Run(
                 () =>
@@ -234,7 +236,7 @@
                     }
                     catch (Exception ex)
                     {
-                        this.OnError(ex);
+                        OnError(ex);
                         return null;
                     }
                     return result;
@@ -243,7 +245,7 @@
 
         internal void Send<T>(JsonRPCFuture future, out Task<T> task)
         {
-            this._futures[future.id] = future;
+            _futures[future.id] = future;
 
             task = Task.Run(
                 () =>
@@ -260,26 +262,26 @@
 
         protected override void OnConnect()
         {
-            if (this.ConnectFuture == null)
+            if (ConnectFuture == null)
                 return;
 
-            this.ConnectFuture.Notify(null, null);
+            ConnectFuture.Notify(null, null);
         }
 
         protected override void OnDisconnect()
         {
-            if (this.disconnectCallback == null)
+            if (disconnectCallback == null)
                 return;
 
             try
             {
-                this.disconnectCallback(null, null);
+                disconnectCallback(null, null);
             }
             catch (Exception error)
             {
                 try
                 {
-                    this.disconnectCallback(error, null);
+                    disconnectCallback(error, null);
                 }
                 catch (Exception finalError)
                 {
@@ -291,10 +293,10 @@
 
         protected override void OnError(Exception error)
         {
-            if (this.ConnectFuture == null)
+            if (ConnectFuture == null)
                 return;
 
-            this.ConnectFuture.Notify(error, null);
+            ConnectFuture.Notify(error, null);
         }
 
         protected override void OnMessage(string message)
@@ -325,7 +327,7 @@
                 var method = methodObj.ToString();
 
                 //Action<dynamic> callback;
-                this._subscriptions.TryGetValue(method, out Subscription subscription);
+                _subscriptions.TryGetValue(method, out Subscription subscription);
 
                 if (subscription == null)
                 {
@@ -356,7 +358,7 @@
                 return;
             }
 
-            this._futures.TryRemove(id, out JsonRPCFuture future);
+            _futures.TryRemove(id, out JsonRPCFuture future);
 
             if (future == null)
             {

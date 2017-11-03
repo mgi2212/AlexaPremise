@@ -35,8 +35,8 @@ namespace PremiseAlexaBridgeService
                     string client_secret = HomeObject.GetValue<string>("AlexaAsyncAuthorizationSecret").GetAwaiter().GetResult();
                     if (string.IsNullOrEmpty(refresh_token) || string.IsNullOrEmpty(client_id) || string.IsNullOrEmpty(client_secret))
                     {
-                        Task.Run(async () => { await HomeObject.SetValue("SendAsyncEventsToAlexa", "False"); });
-                        NotifyError(EventLogEntryType.Warning, $"{errorPrefix} Alexa authorization token is missing. PSUs are now disabled. Re-enable Premise skill.", eventID + 1).GetAwaiter().GetResult();
+                        Task.Run(async () => { await HomeObject.SetValue("SendAsyncEventsToAlexa", "False").ConfigureAwait(false); });
+                        NotifyErrorAsync(EventLogEntryType.Warning, $"{errorPrefix} Alexa authorization token is missing. PSUs are now disabled. Re-enable Premise skill.", eventID + 1).GetAwaiter().GetResult();
                         return;
                     }
                     string refreshData = $"grant_type=refresh_token&refresh_token={refresh_token}&client_id={client_id}&client_secret={client_secret}";
@@ -46,7 +46,7 @@ namespace PremiseAlexaBridgeService
                 }
                 catch (Exception e)
                 {
-                    NotifyError(EventLogEntryType.Error, $"{errorPrefix} Unexpected error: {e.Message}", eventID + 2).GetAwaiter().GetResult();
+                    NotifyErrorAsync(EventLogEntryType.Error, $"{errorPrefix} Unexpected error: {e.Message}", eventID + 2).GetAwaiter().GetResult();
                     return;
                 }
 
@@ -56,7 +56,7 @@ namespace PremiseAlexaBridgeService
                     {
                         if (httpResponse == null || !(httpResponse.StatusCode == HttpStatusCode.OK || httpResponse.StatusCode == HttpStatusCode.Accepted))
                         {
-                            NotifyError(EventLogEntryType.Error, $"{errorPrefix} Null response or unexpected status: ({httpResponse?.StatusCode})", eventID + 3).GetAwaiter().GetResult();
+                            NotifyErrorAsync(EventLogEntryType.Error, $"{errorPrefix} Null response or unexpected status: ({httpResponse?.StatusCode})", eventID + 3).GetAwaiter().GetResult();
                             return;
                         }
 
@@ -66,7 +66,7 @@ namespace PremiseAlexaBridgeService
                         {
                             if (response == null)
                             {
-                                NotifyError(EventLogEntryType.Warning, $"{errorPrefix} Null response from Amazon.", eventID + 4).GetAwaiter().GetResult();
+                                NotifyErrorAsync(EventLogEntryType.Warning, $"{errorPrefix} Null response from Amazon.", eventID + 4).GetAwaiter().GetResult();
                                 return;
                             }
                             StreamReader reader = new StreamReader(response, Encoding.UTF8);
@@ -93,14 +93,14 @@ namespace PremiseAlexaBridgeService
                         if (httpResponse.StatusCode == HttpStatusCode.Unauthorized
                         ) // skill has ben disabled so disable sending Async events to Alexa
                         {
-                            Task.Run(async () => { await HomeObject.SetValue("SendAsyncEventsToAlexa", "False"); });
+                            Task.Run(async () => { await HomeObject.SetValue("SendAsyncEventsToAlexa", "False").ConfigureAwait(false); });
 
                             string responseString;
                             using (Stream response = e.Response.GetResponseStream())
                             {
                                 if (response == null)
                                 {
-                                    NotifyError(EventLogEntryType.Error, $"{errorPrefix} Null response.", eventID + 5).GetAwaiter().GetResult();
+                                    NotifyErrorAsync(EventLogEntryType.Error, $"{errorPrefix} Null response.", eventID + 5).GetAwaiter().GetResult();
                                     return;
                                 }
                                 StreamReader reader = new StreamReader(response, Encoding.UTF8);
@@ -108,15 +108,15 @@ namespace PremiseAlexaBridgeService
                             }
                             JObject json = JObject.Parse(responseString);
                             string message = $"{errorPrefix} PSUs are disabled. ErrorInfo: {json["error"]} Description: {json["error_description"]} More info: {json["error_uri"]}";
-                            NotifyError(EventLogEntryType.Error, message, eventID + 6).GetAwaiter().GetResult();
+                            NotifyErrorAsync(EventLogEntryType.Error, message, eventID + 6).GetAwaiter().GetResult();
                             return;
                         }
-                        NotifyError(EventLogEntryType.Error, $"{errorPrefix} Unexpected error status ({httpResponse.StatusCode})", eventID + 7).GetAwaiter().GetResult();
+                        NotifyErrorAsync(EventLogEntryType.Error, $"{errorPrefix} Unexpected error status ({httpResponse.StatusCode})", eventID + 7).GetAwaiter().GetResult();
                     }
                 }
                 catch (Exception e)
                 {
-                    NotifyError(EventLogEntryType.Error, $"{errorPrefix} Unexpected error: {e.Message}", eventID + 8).GetAwaiter().GetResult();
+                    NotifyErrorAsync(EventLogEntryType.Error, $"{errorPrefix} Unexpected error: {e.Message}", eventID + 8).GetAwaiter().GetResult();
                 }
             }
         }

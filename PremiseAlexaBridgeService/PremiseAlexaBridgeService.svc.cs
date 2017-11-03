@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Globalization;
+﻿using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.Web.Hosting;
 
@@ -34,26 +32,6 @@ namespace PremiseAlexaBridgeService
         }
 
         #endregion Methods
-    }
-
-    public class PremiseAlexaBase
-    {
-        #region Utility
-
-        public static async Task<bool> CheckAccessToken(string token)
-        {
-            var accessToken = await PremiseServer.HomeObject.GetValue<string>("AccessToken");
-            List<string> tokens = new List<string>(accessToken.Split(','));
-            return (-1 != tokens.IndexOf(token));
-        }
-
-        public static async Task InformLastContact(string command)
-        {
-            await PremiseServer.HomeObject.SetValue("LastHeardFromAlexa", DateTime.Now.ToString(CultureInfo.InvariantCulture));
-            await PremiseServer.HomeObject.SetValue("LastHeardCommand", command);
-        }
-
-        #endregion Utility
     }
 
     public class PreWarmCache : IProcessHostPreloadClient
