@@ -155,6 +155,9 @@ namespace Alexa.SmartHomeAPI.V3
         [DataMember(Name = "path", EmitDefaultValue = false)]
         public string path;
 
+        [DataMember(Name = "processingTime", EmitDefaultValue = false)]
+        public long processingTime;
+
         #endregion Fields
     }
 

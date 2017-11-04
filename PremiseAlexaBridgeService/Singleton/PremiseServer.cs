@@ -269,7 +269,7 @@ namespace PremiseAlexaBridgeService
                 }
 
                 // Seems like a good idea here.
-                HostingEnvironment.QueueBackgroundWorkItem(ct => BackgroundGarbageCollect());
+                HostingEnvironment.QueueBackgroundWorkItem(ct => BackgroundGarbageCollectAsync());
 
                 return endpoints;
             }
@@ -333,7 +333,7 @@ namespace PremiseAlexaBridgeService
             }
         }
 
-        private static async Task BackgroundGarbageCollect()
+        private static async Task BackgroundGarbageCollectAsync()
         {
             // collect garbage after 5 seconds.
             Thread.Sleep(5000);

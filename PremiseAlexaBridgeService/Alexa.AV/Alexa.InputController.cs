@@ -258,7 +258,7 @@ namespace Alexa.AV
                 // if the AlexaInputName isn't set then use the object name.
                 inputName = input.GetName().GetAwaiter().GetResult();
             }
-            return inputName;
+            return inputName.ToUpper();
         }
 
         private IPremiseObject GetSwitcherZone()

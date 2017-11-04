@@ -148,11 +148,14 @@ namespace PremiseAlexaBridgeService
         [WebInvoke(Method = "POST", RequestFormat = WebMessageFormat.Json, ResponseFormat = WebMessageFormat.Json, BodyStyle = WebMessageBodyStyle.Bare, UriTemplate = "/Discovery/")]
         public DiscoveryControllerResponse Discovery(AlexaDiscoveryControllerRequest request)
         {
+            Stopwatch stopwatch = Stopwatch.StartNew();
             AlexaDiscoveryController controller = new AlexaDiscoveryController(request);
             if (controller.ValidateDirective())
             {
                 controller.ProcessControllerDirective();
             }
+            stopwatch.Stop();
+            PremiseServer.WriteToWindowsApplicationEventLog(EventLogEntryType.Information, $"Discovery processing time {stopwatch.ElapsedMilliseconds}ms", 51);
             return controller.Response;
         }
 
@@ -170,12 +173,14 @@ namespace PremiseAlexaBridgeService
         [WebInvoke(Method = "POST", RequestFormat = WebMessageFormat.Json, ResponseFormat = WebMessageFormat.Json, BodyStyle = WebMessageBodyStyle.Bare, UriTemplate = "/Control/SetPowerState/")]
         public ControlResponse SetPowerState(AlexaSetPowerStateControllerRequest request)
         {
+            Stopwatch stopwatch = Stopwatch.StartNew();
             AlexaSetPowerStateController controller = new AlexaSetPowerStateController(request);
             if (controller.ValidateDirective())
             {
                 controller.ProcessControllerDirective();
             }
-
+            stopwatch.Stop();
+            controller.Response.Event.endpoint.cookie.processingTime = stopwatch.ElapsedMilliseconds;
             return controller.Response;
         }
 
@@ -191,11 +196,14 @@ namespace PremiseAlexaBridgeService
         [WebInvoke(Method = "POST", RequestFormat = WebMessageFormat.Json, ResponseFormat = WebMessageFormat.Json, BodyStyle = WebMessageBodyStyle.Bare, UriTemplate = "/Control/AdjustBrightness/")]
         public ControlResponse AdjustBrightness(AlexaBrightnessControllerRequest request)
         {
+            Stopwatch stopwatch = Stopwatch.StartNew();
             AlexaBrightnessController controller = new AlexaBrightnessController(request);
             if (controller.ValidateDirective())
             {
                 controller.ProcessControllerDirective();
             }
+            stopwatch.Stop();
+            controller.Response.Event.endpoint.cookie.processingTime = stopwatch.ElapsedMilliseconds;
             return controller.Response;
         }
 
@@ -207,11 +215,14 @@ namespace PremiseAlexaBridgeService
         [WebInvoke(Method = "POST", RequestFormat = WebMessageFormat.Json, ResponseFormat = WebMessageFormat.Json, BodyStyle = WebMessageBodyStyle.Bare, UriTemplate = "/Control/SetBrightness/")]
         public ControlResponse SetBrightness(AlexaBrightnessControllerRequest request)
         {
+            Stopwatch stopwatch = Stopwatch.StartNew();
             AlexaBrightnessController controller = new AlexaBrightnessController(request);
             if (controller.ValidateDirective())
             {
                 controller.ProcessControllerDirective();
             }
+            stopwatch.Stop();
+            controller.Response.Event.endpoint.cookie.processingTime = stopwatch.ElapsedMilliseconds;
             return controller.Response;
         }
 
@@ -227,11 +238,14 @@ namespace PremiseAlexaBridgeService
         [WebInvoke(Method = "POST", RequestFormat = WebMessageFormat.Json, ResponseFormat = WebMessageFormat.Json, BodyStyle = WebMessageBodyStyle.Bare, UriTemplate = "/Control/Scene/")]
         public ControlResponse SetScene(AlexaSetSceneControllerRequest request)
         {
+            Stopwatch stopwatch = Stopwatch.StartNew();
             AlexaSetSceneController controller = new AlexaSetSceneController(request);
             if (controller.ValidateDirective())
             {
                 controller.ProcessControllerDirective();
             }
+            stopwatch.Stop();
+            controller.Response.Event.endpoint.cookie.processingTime = stopwatch.ElapsedMilliseconds;
             return controller.Response;
         }
 
@@ -247,11 +261,14 @@ namespace PremiseAlexaBridgeService
         [WebInvoke(Method = "POST", RequestFormat = WebMessageFormat.Json, ResponseFormat = WebMessageFormat.Json, BodyStyle = WebMessageBodyStyle.Bare, UriTemplate = "/Control/AdjustColorTemperature/")]
         public ControlResponse AdjustColorTemperature(AlexaColorTemperatureControllerRequest request)
         {
+            Stopwatch stopwatch = Stopwatch.StartNew();
             AlexaColorTemperatureController controller = new AlexaColorTemperatureController(request);
             if (controller.ValidateDirective())
             {
                 controller.ProcessControllerDirective();
             }
+            stopwatch.Stop();
+            controller.Response.Event.endpoint.cookie.processingTime = stopwatch.ElapsedMilliseconds;
             return controller.Response;
         }
 
@@ -263,11 +280,14 @@ namespace PremiseAlexaBridgeService
         [WebInvoke(Method = "POST", RequestFormat = WebMessageFormat.Json, ResponseFormat = WebMessageFormat.Json, BodyStyle = WebMessageBodyStyle.Bare, UriTemplate = "/Control/SetColorTemperature/")]
         public ControlResponse SetColorTemperature(AlexaColorTemperatureControllerRequest request)
         {
+            Stopwatch stopwatch = Stopwatch.StartNew();
             AlexaColorTemperatureController controller = new AlexaColorTemperatureController(request);
             if (controller.ValidateDirective())
             {
                 controller.ProcessControllerDirective();
             }
+            stopwatch.Stop();
+            controller.Response.Event.endpoint.cookie.processingTime = stopwatch.ElapsedMilliseconds;
             return controller.Response;
         }
 
@@ -283,11 +303,14 @@ namespace PremiseAlexaBridgeService
         [WebInvoke(Method = "POST", RequestFormat = WebMessageFormat.Json, ResponseFormat = WebMessageFormat.Json, BodyStyle = WebMessageBodyStyle.Bare, UriTemplate = "/Control/SetColor/")]
         public ControlResponse SetColor(AlexaColorControllerRequest request)
         {
+            Stopwatch stopwatch = Stopwatch.StartNew();
             AlexaColorController controller = new AlexaColorController(request);
             if (controller.ValidateDirective())
             {
                 controller.ProcessControllerDirective();
             }
+            stopwatch.Stop();
+            controller.Response.Event.endpoint.cookie.processingTime = stopwatch.ElapsedMilliseconds;
             return controller.Response;
         }
 
@@ -303,11 +326,14 @@ namespace PremiseAlexaBridgeService
         [WebInvoke(Method = "POST", RequestFormat = WebMessageFormat.Json, ResponseFormat = WebMessageFormat.Json, BodyStyle = WebMessageBodyStyle.Bare, UriTemplate = "/Control/AdjustTargetTemperature/")]
         public ControlResponse AdjustTargetTemperature(AlexaThermostatControllerRequest request)
         {
+            Stopwatch stopwatch = Stopwatch.StartNew();
             AlexaThermostatController controller = new AlexaThermostatController(request);
             if (controller.ValidateDirective())
             {
                 controller.ProcessControllerDirective();
             }
+            stopwatch.Stop();
+            controller.Response.Event.endpoint.cookie.processingTime = stopwatch.ElapsedMilliseconds;
             return controller.Response;
         }
 
@@ -319,11 +345,14 @@ namespace PremiseAlexaBridgeService
         [WebInvoke(Method = "POST", RequestFormat = WebMessageFormat.Json, ResponseFormat = WebMessageFormat.Json, BodyStyle = WebMessageBodyStyle.Bare, UriTemplate = "/Control/SetTargetTemperature/")]
         public ControlResponse SetTargetTemperature(AlexaThermostatControllerRequest request)
         {
+            Stopwatch stopwatch = Stopwatch.StartNew();
             AlexaThermostatController controller = new AlexaThermostatController(request);
             if (controller.ValidateDirective())
             {
                 controller.ProcessControllerDirective();
             }
+            stopwatch.Stop();
+            controller.Response.Event.endpoint.cookie.processingTime = stopwatch.ElapsedMilliseconds;
             return controller.Response;
         }
 
@@ -335,11 +364,14 @@ namespace PremiseAlexaBridgeService
         [WebInvoke(Method = "POST", RequestFormat = WebMessageFormat.Json, ResponseFormat = WebMessageFormat.Json, BodyStyle = WebMessageBodyStyle.Bare, UriTemplate = "/Control/SetThermostatMode/")]
         public ControlResponse SetThermostatMode(AlexaThermostatControllerRequest request)
         {
+            Stopwatch stopwatch = Stopwatch.StartNew();
             AlexaThermostatController controller = new AlexaThermostatController(request);
             if (controller.ValidateDirective())
             {
                 controller.ProcessControllerDirective();
             }
+            stopwatch.Stop();
+            controller.Response.Event.endpoint.cookie.processingTime = stopwatch.ElapsedMilliseconds;
             return controller.Response;
         }
 
@@ -355,11 +387,14 @@ namespace PremiseAlexaBridgeService
         [WebInvoke(Method = "POST", RequestFormat = WebMessageFormat.Json, ResponseFormat = WebMessageFormat.Json, BodyStyle = WebMessageBodyStyle.Bare, UriTemplate = "/Control/Speaker/")]
         public ControlResponse Speaker(AlexaSpeakerRequest request)
         {
+            Stopwatch stopwatch = Stopwatch.StartNew();
             AlexaSpeaker controller = new AlexaSpeaker(request);
             if (controller.ValidateDirective())
             {
                 controller.ProcessControllerDirective();
             }
+            stopwatch.Stop();
+            controller.Response.Event.endpoint.cookie.processingTime = stopwatch.ElapsedMilliseconds;
             return controller.Response;
         }
 
@@ -375,11 +410,14 @@ namespace PremiseAlexaBridgeService
         [WebInvoke(Method = "POST", RequestFormat = WebMessageFormat.Json, ResponseFormat = WebMessageFormat.Json, BodyStyle = WebMessageBodyStyle.Bare, UriTemplate = "/Control/InputController/")]
         public ControlResponse InputController(AlexaInputControllerRequest request)
         {
+            Stopwatch stopwatch = Stopwatch.StartNew();
             AlexaInputController controller = new AlexaInputController(request);
             if (controller.ValidateDirective())
             {
                 controller.ProcessControllerDirective();
             }
+            stopwatch.Stop();
+            controller.Response.Event.endpoint.cookie.processingTime = stopwatch.ElapsedMilliseconds;
             return controller.Response;
         }
 
@@ -397,6 +435,8 @@ namespace PremiseAlexaBridgeService
         [WebInvoke(Method = "POST", RequestFormat = WebMessageFormat.Json, ResponseFormat = WebMessageFormat.Json, BodyStyle = WebMessageBodyStyle.Bare, UriTemplate = "/ReportState/")]
         public ReportStateResponse ReportState(ReportStateRequest request)
         {
+            Stopwatch stopwatch = Stopwatch.StartNew();
+
             AlexaDirective directive = request.directive;
 
             var response = new ReportStateResponse(directive);
@@ -546,6 +586,11 @@ namespace PremiseAlexaBridgeService
 
             response.@event.header.name = "StateReport";
             PremiseServer.InformLastContactAsync($"StateReport: {response.@event?.endpoint?.cookie?.path}").GetAwaiter().GetResult();
+            stopwatch.Stop();
+            if (response.@event.endpoint.cookie != null)
+            {
+                response.@event.endpoint.cookie.processingTime = stopwatch.ElapsedMilliseconds;
+            }
             return response;
         }
 

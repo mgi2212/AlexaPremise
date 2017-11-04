@@ -5,31 +5,32 @@ var AWS = require("aws-sdk");
 var log = log;
 
 function log(title, msg) {
-    console.log(':' + title + ':');
+    console.log(title + ':');
     console.log(msg);
 }
 
-var skill_client_secret = 'd9bd211cb8c9af7b8db1eb3ba52cc9b31fab94604cbf6804110788e79fbb535e';
-var skill_client_id = 'amzn1.application-oa2-client.76f9bb6cb75a4eb18b9886f9c3d32631';
+// skill secret, id and customer table are stored in lambda environment variables.
+var skill_client_secret = process.env.skill_client_secret;
+var skill_client_id = process.env.skill_client_id;
+var customer_table = process.env.customer_table;
+
+var LWA_TOKEN_URI = "https://api.amazon.com/auth/o2/token";
 var LWA_HEADERS = {
     "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8"
 };
 
-const healthyResponse = {
-    "header": {
-        "messageId": "",
-        "namespace": "Alexa.ConnectedHome.System",
-        "name": "HealthCheckResponse",
-        "payloadVersion": "2"
-    },
-    "payload": {
-        "isHealthy": true,
-        "description": "The system is currently healthy."
-    }
-};
-
 exports.handler = function (event, context) {
     log('event', JSON.stringify(event));
+
+    // filter out scheduled keep-alive events
+    if (event.hasOwnProperty('detail-type')) {
+        if (event['detail-type'] === 'Scheduled Event') {
+            context.succeed(event);
+        } else {
+            context.fail("Unknown event.");
+        }
+        return;
+    }
 
     switch (event.directive.header.namespace) {
         case 'Alexa':
@@ -164,7 +165,7 @@ function getCustomerEndpoint(event, context, command, customer_info) {
     var dynamodb = new AWS.DynamoDB();
 
     var params = {
-        TableName: 'PremiseBridgeCustomer',
+        TableName: customer_table, // 'PremiseBridgeCustomer',
         Key: {
             "id": {
                 "S": customer_info.user_id
@@ -188,6 +189,7 @@ function getCustomerEndpoint(event, context, command, customer_info) {
 function proxyEvent(event, context, command, customer_endpoint) {
     setLocalAccessToken(event, customer_endpoint);
     var post_data = JSON.stringify(event, 'utf-8');
+    var start = new Date();
 
     // prepare request options
     var post_options = {
@@ -200,9 +202,6 @@ function proxyEvent(event, context, command, customer_endpoint) {
             'Content-Length': post_data.length
         }
     };
-
-    //log('Customer Endpoint', post_options);
-    //log('Send Directive', post_data);
 
     var result = "";
     var protocol;
@@ -223,10 +222,12 @@ function proxyEvent(event, context, command, customer_endpoint) {
         });
 
         response.on('end', function () {
-            //log('raw response', result);
-
             var jsonResult = JSON.parse(result);
+
             cleanUpResponse(event, jsonResult);
+
+            var end = new Date() - start;
+            console.info("Round trip time: %dms", end);
 
             log('Response', JSON.stringify(jsonResult));
 
@@ -239,6 +240,23 @@ function proxyEvent(event, context, command, customer_endpoint) {
         });
     });
 
+    post_req.on('socket', function (socket) {
+        socket.setTimeout(6000);
+        socket.on('timeout', function () {
+            post_req.abort();
+        });
+    });
+
+    post_req.on('error', function (err) {
+        if (err.code === "ECONNRESET") {
+            console.log("Send directive timeout.");
+            context.fail('Request to appliance cloud timed out.');
+        }
+        console.log('Unexpected socket error:' + err.code);
+        context.fail('Connection to appliance cloud failed.');
+    });
+
+    console.log('Send Directive');
     post_req.write(post_data);
     post_req.end();
 }
