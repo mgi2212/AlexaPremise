@@ -411,6 +411,7 @@ namespace PremiseAlexaBridgeService
         public ControlResponse InputController(AlexaInputControllerRequest request)
         {
             Stopwatch stopwatch = Stopwatch.StartNew();
+
             AlexaInputController controller = new AlexaInputController(request);
             if (controller.ValidateDirective())
             {
