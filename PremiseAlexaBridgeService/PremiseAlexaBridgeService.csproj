@@ -168,6 +168,7 @@
     <None Include="App_Data\S3 Web\lib\url-template\url-template.js" />
     <None Include="App_Data\S3 Web\privacy.html" />
     <None Include="App_Data\S3 Web\simple.html" />
+    <None Include="App_Data\Premise Driver\SPWebSockets.dll" />
     <Content Include="PremiseAlexaBridgeService.svc" />
     <Content Include="Alexa.V3\Alexa.svc">
       <BrowseToURL>~/V3/Alexa.svc</BrowseToURL>

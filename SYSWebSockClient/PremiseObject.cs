@@ -272,7 +272,6 @@ namespace SYSWebSockClient
             }
 
             var future = new GetValueFuture(_objectId, name);
-            // TODO - DANQ: find out why this will not return when a property is not found and fix
             _client.Send(future, out Task<dynamic> task);
             return task;
         }
