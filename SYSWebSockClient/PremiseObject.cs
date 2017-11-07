@@ -6,7 +6,7 @@ namespace SYSWebSockClient
 {
     using IPremiseObjectCollection = ICollection<IPremiseObject>;
 
-    public class PremiseObject : IPremiseObject
+    public sealed class PremiseObject : IPremiseObject
     {
         #region Fields
 
@@ -34,7 +34,7 @@ namespace SYSWebSockClient
 
         #region Methods
 
-        Task<IPremiseObject> IPremiseObject.CreateObject(IPremiseObject type, string name)
+        Task<IPremiseObject> IPremiseObject.CreateObjectAsync(IPremiseObject type, string name)
         {
             var future = new CreateObjectFuture(_objectId, (type as PremiseObject)?._objectId, name);
 
@@ -42,7 +42,7 @@ namespace SYSWebSockClient
             return task;
         }
 
-        Task<IPremiseObject> IPremiseObject.CreateObject(string type, string name)
+        Task<IPremiseObject> IPremiseObject.CreateObjectAsync(string type, string name)
         {
             var future = new CreateObjectFuture(_objectId, type, name);
 
@@ -50,7 +50,7 @@ namespace SYSWebSockClient
             return task;
         }
 
-        Task IPremiseObject.Delete()
+        Task IPremiseObject.DeleteAsync()
         {
             var future = new DeleteObjectFuture(_objectId, string.Empty);
 
@@ -58,7 +58,7 @@ namespace SYSWebSockClient
             return task;
         }
 
-        Task IPremiseObject.DeleteChildObject(string subObjectId)
+        Task IPremiseObject.DeleteChildObjectAsync(string subObjectId)
         {
             if (!IsValidObjectId(subObjectId))
             {
@@ -71,7 +71,7 @@ namespace SYSWebSockClient
             return task;
         }
 
-        Task<IPremiseObjectCollection> IPremiseObject.GetAggregatedProperties()
+        Task<IPremiseObjectCollection> IPremiseObject.GetAggregatedPropertiesAsync()
         {
             var future = new GetAggregatedPropertiesFuture(_objectId);
 
@@ -79,7 +79,7 @@ namespace SYSWebSockClient
             return task;
         }
 
-        Task<IPremiseObjectCollection> IPremiseObject.GetAll()
+        Task<IPremiseObjectCollection> IPremiseObject.GetAllAsync()
         {
             var future = new GetAllFuture(_objectId);
 
@@ -87,7 +87,7 @@ namespace SYSWebSockClient
             return task;
         }
 
-        Task<IPremiseObjectCollection> IPremiseObject.GetChildren()
+        Task<IPremiseObjectCollection> IPremiseObject.GetChildrenAsync()
         {
             var future = new GetChildrenFuture(_objectId);
 
@@ -95,7 +95,7 @@ namespace SYSWebSockClient
             return task;
         }
 
-        Task<IPremiseObject> IPremiseObject.GetClass()
+        Task<IPremiseObject> IPremiseObject.GetClassAsync()
         {
             var future = new GetClassFuture(_objectId);
 
@@ -103,7 +103,7 @@ namespace SYSWebSockClient
             return task;
         }
 
-        Task<IPremiseObjectCollection> IPremiseObject.GetClasses()
+        Task<IPremiseObjectCollection> IPremiseObject.GetClassesAsync()
         {
             var future = new GetClassesFuture(_objectId);
 
@@ -111,7 +111,7 @@ namespace SYSWebSockClient
             return task;
         }
 
-        Task<IPremiseObjectCollection> IPremiseObject.GetConnectedObjects()
+        Task<IPremiseObjectCollection> IPremiseObject.GetConnectedObjectsAsync()
         {
             var future = new GetConnectedObjectsFuture(_objectId);
 
@@ -119,7 +119,7 @@ namespace SYSWebSockClient
             return task;
         }
 
-        Task<IPremiseObjectCollection> IPremiseObject.GetCreatableObjects()
+        Task<IPremiseObjectCollection> IPremiseObject.GetCreatableObjectsAsync()
         {
             var future = new GetCreatableObjectsFuture(_objectId);
 
@@ -127,7 +127,7 @@ namespace SYSWebSockClient
             return task;
         }
 
-        Task<string> IPremiseObject.GetDescription()
+        Task<string> IPremiseObject.GetDescriptionAsync()
         {
             var future = new GetDescriptionFuture(_objectId);
 
@@ -135,7 +135,7 @@ namespace SYSWebSockClient
             return task;
         }
 
-        Task<string> IPremiseObject.GetDisplayName()
+        Task<string> IPremiseObject.GetDisplayNameAsync()
         {
             var future = new GetDisplayNameFuture(_objectId);
 
@@ -143,7 +143,7 @@ namespace SYSWebSockClient
             return task;
         }
 
-        Task<IPremiseObjectCollection> IPremiseObject.GetMethods()
+        Task<IPremiseObjectCollection> IPremiseObject.GetMethodsAsync()
         {
             var future = new GetMethodsFuture(_objectId);
 
@@ -151,7 +151,7 @@ namespace SYSWebSockClient
             return task;
         }
 
-        Task<string> IPremiseObject.GetName()
+        Task<string> IPremiseObject.GetNameAsync()
         {
             var future = new GetNameFuture(_objectId);
 
@@ -159,7 +159,7 @@ namespace SYSWebSockClient
             return task;
         }
 
-        Task<IPremiseObject> IPremiseObject.GetObject(string subObject)
+        Task<IPremiseObject> IPremiseObject.GetObjectAsync(string subObject)
         {
             var future = new GetObjectFuture(_objectId, subObject);
 
@@ -167,7 +167,7 @@ namespace SYSWebSockClient
             return task;
         }
 
-        Task<string> IPremiseObject.GetObjectID()
+        Task<string> IPremiseObject.GetObjectIDAsync()
         {
             var future = new GetObjectIDFuture(_objectId);
 
@@ -175,7 +175,7 @@ namespace SYSWebSockClient
             return task;
         }
 
-        Task<IPremiseObject> IPremiseObject.GetParent()
+        Task<IPremiseObject> IPremiseObject.GetParentAsync()
         {
             var future = new GetParentFuture(_objectId);
 
@@ -183,7 +183,7 @@ namespace SYSWebSockClient
             return task;
         }
 
-        Task<string> IPremiseObject.GetPath()
+        Task<string> IPremiseObject.GetPathAsync()
         {
             var future = new GetPathFuture(_objectId);
 
@@ -191,7 +191,7 @@ namespace SYSWebSockClient
             return task;
         }
 
-        Task<IPremiseObjectCollection> IPremiseObject.GetProperties()
+        Task<IPremiseObjectCollection> IPremiseObject.GetPropertiesAsync()
         {
             var future = new GetPropertiesFuture(_objectId);
 
@@ -199,7 +199,7 @@ namespace SYSWebSockClient
             return task;
         }
 
-        Task<string> IPremiseObject.GetPropertyAsText(string propertyId)
+        Task<string> IPremiseObject.GetPropertyAsTextAsync(string propertyId)
         {
             var future = new GetPropertyAsTextFuture(_objectId, propertyId);
 
@@ -207,7 +207,7 @@ namespace SYSWebSockClient
             return task;
         }
 
-        Task<string> IPremiseObject.GetPropertyAsText(IPremiseObject property)
+        Task<string> IPremiseObject.GetPropertyAsTextAsync(IPremiseObject property)
         {
             var future = new GetPropertyAsTextFuture(_objectId, (property as PremiseObject)?._objectId);
 
@@ -215,7 +215,7 @@ namespace SYSWebSockClient
             return task;
         }
 
-        Task<IPremiseObject> IPremiseObject.GetRefValue(string name)
+        Task<IPremiseObject> IPremiseObject.GetRefValueAsync(string name)
         {
             if (string.IsNullOrEmpty(name))
             {
@@ -227,7 +227,7 @@ namespace SYSWebSockClient
             return task;
         }
 
-        Task<IPremiseObject> IPremiseObject.GetRoot()
+        Task<IPremiseObject> IPremiseObject.GetRootAsync()
         {
             var future = new GetRootFuture(_objectId);
 
@@ -235,7 +235,7 @@ namespace SYSWebSockClient
             return task;
         }
 
-        Task<IPremiseObjectCollection> IPremiseObject.GetSubClasses()
+        Task<IPremiseObjectCollection> IPremiseObject.GetSubClassesAsync()
         {
             var future = new GetSubClassesFuture(_objectId);
 
@@ -243,7 +243,7 @@ namespace SYSWebSockClient
             return task;
         }
 
-        Task<IPremiseObjectCollection> IPremiseObject.GetSuperClasses()
+        Task<IPremiseObjectCollection> IPremiseObject.GetSuperClassesAsync()
         {
             var future = new GetSuperClassesFuture(_objectId);
 
@@ -251,7 +251,7 @@ namespace SYSWebSockClient
             return task;
         }
 
-        Task<ExpectedReturnType> IPremiseObject.GetValue<ExpectedReturnType>(string name)
+        Task<ExpectedReturnType> IPremiseObject.GetValueAsync<ExpectedReturnType>(string name)
         {
             if (string.IsNullOrEmpty(name))
             {
@@ -264,7 +264,7 @@ namespace SYSWebSockClient
             return task;
         }
 
-        Task<dynamic> IPremiseObject.GetValue(string name)
+        Task<dynamic> IPremiseObject.GetValueAsync(string name)
         {
             if (string.IsNullOrEmpty(name))
             {
@@ -276,12 +276,12 @@ namespace SYSWebSockClient
             return task;
         }
 
-        Task<bool> IPremiseObject.IsChildOf()
+        Task<bool> IPremiseObject.IsChildOfAsync()
         {
             throw new NotImplementedException();
         }
 
-        Task<bool> IPremiseObject.IsOfType(string typeId)
+        Task<bool> IPremiseObject.IsOfTypeAsync(string typeId)
         {
             if (string.IsNullOrEmpty(typeId))
             {
@@ -294,7 +294,7 @@ namespace SYSWebSockClient
             return task;
         }
 
-        Task<bool> IPremiseObject.IsOfType(IPremiseObject typeId)
+        Task<bool> IPremiseObject.IsOfTypeAsync(IPremiseObject typeId)
         {
             var future = new IsOfTypeFuture(_objectId, (typeId as PremiseObject)?._objectId);
 
@@ -307,7 +307,7 @@ namespace SYSWebSockClient
             return IsValidObjectId(_objectId);
         }
 
-        Task<dynamic> IPremiseObject.Select(ICollection<string> returnClause, dynamic whereClause)
+        Task<dynamic> IPremiseObject.SelectAsync(ICollection<string> returnClause, dynamic whereClause)
         {
             var future = new SelectFuture(_objectId, returnClause, whereClause);
 
@@ -315,7 +315,7 @@ namespace SYSWebSockClient
             return task;
         }
 
-        Task<IPremiseObject> IPremiseObject.SetClass(IPremiseObject classObject)
+        Task<IPremiseObject> IPremiseObject.SetClassAsync(IPremiseObject classObject)
         {
             var future = new SetClassFuture(_objectId, (classObject as PremiseObject)?._objectId);
 
@@ -323,7 +323,7 @@ namespace SYSWebSockClient
             return task;
         }
 
-        Task<IPremiseObject> IPremiseObject.SetClass(string classObjectId)
+        Task<IPremiseObject> IPremiseObject.SetClassAsync(string classObjectId)
         {
             if (string.IsNullOrEmpty(classObjectId))
             {
@@ -336,7 +336,7 @@ namespace SYSWebSockClient
             return task;
         }
 
-        Task IPremiseObject.SetDescription(string name)
+        Task IPremiseObject.SetDescriptionAsync(string name)
         {
             var future = new SetDescriptionFuture(_objectId, name);
 
@@ -344,7 +344,7 @@ namespace SYSWebSockClient
             return task;
         }
 
-        Task IPremiseObject.SetDisplayName(string name)
+        Task IPremiseObject.SetDisplayNameAsync(string name)
         {
             var future = new SetDisplayNameFuture(_objectId, name);
 
@@ -352,7 +352,7 @@ namespace SYSWebSockClient
             return task;
         }
 
-        Task IPremiseObject.SetName(string name)
+        Task IPremiseObject.SetNameAsync(string name)
         {
             if (string.IsNullOrEmpty(name))
             {
@@ -365,7 +365,7 @@ namespace SYSWebSockClient
             return task;
         }
 
-        Task IPremiseObject.SetValue(string name, string value)
+        Task IPremiseObject.SetValueAsync(string name, string value)
         {
             if (string.IsNullOrEmpty(name))
             {
@@ -378,7 +378,7 @@ namespace SYSWebSockClient
             return task;
         }
 
-        Task<IPremiseSubscription> IPremiseObject.Subscribe(string propertyName, string alexaController, Action<dynamic> callback)
+        Task<IPremiseSubscription> IPremiseObject.SubscribeAsync(string propertyName, string alexaController, Action<dynamic> callback)
         {
             if (string.IsNullOrEmpty(propertyName))
             {

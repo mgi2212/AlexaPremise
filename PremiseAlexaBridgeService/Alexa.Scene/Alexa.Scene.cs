@@ -49,7 +49,7 @@ namespace Alexa.Scene
                     switch (capability.@interface)
                     {
                         case "Alexa.SceneController":
-                            subscription = endpoint.Subscribe("PowerState", GetType().AssemblyQualifiedName, callback).GetAwaiter().GetResult();
+                            subscription = endpoint.SubscribeAsync("PowerState", GetType().AssemblyQualifiedName, callback).GetAwaiter().GetResult();
                             break;
                     }
                 }

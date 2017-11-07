@@ -148,7 +148,7 @@ namespace Alexa.EndpointHealth
         {
             List<AlexaProperty> properties = new List<AlexaProperty>();
 
-            bool isReachable = Endpoint.GetValue<bool>(premiseProperties[0]).GetAwaiter().GetResult();
+            bool isReachable = Endpoint.GetValueAsync<bool>(premiseProperties[0]).GetAwaiter().GetResult();
             AlexaProperty property = new AlexaProperty
             {
                 @namespace = @namespace,

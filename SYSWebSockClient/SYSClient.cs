@@ -34,15 +34,15 @@ namespace SYSWebSockClient
         #endregion Constructors
     }
 
-    public class SYSClient : JsonWebSocket
+    public sealed class SYSClient : JsonWebSocket, IDisposable
     {
         #region Fields
 
         // ToDo: CHRISBE: Let's make this use the Root by default at some point
         public static string HomeObjectId = "{4F846CA8-6603-4675-AC66-05A0AF6A8ACD}";
 
-        private ConcurrentDictionary<long, JsonRPCFuture> _futures;
-        private ConcurrentDictionary<string, Subscription> _subscriptions;
+        private readonly ConcurrentDictionary<long, JsonRPCFuture> _futures;
+        private readonly ConcurrentDictionary<string, Subscription> _subscriptions;
         private Future ConnectFuture;
         private Action<Exception, string> disconnectCallback;
 
@@ -60,27 +60,15 @@ namespace SYSWebSockClient
 
         #region Properties
 
-        public new WebSocketState ConnectionState
-        {
-            get
-            {
-                return base.ConnectionState;
-            }
-        }
+        public new WebSocketState ConnectionState => base.ConnectionState;
 
-        public ConcurrentDictionary<string, Subscription> Subscriptions
-        {
-            get
-            {
-                return _subscriptions;
-            }
-        }
+        public ConcurrentDictionary<string, Subscription> Subscriptions => _subscriptions;
 
         #endregion Properties
 
         #region Methods
 
-        public new Task<IPremiseObject> Connect(string uri)
+        public Task<IPremiseObject> ConnectAsync(string uri)
         {
             ConnectFuture = new Future();
 
@@ -89,7 +77,7 @@ namespace SYSWebSockClient
                 {
                     try
                     {
-                        base.Connect(uri);
+                        Connect(uri);
                         ConnectFuture.Await();
                     }
                     catch (Exception ex)
@@ -154,7 +142,7 @@ namespace SYSWebSockClient
                     }
 
                     var premiseObject = new PremiseObject(this, (string)result);
-                    return premiseObject as IPremiseObject;
+                    return (IPremiseObject)premiseObject;
                 });
         }
 
@@ -179,7 +167,7 @@ namespace SYSWebSockClient
                         return null;
                     }
                     var premiseObject = new PremiseSubscription(this, HomeObjectId, (long)result, clientSideSubscriptionId);
-                    return premiseObject as IPremiseSubscription;
+                    return (IPremiseSubscription)premiseObject;
                 });
         }
 
@@ -213,7 +201,7 @@ namespace SYSWebSockClient
                         var premiseObject = new PremiseObject(this, (string)item);
                         premiseObjects.Add(premiseObject);
                     }
-                    var collection = premiseObjects as IPremiseObjectCollection;
+                    var collection = (IPremiseObjectCollection)premiseObjects;
                     return collection;
                 });
         }
@@ -253,19 +241,14 @@ namespace SYSWebSockClient
                     string strMessage = JsonConvert.SerializeObject(future);
                     base.Send(strMessage);
 
-                    dynamic result;
-                    // todo: figure out how to wrap this in a try-catch
-                    result = future.Await();
+                    dynamic result = future.Await();
                     return (T)result;
                 });
         }
 
         protected override void OnConnect()
         {
-            if (ConnectFuture == null)
-                return;
-
-            ConnectFuture.Notify(null, null);
+            ConnectFuture?.Notify(null, null);
         }
 
         protected override void OnDisconnect()
@@ -293,10 +276,7 @@ namespace SYSWebSockClient
 
         protected override void OnError(Exception error)
         {
-            if (ConnectFuture == null)
-                return;
-
-            ConnectFuture.Notify(error, null);
+            ConnectFuture?.Notify(error, null);
         }
 
         protected override void OnMessage(string message)
@@ -371,14 +351,9 @@ namespace SYSWebSockClient
 
             if (error != null)
             {
-                JsonRPCException ex;
-
                 // we have an error
                 var errorMessage = (string)error.message;
-                if (errorMessage != null)
-                    ex = new JsonRPCException(errorMessage);
-                else
-                    ex = new JsonRPCException("Undefined exception");
+                var ex = errorMessage != null ? new JsonRPCException(errorMessage) : new JsonRPCException("Undefined exception");
 
                 future.Notify(ex, null);
 
@@ -389,5 +364,15 @@ namespace SYSWebSockClient
         }
 
         #endregion Methods
+
+        #region Public Methods
+
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2213:DisposableFieldsShouldBeDisposed", MessageId = "ConnectFuture")]
+        public void Dispose()
+        {
+            ConnectFuture?.Dispose();
+        }
+
+        #endregion Public Methods
     }
 }

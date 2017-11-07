@@ -12,7 +12,7 @@ namespace SYSWebSockClient
         private float FloatVal;
 
         [FieldOffset(0)]
-        private int IntVal;
+        private readonly int IntVal;
 
         private static PowerFuncs FloatCast;
 

@@ -123,7 +123,7 @@ namespace Alexa.Power
         {
             List<AlexaProperty> properties = new List<AlexaProperty>();
 
-            bool powerState = Endpoint.GetValue<bool>(_premiseProperties[0]).GetAwaiter().GetResult();
+            bool powerState = Endpoint.GetValueAsync<bool>(_premiseProperties[0]).GetAwaiter().GetResult();
             AlexaProperty property = new AlexaProperty
             {
                 @namespace = Namespace,
@@ -178,7 +178,7 @@ namespace Alexa.Power
                 // only change powerState if it needs to.
                 if ((string)GetPropertyStates()[0].value != (valueToSend ? "ON" : "OFF"))
                 {
-                    Endpoint.SetValue(_premiseProperties[0], valueToSend.ToString()).GetAwaiter().GetResult();
+                    Endpoint.SetValueAsync(_premiseProperties[0], valueToSend.ToString()).GetAwaiter().GetResult();
                 }
                 Response.context.properties.AddRange(PropertyHelpers.FindRelatedProperties(Endpoint, ""));
             }

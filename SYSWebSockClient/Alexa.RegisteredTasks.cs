@@ -22,7 +22,7 @@ namespace Alexa.RegisteredTasks
         /// <summary>
         /// Gets a cancellation token that is set when ASP.NET is shutting down the app domain.
         /// </summary>
-        public static CancellationToken Shutdown { get { return Instance.Shutdown; } }
+        public static CancellationToken Shutdown => Instance.Shutdown;
 
         #endregion Properties
 
@@ -52,7 +52,7 @@ namespace Alexa.RegisteredTasks
     /// <summary>
     /// An async-compatible countdown event.
     /// </summary>
-    [DebuggerDisplay("CurrentCount = {_count}")]
+    [DebuggerDisplay("CurrentCount = {" + nameof(_count) + "}")]
     [DebuggerTypeProxy(typeof(DebugView))]
     public sealed class AsyncCountdownEvent
     {
@@ -154,7 +154,10 @@ namespace Alexa.RegisteredTasks
 
             #region Properties
 
+            // ReSharper disable once UnusedMember.Local
             public int CurrentCount => _ce._count;
+
+            // ReSharper disable once UnusedMember.Local
             public Task Task => _ce._tcs.Task;
 
             #endregion Properties
@@ -163,7 +166,7 @@ namespace Alexa.RegisteredTasks
         #endregion Classes
     }
 
-    public sealed class RegisteredTasks : IRegisteredObject
+    public sealed class RegisteredTasks : IRegisteredObject, IDisposable
     {
         #region Fields
 
@@ -216,7 +219,7 @@ namespace Alexa.RegisteredTasks
         /// <summary>
         /// Gets a cancellation token that is set when ASP.NET is shutting down the app domain.
         /// </summary>
-        public CancellationToken Shutdown { get { return _shutdown.Token; } }
+        public CancellationToken Shutdown => _shutdown.Token;
 
         #endregion Properties
 
@@ -228,6 +231,7 @@ namespace Alexa.RegisteredTasks
         /// <param name="operation">The background operation.</param>
         public void Run(Func<Task> operation)
         {
+            // ReSharper disable once MethodSupportsCancellation
             Register(Task.Run(operation));
         }
 
@@ -237,6 +241,7 @@ namespace Alexa.RegisteredTasks
         /// <param name="operation">The background operation.</param>
         public void Run(Action operation)
         {
+            // ReSharper disable once MethodSupportsCancellation
             Register(Task.Run(operation));
         }
 
@@ -245,6 +250,7 @@ namespace Alexa.RegisteredTasks
             _shutdown.Cancel();
 
             if (immediate)
+                // ReSharper disable once MethodSupportsCancellation
                 _done.Wait();
         }
 
@@ -264,5 +270,16 @@ namespace Alexa.RegisteredTasks
         }
 
         #endregion Methods
+
+        #region Public Methods
+
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2213:DisposableFieldsShouldBeDisposed", MessageId = "_shutdown")]
+        public void Dispose()
+        {
+            _done?.Dispose();
+            _shutdown?.Dispose();
+        }
+
+        #endregion Public Methods
     }
 }

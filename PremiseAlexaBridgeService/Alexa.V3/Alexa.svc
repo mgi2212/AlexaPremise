@@ -1,1 +1,1 @@
-﻿<%@ servicehost language="C#" debug="true" service="PremiseAlexaBridgeService.PremiseAlexaService" codebehind="Alexa.svc.cs" factory="System.ServiceModel.Activation.WebServiceHostFactory" %>
+﻿<%@ servicehost language="C#" debug="true" service="PremiseAlexaBridgeService.PremiseAlexaV3Service" codebehind="Alexa.svc.cs" factory="System.ServiceModel.Activation.WebServiceHostFactory" %>

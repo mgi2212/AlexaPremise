@@ -7,9 +7,11 @@ using System.Net;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Alexa.RegisteredTasks;
 
 namespace PremiseAlexaBridgeService
 {
+    // ReSharper disable once ClassCannotBeInstantiated
     public sealed partial class PremiseServer
     {
         #region Methods
@@ -22,25 +24,30 @@ namespace PremiseAlexaBridgeService
             // This queue blocks in the enumerator so this is essentially an infinite loop.
             foreach (StateChangeReportWrapper item in stateReportQueue)
             {
+                if (BackgroundTaskManager.Shutdown.IsCancellationRequested)
+                {
+                    BackgroundTaskManager.Shutdown.ThrowIfCancellationRequested();
+                    return;
+                }
                 WebRequest request;
                 try
                 {
                     string expiry;
                     using (asyncObjectsLock.Lock())
                     {
-                        expiry = HomeObject.GetValue<string>("AlexaAsyncAuthorizationCodeExpiry").GetAwaiter()
+                        expiry = HomeObject.GetValueAsync<string>("AlexaAsyncAuthorizationCodeExpiry").GetAwaiter()
                             .GetResult();
                     }
                     if (string.IsNullOrEmpty(expiry))
                     {
-                        Task.Run(async () => { await HomeObject.SetValue("SendAsyncEventsToAlexa", "False").ConfigureAwait(false); });
+                        Task.Run(async () => { await HomeObject.SetValueAsync("SendAsyncEventsToAlexa", "False").ConfigureAwait(false); });
                         NotifyErrorAsync(EventLogEntryType.Error,
                             $"{errorPrefix}: no PSU expiry datetime. PSUs are now disabled. Enable premise skill.",
                             eventID + 1).GetAwaiter().GetResult();
                     }
                     if (!DateTime.TryParse(expiry, out var expiryDateTime))
                     {
-                        Task.Run(async () => { await HomeObject.SetValue("SendAsyncEventsToAlexa", "False").ConfigureAwait(false); });
+                        Task.Run(async () => { await HomeObject.SetValueAsync("SendAsyncEventsToAlexa", "False").ConfigureAwait(false); });
                         NotifyErrorAsync(EventLogEntryType.Error,
                             $"{errorPrefix} Cannot parse expiry date. PSUs are now disabled. Enable premise skill.",
                             eventID + 1).GetAwaiter().GetResult();
@@ -136,7 +143,7 @@ namespace PremiseAlexaBridgeService
                                 continue;
                             case HttpStatusCode.Forbidden
                             : // The skill is disabled so disable sending Async events to Alexa
-                                Task.Run(async () => { await HomeObject.SetValue("SendAsyncEventsToAlexa", "False").ConfigureAwait(false); });
+                                Task.Run(async () => { await HomeObject.SetValueAsync("SendAsyncEventsToAlexa", "False").ConfigureAwait(false); });
                                 NotifyErrorAsync(EventLogEntryType.Error,
                                     $"{errorPrefix} Premise skill has been disabled. PSUs are now disabled. Enable premise skill.",
                                     eventID + 4).GetAwaiter().GetResult();

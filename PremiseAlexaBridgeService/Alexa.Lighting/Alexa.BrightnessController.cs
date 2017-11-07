@@ -133,7 +133,7 @@ namespace Alexa.Lighting
         {
             List<AlexaProperty> properties = new List<AlexaProperty>();
 
-            double brightness = Endpoint.GetValue<double>(_premiseProperties[0]).GetAwaiter().GetResult();
+            double brightness = Endpoint.GetValueAsync<double>(_premiseProperties[0]).GetAwaiter().GetResult();
             AlexaProperty property = new AlexaProperty
             {
                 @namespace = Namespace,
@@ -169,14 +169,14 @@ namespace Alexa.Lighting
                 {
                     case "AdjustBrightness":
                         double adjustValue = Math.Round((Payload.brightnessDelta / 100.00), 2).LimitToRange(-1.00, 1.00);
-                        double currentValue = Math.Round(Endpoint.GetValue<double>(_premiseProperties[0]).GetAwaiter().GetResult(), 2);
+                        double currentValue = Math.Round(Endpoint.GetValueAsync<double>(_premiseProperties[0]).GetAwaiter().GetResult(), 2);
                         double valueToSend = Math.Round(currentValue + adjustValue, 2).LimitToRange(0.00, 1.00);
-                        Endpoint.SetValue(_premiseProperties[0], valueToSend.ToString(CultureInfo.InvariantCulture)).GetAwaiter().GetResult();
+                        Endpoint.SetValueAsync(_premiseProperties[0], valueToSend.ToString(CultureInfo.InvariantCulture)).GetAwaiter().GetResult();
                         break;
 
                     case "SetBrightness":
                         double setValue = (Payload.brightness / 100.00).LimitToRange(0.00, 1.000);
-                        Endpoint.SetValue(_premiseProperties[0], setValue.ToString(CultureInfo.InvariantCulture)).GetAwaiter().GetResult();
+                        Endpoint.SetValueAsync(_premiseProperties[0], setValue.ToString(CultureInfo.InvariantCulture)).GetAwaiter().GetResult();
                         break;
 
                     default:

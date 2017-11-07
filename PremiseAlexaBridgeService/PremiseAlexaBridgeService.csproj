@@ -137,6 +137,7 @@
     </Reference>
     <Reference Include="System.Xml" />
     <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Xml.Serialization" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Alexa.Video\readme.md" />
@@ -169,7 +170,6 @@
     <None Include="App_Data\S3 Web\privacy.html" />
     <None Include="App_Data\S3 Web\simple.html" />
     <None Include="App_Data\Premise Driver\SPWebSockets.dll" />
-    <Content Include="PremiseAlexaBridgeService.svc" />
     <Content Include="Alexa.V3\Alexa.svc">
       <BrowseToURL>~/V3/Alexa.svc</BrowseToURL>
     </Content>
@@ -196,6 +196,7 @@
     <Compile Include="Alexa.EndpointHealth\Alexa.EndpointHealthController.cs" />
     <Compile Include="Alexa.Scene\Alexa.Scene.cs" />
     <Compile Include="Alexa.Scene\Alexa.SetSceneController.cs" />
+    <Compile Include="Alexa.V3\PreWarmUpCache.cs" />
     <Compile Include="Singleton\PremiseServer.StateChangeReports.cs" />
     <Compile Include="Singleton\PremiseServer.RefreshAuthToken.cs" />
     <Compile Include="Singleton\PremiseServer.Subcriptions.cs" />
@@ -206,9 +207,6 @@
     <Compile Include="Alexa.V3\Alexa.SmartHome.V3.cs" />
     <Compile Include="Alexa.Controller\IAlexaController.cs" />
     <Compile Include="Alexa\IAlexaDeviceType.cs" />
-    <Compile Include="PremiseAlexaBridgeService.svc.cs">
-      <DependentUpon>PremiseAlexaBridgeService.svc</DependentUpon>
-    </Compile>
     <Compile Include="Alexa.V3\Alexa.svc.cs">
       <DependentUpon>Alexa.svc</DependentUpon>
     </Compile>

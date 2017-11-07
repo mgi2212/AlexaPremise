@@ -914,6 +914,7 @@ namespace Alexa.SmartHomeAPI.V3
 
         public ReportStateResponse(AlexaDirective directive)
         {
+            // ReSharper disable once UseObjectOrCollectionInitializer
             @event = new AlexaEventBody(directive.header, directive.endpoint);
             @event.header = new Header
             {

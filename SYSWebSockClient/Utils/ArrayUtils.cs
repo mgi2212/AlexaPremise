@@ -284,7 +284,7 @@ namespace SYSWebSockClient
         #endregion Methods
     }
 
-    public class FreeListArray<StorageType> : IDisposable
+    public sealed class FreeListArray<StorageType> : IDisposable
     {
         #region Fields
 
@@ -293,6 +293,10 @@ namespace SYSWebSockClient
 
         private int[] FreeList = ArrayUtils<int>.Empty;
         private int FreeListCount;
+
+        public FreeListArray()
+        {
+        }
 
         #endregion Fields
 

@@ -259,7 +259,10 @@ namespace SYSWebSockClient
     {
         #region Fields
 
+        // ReSharper disable once NotAccessedField.Local
         private readonly string _name;
+
+        // ReSharper disable once NotAccessedField.Local
         private readonly string _value;
 
         #endregion Fields

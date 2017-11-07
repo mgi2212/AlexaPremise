@@ -166,7 +166,7 @@ namespace Alexa.AV
 
             if (switcher == null || !switcher.IsValidObject())
             {
-                string name = Endpoint.GetPath().GetAwaiter().GetResult();
+                string name = Endpoint.GetPathAsync().GetAwaiter().GetResult();
                 ReportError(AlexaErrorTypes.NO_SUCH_ENDPOINT, $"No switcher child object in MediaZone at {name}.");
                 return;
             }
@@ -177,8 +177,8 @@ namespace Alexa.AV
             {
                 // switch inputs
                 IPremiseObject newInput = inputs[Request.directive.payload.input];
-                string newInputId = newInput.GetObjectID().GetAwaiter().GetResult();
-                switcher.SetValue("CurrentSource", newInputId).GetAwaiter().GetResult();
+                string newInputId = newInput.GetObjectIDAsync().GetAwaiter().GetResult();
+                switcher.SetValueAsync("CurrentSource", newInputId).GetAwaiter().GetResult();
                 Response.Event.header.name = "Response";
                 Response.context.properties.AddRange(PropertyHelpers.FindRelatedProperties(Endpoint, ""));
             }
@@ -205,27 +205,27 @@ namespace Alexa.AV
                 return inputs;
 
             // The bound object of the switcher should be the output zone object at the device level
-            IPremiseObject boundObject = switcher.GetRefValue("BoundObject").GetAwaiter().GetResult();
+            IPremiseObject boundObject = switcher.GetRefValueAsync("BoundObject").GetAwaiter().GetResult();
             if (!boundObject.IsValidObject())
             {
-                string path = switcher.GetPath().GetAwaiter().GetResult();
+                string path = switcher.GetPathAsync().GetAwaiter().GetResult();
                 ReportError(AlexaErrorTypes.ENDPOINT_UNREACHABLE, $"No device bound to switcher at {path}.");
                 return inputs;
             }
 
             // the parent should be the actual switcher
-            IPremiseObject actualSwitcher = boundObject.GetParent().GetAwaiter().GetResult();
+            IPremiseObject actualSwitcher = boundObject.GetParentAsync().GetAwaiter().GetResult();
             if (!actualSwitcher.IsValidObject())
             {
-                string path = boundObject.GetPath().GetAwaiter().GetResult();
+                string path = boundObject.GetPathAsync().GetAwaiter().GetResult();
                 ReportError(AlexaErrorTypes.INTERNAL_ERROR, $"Unexpected parent at {path}.");
                 return inputs;
             }
 
             // walk through the children looking for inputs
-            foreach (IPremiseObject child in actualSwitcher.GetChildren().GetAwaiter().GetResult())
+            foreach (IPremiseObject child in actualSwitcher.GetChildrenAsync().GetAwaiter().GetResult())
             {
-                if (child.IsOfType(PremiseServer.AlexaAudioVideoInput).GetAwaiter().GetResult())
+                if (child.IsOfTypeAsync(PremiseServer.AlexaAudioVideoInput).GetAwaiter().GetResult())
                 {
                     string inputName = GetInputName(child).ToUpper();
                     inputs.Add(inputName, child);
@@ -242,7 +242,7 @@ namespace Alexa.AV
                 return "";
             }
 
-            IPremiseObject currentInput = switcher.GetRefValue("CurrentSource").GetAwaiter().GetResult();
+            IPremiseObject currentInput = switcher.GetRefValueAsync("CurrentSource").GetAwaiter().GetResult();
             if (!currentInput.IsValidObject())
             {
                 return "";
@@ -252,11 +252,11 @@ namespace Alexa.AV
 
         private string GetInputName(IPremiseObject input)
         {
-            string inputName = input.GetValue<string>("AlexaInputName").GetAwaiter().GetResult();
+            string inputName = input.GetValueAsync<string>("AlexaInputName").GetAwaiter().GetResult();
             if (string.IsNullOrEmpty(inputName))
             {
                 // if the AlexaInputName isn't set then use the object name.
-                inputName = input.GetName().GetAwaiter().GetResult();
+                inputName = input.GetNameAsync().GetAwaiter().GetResult();
             }
             return inputName.ToUpper();
         }
@@ -265,10 +265,10 @@ namespace Alexa.AV
         {
             IPremiseObject switcher = null;
 
-            foreach (IPremiseObject child in Endpoint.GetChildren().GetAwaiter().GetResult())
+            foreach (IPremiseObject child in Endpoint.GetChildrenAsync().GetAwaiter().GetResult())
             {
                 // there should be an object of type matrix switcher zone as a child
-                if (child.IsOfType(PremiseServer.AlexaMatrixSwitcherZone).GetAwaiter().GetResult())
+                if (child.IsOfTypeAsync(PremiseServer.AlexaMatrixSwitcherZone).GetAwaiter().GetResult())
                 {
                     switcher = child;
                     break;

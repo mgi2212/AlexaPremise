@@ -7,19 +7,19 @@ namespace SYSWebSockClient
     {
         #region Methods
 
-        Task Unsubscribe();
+        Task UnsubscribeAsync();
 
         #endregion Methods
     }
 
-    public class PremiseSubscription : IPremiseSubscription
+    public sealed class PremiseSubscription : IPremiseSubscription
     {
         #region Fields
 
         public string clientSideSubscriptionId;
-        private string ObjectId;
-        private long SubscriptionId;
-        private SYSClient SysClient;
+        private readonly string _objectId;
+        private readonly long _subscriptionId;
+        private readonly SYSClient _sysClient;
 
         #endregion Fields
 
@@ -27,9 +27,9 @@ namespace SYSWebSockClient
 
         internal PremiseSubscription(SYSClient sysClient, string objectId, long subscriptionId, string clientSubscriptionId)
         {
-            SysClient = sysClient;
-            ObjectId = objectId;
-            SubscriptionId = subscriptionId;
+            _sysClient = sysClient;
+            _objectId = objectId;
+            _subscriptionId = subscriptionId;
             clientSideSubscriptionId = clientSubscriptionId;
         }
 
@@ -37,12 +37,12 @@ namespace SYSWebSockClient
 
         #region Methods
 
-        Task IPremiseSubscription.Unsubscribe()
+        Task IPremiseSubscription.UnsubscribeAsync()
         {
-            var future = new UnsubscribeFuture(ObjectId, SubscriptionId);
+            var future = new UnsubscribeFuture(_objectId, _subscriptionId);
 
-            SysClient.Send(future, out Task task);
-            if (!SysClient.Subscriptions.TryRemove(clientSideSubscriptionId, out Subscription _))
+            _sysClient.Send(future, out Task task);
+            if (!_sysClient.Subscriptions.TryRemove(clientSideSubscriptionId, out Subscription _))
             {
                 Debug.WriteLine($"Subscription {clientSideSubscriptionId} Not Found");
             }

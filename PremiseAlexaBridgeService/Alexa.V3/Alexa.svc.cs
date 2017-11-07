@@ -1,11 +1,4 @@
-﻿using System;
-using System.Diagnostics;
-using System.Globalization;
-using System.Linq;
-using System.ServiceModel;
-using System.ServiceModel.Web;
-using System.Threading.Tasks;
-using Alexa;
+﻿using Alexa;
 using Alexa.AV;
 using Alexa.Discovery;
 using Alexa.HVAC;
@@ -13,6 +6,14 @@ using Alexa.Lighting;
 using Alexa.Power;
 using Alexa.Scene;
 using Alexa.SmartHomeAPI.V3;
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Globalization;
+using System.Linq;
+using System.ServiceModel;
+using System.ServiceModel.Web;
+using System.Threading.Tasks;
 using SYSWebSockClient;
 
 namespace PremiseAlexaBridgeService
@@ -77,6 +78,36 @@ namespace PremiseAlexaBridgeService
         #endregion Methods
     }
 
+    public static class InputExtensions
+    {
+        #region Methods
+
+        public static void AddUnique<TList>(this IList<TList> self, IEnumerable<TList> items)
+        {
+            foreach (var item in items)
+                if (!self.Contains(item))
+                    self.Add(item);
+        }
+
+        public static double LimitToRange(
+            this double value, double inclusiveMinimum, double inclusiveMaximum)
+        {
+            if (value < inclusiveMinimum) { return inclusiveMinimum; }
+            if (value > inclusiveMaximum) { return inclusiveMaximum; }
+            return value;
+        }
+
+        public static int LimitToRange(
+            this int value, int inclusiveMinimum, int inclusiveMaximum)
+        {
+            if (value < inclusiveMinimum) { return inclusiveMinimum; }
+            if (value > inclusiveMaximum) { return inclusiveMaximum; }
+            return value;
+        }
+
+        #endregion Methods
+    }
+
     public class PremiseAlexaV3Service : IPremiseAlexaV3Service
     {
         #region System
@@ -85,8 +116,8 @@ namespace PremiseAlexaBridgeService
         {
             SystemResponsePayload payload = new SystemResponsePayload
             {
-                isHealthy = PremiseServer.HomeObject.GetValue<bool>("Health").GetAwaiter().GetResult(),
-                description = PremiseServer.HomeObject.GetValue<string>("HealthDescription").GetAwaiter().GetResult()
+                isHealthy = PremiseServer.HomeObject.GetValueAsync<bool>("Health").GetAwaiter().GetResult(),
+                description = PremiseServer.HomeObject.GetValueAsync<string>("HealthDescription").GetAwaiter().GetResult()
             };
             return payload;
         }
@@ -506,16 +537,19 @@ namespace PremiseAlexaBridgeService
             try
             {
                 Guid premiseId = new Guid(directive.endpoint.endpointId);
-                endpoint = PremiseServer.RootObject.GetObject(premiseId.ToString("B")).GetAwaiter().GetResult();
+                endpoint = PremiseServer.RootObject.GetObjectAsync(premiseId.ToString("B")).GetAwaiter().GetResult();
                 if (endpoint == null)
                 {
-                    throw new Exception();
+                    response.context = null;
+                    response.@event.payload = new AlexaErrorResponsePayload(AlexaErrorTypes.NO_SUCH_ENDPOINT,
+                        $"Cannot find device {directive.endpoint.endpointId} on server.");
+                    return response;
                 }
             }
             catch
             {
                 response.context = null;
-                response.@event.payload = new AlexaErrorResponsePayload(AlexaErrorTypes.INTERNAL_ERROR,
+                response.@event.payload = new AlexaErrorResponsePayload(AlexaErrorTypes.NO_SUCH_ENDPOINT,
                     $"Cannot find device {directive.endpoint.endpointId} on server.");
                 return response;
             }
@@ -655,13 +689,13 @@ namespace PremiseAlexaBridgeService
 
                 using (PremiseServer.AsyncObjectsLock.Lock())
                 {
-                    PremiseServer.HomeObject.SetValue("AlexaAsyncAuthorizationCode", directive.payload.grant.access_token).GetAwaiter().GetResult();
-                    PremiseServer.HomeObject.SetValue("AlexaAsyncAuthorizationRefreshToken", directive.payload.grant.refresh_token).GetAwaiter().GetResult();
-                    PremiseServer.HomeObject.SetValue("AlexaAsyncAuthorizationClientId", directive.payload.grant.client_id).GetAwaiter().GetResult();
-                    PremiseServer.HomeObject.SetValue("AlexaAsyncAuthorizationSecret", directive.payload.grant.client_secret).GetAwaiter().GetResult();
+                    PremiseServer.HomeObject.SetValueAsync("AlexaAsyncAuthorizationCode", directive.payload.grant.access_token).GetAwaiter().GetResult();
+                    PremiseServer.HomeObject.SetValueAsync("AlexaAsyncAuthorizationRefreshToken", directive.payload.grant.refresh_token).GetAwaiter().GetResult();
+                    PremiseServer.HomeObject.SetValueAsync("AlexaAsyncAuthorizationClientId", directive.payload.grant.client_id).GetAwaiter().GetResult();
+                    PremiseServer.HomeObject.SetValueAsync("AlexaAsyncAuthorizationSecret", directive.payload.grant.client_secret).GetAwaiter().GetResult();
 
                     DateTime expiry = DateTime.UtcNow.AddSeconds(directive.payload.grant.expires_in);
-                    PremiseServer.HomeObject.SetValue("AlexaAsyncAuthorizationCodeExpiry", expiry.ToString(CultureInfo.InvariantCulture)).GetAwaiter().GetResult();
+                    PremiseServer.HomeObject.SetValueAsync("AlexaAsyncAuthorizationCodeExpiry", expiry.ToString(CultureInfo.InvariantCulture)).GetAwaiter().GetResult();
                 }
 
                 const string message = "Skill is now enabled and authorized to send async updates to Alexa. A task has been started to subscribe to property change events.";
@@ -671,9 +705,9 @@ namespace PremiseAlexaBridgeService
                 Task.Run(async () =>
                 {
                     // Generate Discovery Json
-                    await PremiseServer.HomeObject.SetValue("GenerateDiscoveryJson", "True").ConfigureAwait(false);
+                    await PremiseServer.HomeObject.SetValueAsync("GenerateDiscoveryJson", "True").ConfigureAwait(false);
                     // Signal sending async property change events - this will also subscribe to all properties
-                    await PremiseServer.HomeObject.SetValue("SendAsyncEventsToAlexa", "True").ConfigureAwait(false);
+                    await PremiseServer.HomeObject.SetValueAsync("SendAsyncEventsToAlexa", "True").ConfigureAwait(false);
                 });
             }
             catch (Exception ex)

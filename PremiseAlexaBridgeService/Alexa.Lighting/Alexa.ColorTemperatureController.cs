@@ -135,7 +135,7 @@ namespace Alexa.Lighting
         {
             List<AlexaProperty> properties = new List<AlexaProperty>();
 
-            double colorTemperature = Endpoint.GetValue<double>(_premiseProperties[0]).GetAwaiter().GetResult();
+            double colorTemperature = Endpoint.GetValueAsync<double>(_premiseProperties[0]).GetAwaiter().GetResult();
             AlexaProperty property = new AlexaProperty
             {
                 @namespace = Namespace,
@@ -173,23 +173,23 @@ namespace Alexa.Lighting
                     case "SetColorTemperature":
                         {
                             int setValue = Payload.colorTemperatureInKelvin.LimitToRange(1000, 10000);
-                            Endpoint.SetValue(_premiseProperties[0], setValue.ToString()).GetAwaiter().GetResult();
+                            Endpoint.SetValueAsync(_premiseProperties[0], setValue.ToString()).GetAwaiter().GetResult();
                         }
                         break;
 
                     case "DecreaseColorTemperature":
                         {
-                            int currentValue = (int)(Endpoint.GetValue<double>(_premiseProperties[0]).GetAwaiter().GetResult()).LimitToRange(1000, 10000);
+                            int currentValue = (int)(Endpoint.GetValueAsync<double>(_premiseProperties[0]).GetAwaiter().GetResult()).LimitToRange(1000, 10000);
                             int valueToSend = GetPreviousColor(currentValue).LimitToRange(1000, 10000);
-                            Endpoint.SetValue(_premiseProperties[0], valueToSend.ToString()).GetAwaiter().GetResult();
+                            Endpoint.SetValueAsync(_premiseProperties[0], valueToSend.ToString()).GetAwaiter().GetResult();
                         }
                         break;
 
                     case "IncreaseColorTemperature":
                         {
-                            int currentValue = (int)(Endpoint.GetValue<double>(_premiseProperties[0]).GetAwaiter().GetResult()).LimitToRange(1000, 10000);
+                            int currentValue = (int)(Endpoint.GetValueAsync<double>(_premiseProperties[0]).GetAwaiter().GetResult()).LimitToRange(1000, 10000);
                             int valueToSend = GetNextColor(currentValue).LimitToRange(1000, 10000);
-                            Endpoint.SetValue(_premiseProperties[0], valueToSend.ToString()).GetAwaiter().GetResult();
+                            Endpoint.SetValueAsync(_premiseProperties[0], valueToSend.ToString()).GetAwaiter().GetResult();
                         }
                         break;
 

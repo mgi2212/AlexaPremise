@@ -22,7 +22,7 @@ namespace SYSWebSockClient
         #endregion Methods
     }
 
-    internal class Future
+    internal class Future : IDisposable
     {
         #region Fields
 
@@ -66,6 +66,16 @@ namespace SYSWebSockClient
         }
 
         #endregion Methods
+
+        #region Public Methods
+
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2213:DisposableFieldsShouldBeDisposed", MessageId = "Event")]
+        public void Dispose()
+        {
+            Event?.Dispose();
+        }
+
+        #endregion Public Methods
     }
 
     /// <summary>

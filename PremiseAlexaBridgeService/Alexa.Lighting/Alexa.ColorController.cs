@@ -154,15 +154,15 @@ namespace Alexa.Lighting
                 switch (premiseProperty)
                 {
                     case "Hue":
-                        colorValue.hue = Math.Round(Endpoint.GetValue<double>(premiseProperty).GetAwaiter().GetResult().LimitToRange(0.0, 360.0), 4);
+                        colorValue.hue = Math.Round(Endpoint.GetValueAsync<double>(premiseProperty).GetAwaiter().GetResult().LimitToRange(0.0, 360.0), 4);
                         break;
 
                     case "Saturation":
-                        colorValue.saturation = Math.Round(Endpoint.GetValue<double>(premiseProperty).GetAwaiter().GetResult().LimitToRange(0.0, 1.0), 4);
+                        colorValue.saturation = Math.Round(Endpoint.GetValueAsync<double>(premiseProperty).GetAwaiter().GetResult().LimitToRange(0.0, 1.0), 4);
                         break;
 
                     case "Brightness":
-                        colorValue.brightness = Math.Round(Endpoint.GetValue<double>(premiseProperty).GetAwaiter().GetResult().LimitToRange(0.0, 1.0), 4);
+                        colorValue.brightness = Math.Round(Endpoint.GetValueAsync<double>(premiseProperty).GetAwaiter().GetResult().LimitToRange(0.0, 1.0), 4);
                         break;
                 }
             }
@@ -206,9 +206,9 @@ namespace Alexa.Lighting
         {
             try
             {
-                Endpoint.SetValue("Hue", Payload.color.hue.ToString(CultureInfo.InvariantCulture)).GetAwaiter().GetResult();
-                Endpoint.SetValue("Saturation", Payload.color.saturation.ToString(CultureInfo.InvariantCulture)).GetAwaiter().GetResult();
-                Endpoint.SetValue("Brightness", Payload.color.brightness.ToString(CultureInfo.InvariantCulture)).GetAwaiter().GetResult();
+                Endpoint.SetValueAsync("Hue", Payload.color.hue.ToString(CultureInfo.InvariantCulture)).GetAwaiter().GetResult();
+                Endpoint.SetValueAsync("Saturation", Payload.color.saturation.ToString(CultureInfo.InvariantCulture)).GetAwaiter().GetResult();
+                Endpoint.SetValueAsync("Brightness", Payload.color.brightness.ToString(CultureInfo.InvariantCulture)).GetAwaiter().GetResult();
                 Response.Event.header.name = "Response";
                 Response.context.properties.AddRange(PropertyHelpers.FindRelatedProperties(Endpoint, ""));
             }

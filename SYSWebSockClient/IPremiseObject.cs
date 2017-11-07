@@ -10,83 +10,83 @@ namespace SYSWebSockClient
     {
         IPremiseObject WrapObjectId(string objectId);
 
-        Task SetName(string name);
+        Task SetNameAsync(string name);
 
-        Task<string> GetName();
+        Task<string> GetNameAsync();
 
-        Task SetDisplayName(string name);
+        Task SetDisplayNameAsync(string name);
 
-        Task<string> GetDisplayName();
+        Task<string> GetDisplayNameAsync();
 
-        Task SetDescription(string name);
+        Task SetDescriptionAsync(string name);
 
-        Task<string> GetDescription();
+        Task<string> GetDescriptionAsync();
 
-        Task<string> GetObjectID();
+        Task<string> GetObjectIDAsync();
 
-        Task<string> GetPath();
+        Task<string> GetPathAsync();
 
-        Task<IPremiseObject> GetObject(string subObject);
+        Task<IPremiseObject> GetObjectAsync(string subObject);
 
-        Task<IPremiseObject> GetParent();
+        Task<IPremiseObject> GetParentAsync();
 
-        Task<IPremiseObject> GetRoot();
+        Task<IPremiseObject> GetRootAsync();
 
-        Task<IPremiseObject> GetClass();
+        Task<IPremiseObject> GetClassAsync();
 
-        Task<IPremiseObject> SetClass(IPremiseObject type);
+        Task<IPremiseObject> SetClassAsync(IPremiseObject type);
 
-        Task<IPremiseObject> SetClass(string classObjectId);
+        Task<IPremiseObject> SetClassAsync(string classObjectId);
 
-        Task<ExpectedT> GetValue<ExpectedT>(string name);
+        Task<ExpectedT> GetValueAsync<ExpectedT>(string name);
 
-        Task<dynamic> GetValue(string name);
+        Task<dynamic> GetValueAsync(string name);
 
-        Task<IPremiseObject> GetRefValue(string name);
+        Task<IPremiseObject> GetRefValueAsync(string name);
 
-        Task SetValue(string name, string value);
+        Task SetValueAsync(string name, string value);
 
-        Task<IPremiseObject> CreateObject(IPremiseObject type, string name);
+        Task<IPremiseObject> CreateObjectAsync(IPremiseObject type, string name);
 
-        Task<IPremiseObject> CreateObject(string type, string name);
+        Task<IPremiseObject> CreateObjectAsync(string type, string name);
 
-        Task Delete();
+        Task DeleteAsync();
 
-        Task DeleteChildObject(string subObjectId);
+        Task DeleteChildObjectAsync(string subObjectId);
 
-        Task<IPremiseObjectCollection> GetAll();
+        Task<IPremiseObjectCollection> GetAllAsync();
 
-        Task<IPremiseObjectCollection> GetChildren();
+        Task<IPremiseObjectCollection> GetChildrenAsync();
 
-        Task<IPremiseObjectCollection> GetClasses();
+        Task<IPremiseObjectCollection> GetClassesAsync();
 
-        Task<IPremiseObjectCollection> GetSubClasses();
+        Task<IPremiseObjectCollection> GetSubClassesAsync();
 
-        Task<IPremiseObjectCollection> GetSuperClasses();
+        Task<IPremiseObjectCollection> GetSuperClassesAsync();
 
-        Task<IPremiseObjectCollection> GetProperties();
+        Task<IPremiseObjectCollection> GetPropertiesAsync();
 
-        Task<IPremiseObjectCollection> GetAggregatedProperties();
+        Task<IPremiseObjectCollection> GetAggregatedPropertiesAsync();
 
-        Task<IPremiseObjectCollection> GetMethods();
+        Task<IPremiseObjectCollection> GetMethodsAsync();
 
-        Task<IPremiseObjectCollection> GetConnectedObjects();
+        Task<IPremiseObjectCollection> GetConnectedObjectsAsync();
 
-        Task<IPremiseObjectCollection> GetCreatableObjects();
+        Task<IPremiseObjectCollection> GetCreatableObjectsAsync();
 
-        Task<string> GetPropertyAsText(string propertyId);
+        Task<string> GetPropertyAsTextAsync(string propertyId);
 
-        Task<string> GetPropertyAsText(IPremiseObject property);
+        Task<string> GetPropertyAsTextAsync(IPremiseObject property);
 
-        Task<bool> IsChildOf();
+        Task<bool> IsChildOfAsync();
 
-        Task<bool> IsOfType(string typeId);
+        Task<bool> IsOfTypeAsync(string typeId);
 
-        Task<bool> IsOfType(IPremiseObject typeId);
+        Task<bool> IsOfTypeAsync(IPremiseObject typeId);
 
-        Task<dynamic> Select(ICollection<string> returnClause, dynamic whereClause);
+        Task<dynamic> SelectAsync(ICollection<string> returnClause, dynamic whereClause);
 
-        Task<IPremiseSubscription> Subscribe(string propertyName, string alexaControllerName, Action<dynamic> callback);
+        Task<IPremiseSubscription> SubscribeAsync(string propertyName, string alexaControllerName, Action<dynamic> callback);
 
         bool IsValidObject();
 

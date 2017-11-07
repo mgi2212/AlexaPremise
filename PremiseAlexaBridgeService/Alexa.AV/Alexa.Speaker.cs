@@ -137,7 +137,7 @@ namespace Alexa.AV
         {
             List<AlexaProperty> properties = new List<AlexaProperty>();
 
-            double volume = Endpoint.GetValue<double>("Volume").GetAwaiter().GetResult();
+            double volume = Endpoint.GetValueAsync<double>("Volume").GetAwaiter().GetResult();
             AlexaProperty volumeProperty = new AlexaProperty
             {
                 @namespace = Namespace,
@@ -147,7 +147,7 @@ namespace Alexa.AV
             };
             properties.Add(volumeProperty);
 
-            bool mute = Endpoint.GetValue<bool>("Mute").GetAwaiter().GetResult();
+            bool mute = Endpoint.GetValueAsync<bool>("Mute").GetAwaiter().GetResult();
             AlexaProperty muteProperty = new AlexaProperty
             {
                 @namespace = Namespace,
@@ -194,19 +194,19 @@ namespace Alexa.AV
                 {
                     case "AdjustVolume":
                         double adjustValue = Math.Round((Payload.volume / 100.00), 2).LimitToRange(-1.00, 1.00);
-                        double currentValue = Math.Round(Endpoint.GetValue<double>("Volume").GetAwaiter().GetResult(), 2);
+                        double currentValue = Math.Round(Endpoint.GetValueAsync<double>("Volume").GetAwaiter().GetResult(), 2);
                         double valueToSend = Math.Round(currentValue + adjustValue, 2).LimitToRange(0.00, 1.00);
-                        Endpoint.SetValue(_premiseProperties[0], valueToSend.ToString(CultureInfo.InvariantCulture)).GetAwaiter().GetResult();
+                        Endpoint.SetValueAsync(_premiseProperties[0], valueToSend.ToString(CultureInfo.InvariantCulture)).GetAwaiter().GetResult();
                         break;
 
                     case "SetVolume":
                         double setValue = (Payload.volume / 100.00).LimitToRange(0.00, 1.000);
-                        Endpoint.SetValue("Volume", setValue.ToString(CultureInfo.InvariantCulture)).GetAwaiter().GetResult();
+                        Endpoint.SetValueAsync("Volume", setValue.ToString(CultureInfo.InvariantCulture)).GetAwaiter().GetResult();
                         break;
 
                     case "SetMute":
                         bool mute = Payload.mute;
-                        Endpoint.SetValue("Mute", mute.ToString(CultureInfo.InvariantCulture)).GetAwaiter().GetResult();
+                        Endpoint.SetValueAsync("Mute", mute.ToString(CultureInfo.InvariantCulture)).GetAwaiter().GetResult();
                         break;
 
                     default:

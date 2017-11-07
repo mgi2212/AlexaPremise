@@ -54,7 +54,7 @@ namespace Alexa.Power
                     switch (capability.@interface)
                     {
                         case "Alexa.PowerController":
-                            subscription = endpoint.Subscribe("PowerState", GetType().AssemblyQualifiedName, callback).GetAwaiter().GetResult();
+                            subscription = endpoint.SubscribeAsync("PowerState", GetType().AssemblyQualifiedName, callback).GetAwaiter().GetResult();
                             break;
                     }
                 }

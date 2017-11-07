@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Collections.Concurrent;
-using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Net.WebSockets;
 using System.Text;
 using System.Threading;
@@ -18,7 +18,8 @@ namespace SYSWebSockClient
         private byte[] Accumulator = ArrayUtils<byte>.Empty;
         private int AccumulatorLength;
         private BlockingCollection<byte[]> SendQueue;
-
+        private CancellationToken sendReceiveCancellationToken;
+        private CancellationTokenSource sendReceiveCancellationTokenSource;
         private ClientWebSocket WebSocket;
 
         #endregion Fields
@@ -54,7 +55,9 @@ namespace SYSWebSockClient
         {
             SendQueue.CompleteAdding();
 
-            WebSocket.CloseAsync(status, "Closing Connection", CancellationToken.None);
+            WebSocket.CloseAsync(status, "Closing Connection", CancellationToken.None).GetAwaiter().GetResult();
+
+            sendReceiveCancellationTokenSource.Cancel();
         }
 
         public void Send(string message)
@@ -63,18 +66,22 @@ namespace SYSWebSockClient
 
             Interlocked.Increment(ref sendCount);
 
-            SendQueue.Add(sendBuffer);
+            SendQueue.Add(sendBuffer, sendReceiveCancellationToken);
         }
 
+        [SuppressMessage("ReSharper", "AsyncConverter.AsyncAwaitMayBeElidedHighlighting")]
         protected async void Connect(string uri)
         {
             if (WebSocket != null)
             {
                 if (WebSocket.State == WebSocketState.Open)
                 {
+                    sendReceiveCancellationTokenSource?.Cancel();
                     Disconnect();
                 }
                 WebSocket = null;
+                sendReceiveCancellationTokenSource = null;
+                sendReceiveCancellationToken = CancellationToken.None;
             }
 
             WebSocket = new ClientWebSocket();
@@ -83,7 +90,10 @@ namespace SYSWebSockClient
             SendQueue = null;
             SendQueue = new BlockingCollection<byte[]>();
 
-            await WebSocket.ConnectAsync(new Uri(uri), CancellationToken.None)
+            sendReceiveCancellationTokenSource = new CancellationTokenSource();
+            sendReceiveCancellationToken = sendReceiveCancellationTokenSource.Token;
+
+            await WebSocket.ConnectAsync(new Uri(uri), sendReceiveCancellationToken)
                 .ContinueWith(
                     task =>
                     {
@@ -97,14 +107,14 @@ namespace SYSWebSockClient
 
                         BackgroundTaskManager.Run(() =>
                         {
-                            StartSending();
+                            StartSending(sendReceiveCancellationToken);
                         });
 
                         BackgroundTaskManager.Run(() =>
                         {
-                            StartReceiving();
+                            StartReceiving(sendReceiveCancellationToken);
                         });
-                    }).ConfigureAwait(false);
+                    }, sendReceiveCancellationToken).ConfigureAwait(false);
         }
 
         protected virtual void OnConnect()
@@ -152,18 +162,21 @@ namespace SYSWebSockClient
             }
         }
 
-        private void StartReceiving()
+        private void StartReceiving(CancellationToken token)
         {
             loop:
-            if (WebSocket.State != WebSocketState.Open)
+
+            if (token.IsCancellationRequested || WebSocket.State != WebSocketState.Open)
+            {
                 return;
+            }
 
             byte[] buffer = new byte[4096];
 
             WebSocketReceiveResult result;
             try
             {
-                result = WebSocket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None).GetAwaiter().GetResult();
+                result = WebSocket.ReceiveAsync(new ArraySegment<byte>(buffer), token).GetAwaiter().GetResult();
             }
             catch (Exception)
             {
@@ -195,16 +208,21 @@ namespace SYSWebSockClient
             goto loop;
         }
 
-        private void StartSending()
+        private void StartSending(CancellationToken token)
         {
-            foreach (var sendBuffer in SendQueue.GetConsumingEnumerable())
+            foreach (var sendBuffer in SendQueue.GetConsumingEnumerable(token))
             {
+                if (token.IsCancellationRequested || WebSocket.State != WebSocketState.Open)
+                {
+                    return;
+                }
+
                 // Note: CHRISBE: ClientWebSocket SendAsync can be called from any thread, but
                 // SendAsync isn't thread safe - so you can't issue overlapped calls kind of lame
                 // ...sooo have to wait for it to complete
                 try
                 {
-                    WebSocket.SendAsync(new ArraySegment<byte>(sendBuffer), WebSocketMessageType.Text, true, CancellationToken.None).GetAwaiter().GetResult();
+                    WebSocket.SendAsync(new ArraySegment<byte>(sendBuffer), WebSocketMessageType.Text, true, token).GetAwaiter().GetResult();
                 }
                 catch (Exception ex)
                 {

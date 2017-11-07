@@ -76,7 +76,7 @@ namespace Alexa.HVAC
                     string index = discoveryEndpoint.endpointId + $".{premiseProperty}." + capability.@interface;
                     if (subscriptions.ContainsKey(index)) continue;
 
-                    IPremiseSubscription subscription = endpoint.Subscribe(premiseProperty, GetType().AssemblyQualifiedName, callback).GetAwaiter().GetResult();
+                    IPremiseSubscription subscription = endpoint.SubscribeAsync(premiseProperty, GetType().AssemblyQualifiedName, callback).GetAwaiter().GetResult();
                     if (subscription != null)
                     {
                         subscriptions.Add(index, subscription);

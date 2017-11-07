@@ -135,7 +135,7 @@ namespace Alexa.Scene
         {
             List<AlexaProperty> properties = new List<AlexaProperty>();
 
-            bool powerState = Endpoint.GetValue<bool>(_premiseProperties[0]).GetAwaiter().GetResult();
+            bool powerState = Endpoint.GetValueAsync<bool>(_premiseProperties[0]).GetAwaiter().GetResult();
             AlexaProperty property = new AlexaProperty
             {
                 @namespace = Namespace,
@@ -184,12 +184,12 @@ namespace Alexa.Scene
                     return;
                 }
 
-                Endpoint.SetValue(_premiseProperties[0], valueToSend).GetAwaiter().GetResult();
+                Endpoint.SetValueAsync(_premiseProperties[0], valueToSend).GetAwaiter().GetResult();
                 Response.context.properties = null;
                 Response.Event.header.@namespace = "Alexa.SceneController";
                 Response.Event.payload.cause = new ChangeReportCause { type = "VOICE_INTERACTION" };
                 Response.Event.payload.timestamp = PremiseServer.GetUtcTime();
-                Response.Event.endpoint.cookie.path = Endpoint.GetPath().GetAwaiter().GetResult();
+                Response.Event.endpoint.cookie.path = Endpoint.GetPathAsync().GetAwaiter().GetResult();
             }
             catch (Exception ex)
             {

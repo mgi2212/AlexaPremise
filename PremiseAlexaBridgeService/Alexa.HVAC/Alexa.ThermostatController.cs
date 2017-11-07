@@ -172,7 +172,7 @@ namespace Alexa.HVAC
 
             for (int x = 0; x <= 2; x++)
             {
-                Temperature temp = new Temperature(Endpoint.GetValue<double>(_premiseProperties[x]).GetAwaiter().GetResult());
+                Temperature temp = new Temperature(Endpoint.GetValueAsync<double>(_premiseProperties[x]).GetAwaiter().GetResult());
                 AlexaProperty property = new AlexaProperty
                 {
                     @namespace = Namespace,
@@ -183,7 +183,7 @@ namespace Alexa.HVAC
                 properties.Add(property);
             }
 
-            int mode = Endpoint.GetValue<int>(_premiseProperties[3]).GetAwaiter().GetResult();
+            int mode = Endpoint.GetValueAsync<int>(_premiseProperties[3]).GetAwaiter().GetResult();
             AlexaProperty thermostatMode = new AlexaProperty
             {
                 @namespace = Namespace,
@@ -227,17 +227,17 @@ namespace Alexa.HVAC
                 if (Payload.targetSetpoint != null)
                 {
                     Temperature target = new Temperature(Payload.targetSetpoint.scale, Payload.targetSetpoint.value);
-                    Endpoint.SetValue("CurrentSetPoint", Math.Round(target.Kelvin, 1).ToString(CultureInfo.InvariantCulture)).GetAwaiter().GetResult();
+                    Endpoint.SetValueAsync("CurrentSetPoint", Math.Round(target.Kelvin, 1).ToString(CultureInfo.InvariantCulture)).GetAwaiter().GetResult();
                 }
                 if (Payload.lowerSetpoint != null)
                 {
                     Temperature lower = new Temperature(Payload.lowerSetpoint.scale, Payload.lowerSetpoint.value);
-                    Endpoint.SetValue("HeatingSetPoint", Math.Round(lower.Kelvin, 1).ToString(CultureInfo.InvariantCulture)).GetAwaiter().GetResult();
+                    Endpoint.SetValueAsync("HeatingSetPoint", Math.Round(lower.Kelvin, 1).ToString(CultureInfo.InvariantCulture)).GetAwaiter().GetResult();
                 }
                 if (Payload.upperSetpoint != null)
                 {
                     Temperature upper = new Temperature(Payload.upperSetpoint.scale, Payload.upperSetpoint.value);
-                    Endpoint.SetValue("CoolingSetPoint", Math.Round(upper.Kelvin, 1).ToString(CultureInfo.InvariantCulture)).GetAwaiter().GetResult();
+                    Endpoint.SetValueAsync("CoolingSetPoint", Math.Round(upper.Kelvin, 1).ToString(CultureInfo.InvariantCulture)).GetAwaiter().GetResult();
                 }
                 if (Payload.thermostatMode != null)
                 {
@@ -245,25 +245,25 @@ namespace Alexa.HVAC
                     switch (mode)
                     {
                         case "AUTO":
-                            Endpoint.SetValue("TemperatureMode", "0").GetAwaiter().GetResult();
+                            Endpoint.SetValueAsync("TemperatureMode", "0").GetAwaiter().GetResult();
                             break;
 
                         case "HEAT":
-                            Endpoint.SetValue("TemperatureMode", "1").GetAwaiter().GetResult();
+                            Endpoint.SetValueAsync("TemperatureMode", "1").GetAwaiter().GetResult();
                             break;
 
                         case "COOL":
-                            Endpoint.SetValue("TemperatureMode", "2").GetAwaiter().GetResult();
+                            Endpoint.SetValueAsync("TemperatureMode", "2").GetAwaiter().GetResult();
                             break;
 
                         case "OFF": // 3 is emergency heat in premise
-                            Endpoint.SetValue("TemperatureMode", "4").GetAwaiter().GetResult();
+                            Endpoint.SetValueAsync("TemperatureMode", "4").GetAwaiter().GetResult();
                             break;
                     }
                 }
                 if (Payload.targetSetpointDelta != null)
                 {
-                    Temperature target = new Temperature(Endpoint.GetValue<double>("CurrentSetPoint").GetAwaiter().GetResult());
+                    Temperature target = new Temperature(Endpoint.GetValueAsync<double>("CurrentSetPoint").GetAwaiter().GetResult());
                     switch (Payload.targetSetpointDelta.scale)
                     {
                         case "FAHRENHEIT":
@@ -278,7 +278,7 @@ namespace Alexa.HVAC
                             target.Kelvin += Payload.targetSetpointDelta.value;
                             break;
                     }
-                    Endpoint.SetValue("CurrentSetPoint", Math.Round(target.Kelvin, 1).ToString(CultureInfo.InvariantCulture)).GetAwaiter().GetResult();
+                    Endpoint.SetValueAsync("CurrentSetPoint", Math.Round(target.Kelvin, 1).ToString(CultureInfo.InvariantCulture)).GetAwaiter().GetResult();
                 }
                 Response.Event.header.name = "Response";
                 Response.context.properties.AddRange(PropertyHelpers.FindRelatedProperties(Endpoint, ""));
@@ -301,6 +301,8 @@ namespace Alexa.HVAC
 
         #endregion Methods
 
+        #region Public Methods
+
         public static string ModeToString(int mode)
         {
             switch (mode)
@@ -320,5 +322,7 @@ namespace Alexa.HVAC
 
             return "ERROR";
         }
+
+        #endregion Public Methods
     }
 }

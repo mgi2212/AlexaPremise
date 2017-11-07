@@ -35,12 +35,13 @@ namespace PremiseAlexaBridgeService
         public static string AlexaEventTokenRefreshEndpoint;
         public static string AlexaLocationClassPath;
         public static string AlexaMatrixSwitcherZone;
-        public static AsyncLock deDupeLock = new AsyncLock();
         public static string PremiseServerAddress;
         public static string PremiseUserName;
         public static string PremiseUserPassword;
+
         private static readonly SYSClient _sysClient = new SYSClient();
         private static readonly AsyncLock asyncObjectsLock = new AsyncLock();
+        private static readonly AsyncLock deDupeLock = new AsyncLock();
         private static readonly List<DiscoveryEndpoint> endpoints = new List<DiscoveryEndpoint>();
         private static readonly AsyncLock endpointsLock = new AsyncLock();
         private static readonly AsyncLock HomeObjectLock = new AsyncLock();
@@ -101,9 +102,17 @@ namespace PremiseAlexaBridgeService
                 });
             });
 
+            Task.Run(() =>
+            {
+                BackgroundTaskManager.Run(() =>
+                {
+                    ShutdownMonitor();
+                });
+            });
+
             controllerNames.Sort();
             string xmlElements = new XElement("interfaces", controllerNames.Select(i => new XElement("interface", i))).ToString();
-            WriteToWindowsApplicationEventLog(EventLogEntryType.Information, $"PremiseAlexaBridge has started with {controllerNames.Count} interfaces:\r\n {xmlElements}", 1);
+            WriteToWindowsApplicationEventLog(EventLogEntryType.Information, $"PremiseAlexaBridge has started with {controllerNames.Count} interfaces:\r\n {xmlElements}", 2);
         }
 
         #endregion Constructors
@@ -119,7 +128,7 @@ namespace PremiseAlexaBridgeService
 
             UnsubscribeAllAsync().GetAwaiter().GetResult();
 
-            _asyncEventSubscription?.Unsubscribe().GetAwaiter().GetResult();
+            _asyncEventSubscription?.UnsubscribeAsync().GetAwaiter().GetResult();
             _asyncEventSubscription = null;
 
             using (endpointsLock.Lock())
@@ -128,6 +137,7 @@ namespace PremiseAlexaBridgeService
             }
 
             _sysClient.Disconnect();
+
             _homeObject = null;
             _rootObject = null;
         }
@@ -205,7 +215,7 @@ namespace PremiseAlexaBridgeService
 
             try
             {
-                string json = await endpoint.GetValue("discoveryJson").ConfigureAwait(false);
+                string json = await endpoint.GetValueAsync("discoveryJson").ConfigureAwait(false);
                 discoveryEndpoint = JsonConvert.DeserializeObject<DiscoveryEndpoint>(json, new JsonSerializerSettings
                 {
                     NullValueHandling = NullValueHandling.Ignore
@@ -233,7 +243,8 @@ namespace PremiseAlexaBridgeService
                 dynamic whereClause = new ExpandoObject();
                 whereClause.TypeOf = AlexaApplianceClassPath;
                 int count = 0;
-                var devices = await HomeObject.Select(returnClause, whereClause).ConfigureAwait(false);
+                // ReSharper disable once AsyncConverter.ConfigureAwaitHighlighting
+                var devices = await HomeObject.SelectAsync(returnClause, whereClause).ConfigureAwait(false);
 
                 foreach (var device in devices)
                 {
@@ -277,9 +288,9 @@ namespace PremiseAlexaBridgeService
 
         public static async Task IncrementCounterAsync(string property)
         {
-            int count = await HomeObject.GetValue<int>(property).ConfigureAwait(false);
+            int count = await HomeObject.GetValueAsync<int>(property).ConfigureAwait(false);
             count++;
-            await HomeObject.SetValue(property, count.ToString()).ConfigureAwait(false);
+            await HomeObject.SetValueAsync(property, count.ToString()).ConfigureAwait(false);
         }
 
         public static bool IsClientConnected()
@@ -289,10 +300,48 @@ namespace PremiseAlexaBridgeService
 
         public static async Task NotifyErrorAsync(EventLogEntryType errorType, string errorMessage, int id)
         {
-            await HomeObject.SetValue("AlexaLastCommunicationsError", errorMessage).ConfigureAwait(false);
+            await HomeObject.SetValueAsync("AlexaLastCommunicationsError", errorMessage).ConfigureAwait(false);
             await IncrementCounterAsync("AlexaCommunicationsErrorCount").ConfigureAwait(false);
             WriteToWindowsApplicationEventLog(errorType, errorMessage, id);
             Debug.WriteLine(errorMessage);
+        }
+
+        public static void ShutdownMonitor()
+        {
+            WriteToWindowsApplicationEventLog(EventLogEntryType.Information, "Shutdown monitor started.", 3);
+            while (!BackgroundTaskManager.Shutdown.IsCancellationRequested)
+            {
+                Thread.Sleep(2000);
+            }
+            WriteToWindowsApplicationEventLog(EventLogEntryType.Information, "Shutdown requested by IIS application pool.", 6);
+
+            UnsubscribeAllAsync().GetAwaiter().GetResult();
+            _asyncEventSubscription?.UnsubscribeAsync().GetAwaiter().GetResult();
+            _asyncEventSubscription = null;
+
+            WriteToWindowsApplicationEventLog(EventLogEntryType.Information, "Removed premise async subscriptions.", 7);
+
+            using (endpointsLock.Lock())
+            {
+                endpoints?.Clear();
+            }
+
+            WriteToWindowsApplicationEventLog(EventLogEntryType.Information, "Disconnect from premise.", 8);
+
+            _sysClient.Disconnect();
+
+            using (HomeObjectLock.Lock())
+            {
+                _homeObject = null;
+            }
+            using (RootObjectLock.Lock())
+
+            {
+                _rootObject = null;
+            }
+
+            WriteToWindowsApplicationEventLog(EventLogEntryType.Information, "Shutdown complete.", 9);
+            BackgroundTaskManager.Shutdown.ThrowIfCancellationRequested();
         }
 
         public static void WriteToWindowsApplicationEventLog(EventLogEntryType logType, string message, int id)
@@ -308,7 +357,7 @@ namespace PremiseAlexaBridgeService
 
         internal static async Task<bool> CheckAccessTokenAsync(string token)
         {
-            var accessToken = await HomeObject.GetValue<string>("AccessToken").ConfigureAwait(false);
+            var accessToken = await HomeObject.GetValueAsync<string>("AccessToken").ConfigureAwait(false);
             var tokens = new List<string>(accessToken.Split(','));
             return (-1 != tokens.IndexOf(token));
         }
@@ -321,32 +370,43 @@ namespace PremiseAlexaBridgeService
         internal static async Task InformLastContactAsync(string command)
         {
             command += $" Client ip: {GetClientIp()}";
-            await HomeObject.SetValue("LastHeardFromAlexa", DateTime.Now.ToString(CultureInfo.CurrentCulture)).ConfigureAwait(false);
-            await HomeObject.SetValue("LastHeardCommand", command).ConfigureAwait(false);
+            await HomeObject.SetValueAsync("LastHeardFromAlexa", DateTime.Now.ToString(CultureInfo.CurrentCulture)).ConfigureAwait(false);
+            await HomeObject.SetValueAsync("LastHeardCommand", command).ConfigureAwait(false);
         }
 
         internal static void WarmUpCache()
         {
+            WriteToWindowsApplicationEventLog(EventLogEntryType.Information, "Start Preload.", 1);
+
             if (CheckStatus())
             {
                 GetEndpointsAsync().GetAwaiter().GetResult();
+                WriteToWindowsApplicationEventLog(EventLogEntryType.Information, "Preload Completed.", 4);
+            }
+            else
+            {
+                WriteToWindowsApplicationEventLog(EventLogEntryType.Error, "Could not complete preload.", 5);
             }
         }
 
-        private static async Task BackgroundGarbageCollectAsync()
+        private static Task BackgroundGarbageCollectAsync()
         {
             // collect garbage after 5 seconds.
             Thread.Sleep(5000);
-            await Task.Run(() =>
+            return Task.Run(() =>
             {
                 GC.Collect();
-            }).ConfigureAwait(false);
+            });
         }
 
         private static bool CheckStatus()
         {
             try
             {
+                if (BackgroundTaskManager.Shutdown.IsCancellationRequested)
+                {
+                    return false;
+                }
                 if (IsClientConnected())
                 {
                     return true;
@@ -358,7 +418,7 @@ namespace PremiseAlexaBridgeService
                     {
                         try
                         {
-                            _homeObject = _sysClient.Connect(PremiseServerAddress)?.GetAwaiter().GetResult();
+                            _homeObject = _sysClient.ConnectAsync(PremiseServerAddress)?.GetAwaiter().GetResult();
                         }
                         catch (Exception ex)
                         {
@@ -374,7 +434,7 @@ namespace PremiseAlexaBridgeService
                     }
                     using (RootObjectLock.Lock())
                     {
-                        _rootObject = _homeObject.GetRoot().GetAwaiter().GetResult();
+                        _rootObject = _homeObject.GetRootAsync().GetAwaiter().GetResult();
                     }
                 }
                 else
@@ -399,7 +459,7 @@ namespace PremiseAlexaBridgeService
                         _homeObject = null;
                         try
                         {
-                            _homeObject = _sysClient.Connect(PremiseServerAddress).GetAwaiter().GetResult();
+                            _homeObject = _sysClient.ConnectAsync(PremiseServerAddress).GetAwaiter().GetResult();
                         }
                         catch
                         {
@@ -410,12 +470,12 @@ namespace PremiseAlexaBridgeService
                     using (RootObjectLock.Lock())
                     {
                         _rootObject = null;
-                        _rootObject = _homeObject.GetRoot().GetAwaiter().GetResult();
+                        _rootObject = _homeObject.GetRootAsync().GetAwaiter().GetResult();
                     }
                 }
                 using (homeObjectSubscriptionLock.Lock())
                 {
-                    enableAsyncEvents = HomeObject.GetValue<bool>("SendAsyncEventsToAlexa").GetAwaiter().GetResult();
+                    enableAsyncEvents = HomeObject.GetValueAsync<bool>("SendAsyncEventsToAlexa").GetAwaiter().GetResult();
                 }
                 if (IsAsyncEventsEnabled)
                 {

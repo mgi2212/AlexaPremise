@@ -3,6 +3,7 @@ using System.Runtime.Serialization;
 
 namespace SYSWebSockClient
 {
+    [Serializable]
     public class JsonRPCException : Exception
     {
         #region Constructors

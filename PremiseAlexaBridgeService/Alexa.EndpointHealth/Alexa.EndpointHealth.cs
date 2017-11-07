@@ -54,7 +54,7 @@ namespace Alexa.EndpointHealth
                     switch (capability.@interface)
                     {
                         case "Alexa.EndpointHealth":
-                            subscription = endpoint.Subscribe("IsReachable", GetType().AssemblyQualifiedName, callback).GetAwaiter().GetResult();
+                            subscription = endpoint.SubscribeAsync("IsReachable", GetType().AssemblyQualifiedName, callback).GetAwaiter().GetResult();
                             break;
                     }
                 }

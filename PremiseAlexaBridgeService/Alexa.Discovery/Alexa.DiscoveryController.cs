@@ -249,9 +249,9 @@ namespace Alexa.Discovery
 
             Response.Event.header.name = _alexaProperties[0];
             string message = $"Discovery reported {Response.Event.payload.endpoints.Count} devices and scenes.";
-            PremiseServer.HomeObject.SetValue("LastRefreshed", DateTime.Now.ToString(CultureInfo.InvariantCulture)).GetAwaiter().GetResult();
-            PremiseServer.HomeObject.SetValue("HealthDescription", message).GetAwaiter().GetResult();
-            PremiseServer.HomeObject.SetValue("Health", "True").GetAwaiter().GetResult();
+            PremiseServer.HomeObject.SetValueAsync("LastRefreshed", DateTime.Now.ToString(CultureInfo.InvariantCulture)).GetAwaiter().GetResult();
+            PremiseServer.HomeObject.SetValueAsync("HealthDescription", message).GetAwaiter().GetResult();
+            PremiseServer.HomeObject.SetValueAsync("Health", "True").GetAwaiter().GetResult();
             PremiseServer.WriteToWindowsApplicationEventLog(EventLogEntryType.Information, message + $" Client ip {PremiseServer.GetClientIp()}", 50);
         }
 

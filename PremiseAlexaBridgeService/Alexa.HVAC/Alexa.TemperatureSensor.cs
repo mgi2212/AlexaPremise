@@ -123,7 +123,7 @@ namespace Alexa.HVAC
         {
             List<AlexaProperty> properties = new List<AlexaProperty>();
 
-            double temperature = Endpoint.GetValue<double>(_premiseProperties[0]).GetAwaiter().GetResult();
+            double temperature = Endpoint.GetValueAsync<double>(_premiseProperties[0]).GetAwaiter().GetResult();
             Temperature temp = new Temperature(temperature);
             AlexaProperty property = new AlexaProperty
             {

@@ -9,6 +9,7 @@ using Newtonsoft.Json.Linq;
 
 namespace PremiseAlexaBridgeService
 {
+    // ReSharper disable once ClassCannotBeInstantiated
     public sealed partial class PremiseServer
     {
         #region Methods
@@ -29,13 +30,13 @@ namespace PremiseAlexaBridgeService
                     refreshRequest = WebRequest.Create(AlexaEventTokenRefreshEndpoint);
                     refreshRequest.Method = WebRequestMethods.Http.Post;
                     refreshRequest.ContentType = "application/x-www-form-urlencoded;charset=UTF-8";
-                    previousToken = HomeObject.GetValue<string>("AlexaAsyncAuthorizationCode").GetAwaiter().GetResult();
-                    string refresh_token = HomeObject.GetValue<string>("AlexaAsyncAuthorizationRefreshToken").GetAwaiter().GetResult();
-                    string client_id = HomeObject.GetValue<string>("AlexaAsyncAuthorizationClientId").GetAwaiter().GetResult();
-                    string client_secret = HomeObject.GetValue<string>("AlexaAsyncAuthorizationSecret").GetAwaiter().GetResult();
+                    previousToken = HomeObject.GetValueAsync<string>("AlexaAsyncAuthorizationCode").GetAwaiter().GetResult();
+                    string refresh_token = HomeObject.GetValueAsync<string>("AlexaAsyncAuthorizationRefreshToken").GetAwaiter().GetResult();
+                    string client_id = HomeObject.GetValueAsync<string>("AlexaAsyncAuthorizationClientId").GetAwaiter().GetResult();
+                    string client_secret = HomeObject.GetValueAsync<string>("AlexaAsyncAuthorizationSecret").GetAwaiter().GetResult();
                     if (string.IsNullOrEmpty(refresh_token) || string.IsNullOrEmpty(client_id) || string.IsNullOrEmpty(client_secret))
                     {
-                        Task.Run(async () => { await HomeObject.SetValue("SendAsyncEventsToAlexa", "False").ConfigureAwait(false); });
+                        Task.Run(async () => { await HomeObject.SetValueAsync("SendAsyncEventsToAlexa", "False").ConfigureAwait(false); });
                         NotifyErrorAsync(EventLogEntryType.Warning, $"{errorPrefix} Alexa authorization token is missing. PSUs are now disabled. Re-enable Premise skill.", eventID + 1).GetAwaiter().GetResult();
                         return;
                     }
@@ -76,10 +77,10 @@ namespace PremiseAlexaBridgeService
                         JObject json = JObject.Parse(responseString);
 
                         newToken = json["access_token"].ToString();
-                        HomeObject.SetValue("AlexaAsyncAuthorizationCode", newToken).GetAwaiter().GetResult();
-                        HomeObject.SetValue("AlexaAsyncAuthorizationRefreshToken", json["refresh_token"].ToString()).GetAwaiter().GetResult();
+                        HomeObject.SetValueAsync("AlexaAsyncAuthorizationCode", newToken).GetAwaiter().GetResult();
+                        HomeObject.SetValueAsync("AlexaAsyncAuthorizationRefreshToken", json["refresh_token"].ToString()).GetAwaiter().GetResult();
                         DateTime expiry = DateTime.UtcNow.AddSeconds((double)json["expires_in"]);
-                        HomeObject.SetValue("AlexaAsyncAuthorizationCodeExpiry", expiry.ToString(CultureInfo.InvariantCulture)).GetAwaiter().GetResult();
+                        HomeObject.SetValueAsync("AlexaAsyncAuthorizationCodeExpiry", expiry.ToString(CultureInfo.InvariantCulture)).GetAwaiter().GetResult();
                         Debug.WriteLine("async token refresh response:" + responseString);
                         WriteToWindowsApplicationEventLog(EventLogEntryType.Information, $"Alexa async auth token successfully refreshed. Previous Token (hash):{previousToken.GetHashCode()} New Token (hash):{newToken.GetHashCode()}", eventID);
                     }
@@ -93,7 +94,7 @@ namespace PremiseAlexaBridgeService
                         if (httpResponse.StatusCode == HttpStatusCode.Unauthorized
                         ) // skill has ben disabled so disable sending Async events to Alexa
                         {
-                            Task.Run(async () => { await HomeObject.SetValue("SendAsyncEventsToAlexa", "False").ConfigureAwait(false); });
+                            Task.Run(async () => { await HomeObject.SetValueAsync("SendAsyncEventsToAlexa", "False").ConfigureAwait(false); });
 
                             string responseString;
                             using (Stream response = e.Response.GetResponseStream())

@@ -11,6 +11,7 @@ using SYSWebSockClient;
 
 namespace PremiseAlexaBridgeService
 {
+    // ReSharper disable once ClassCannotBeInstantiated
     public sealed partial class PremiseServer
     {
         #region Fields
@@ -59,7 +60,7 @@ namespace PremiseAlexaBridgeService
             {
                 // get the endpoint and endpoint capabilities
                 Guid premiseId = new Guid(sub.sysObjectId);
-                IPremiseObject endpoint = RootObject.GetObject(premiseId.ToString("B")).GetAwaiter().GetResult();
+                IPremiseObject endpoint = RootObject.GetObjectAsync(premiseId.ToString("B")).GetAwaiter().GetResult();
                 DiscoveryEndpoint discoveryEndpoint = GetDiscoveryEndpointAsync(endpoint).GetAwaiter().GetResult();
                 if (discoveryEndpoint == null)
                 {
@@ -70,7 +71,7 @@ namespace PremiseAlexaBridgeService
                 string authCode;
                 using (asyncObjectsLock.Lock())
                 {
-                    authCode = (string)HomeObject.GetValue("AlexaAsyncAuthorizationCode").GetAwaiter().GetResult();
+                    authCode = (string)HomeObject.GetValueAsync("AlexaAsyncAuthorizationCode").GetAwaiter().GetResult();
                 }
 
                 // build the change report
@@ -122,6 +123,7 @@ namespace PremiseAlexaBridgeService
                     }
                 }
 
+                // ReSharper disable once ConditionIsAlwaysTrueOrFalse
                 if ((deviceType == null) || (controller == null || relatedPropertyStates == null))
                 {
                     return;
@@ -186,7 +188,7 @@ namespace PremiseAlexaBridgeService
                 {
                     foreach (KeyValuePair<string, IPremiseSubscription> subscription in subscriptions)
                     {
-                        await subscription.Value.Unsubscribe().ConfigureAwait(false);
+                        await subscription.Value.UnsubscribeAsync().ConfigureAwait(false);
                     }
                     subscriptions.Clear();
                 }
@@ -244,7 +246,7 @@ namespace PremiseAlexaBridgeService
                     foreach (DiscoveryEndpoint discoveryEndpoint in endpoints)
                     {
                         Guid premiseId = new Guid(discoveryEndpoint.endpointId);
-                        IPremiseObject endpoint = await RootObject.GetObject(premiseId.ToString("B")).ConfigureAwait(false);
+                        IPremiseObject endpoint = await RootObject.GetObjectAsync(premiseId.ToString("B")).ConfigureAwait(false);
 
                         // use reflection to instantiate all device type controllers
                         var interfaceType = typeof(IAlexaDeviceType);
@@ -274,7 +276,7 @@ namespace PremiseAlexaBridgeService
                 if (_asyncEventSubscription == null)
                 {
                     _asyncEventSubscription = HomeObject
-                        .Subscribe("SendAsyncEventsToAlexa", "NoController", EnableAsyncPropertyChanged).GetAwaiter().GetResult();
+                        .SubscribeAsync("SendAsyncEventsToAlexa", "NoController", EnableAsyncPropertyChanged).GetAwaiter().GetResult();
                 }
             }
         }
