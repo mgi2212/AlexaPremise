@@ -141,16 +141,16 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Alexa.Video\readme.md" />
-    <None Include="App_Data\images\ApplicationInitialization.png" />
-    <None Include="App_Data\images\ApplicationPool.PNG" />
-    <None Include="App_Data\images\AutoStart.png" />
-    <None Include="App_Data\images\AutoStartProviderEntry.png" />
-    <None Include="App_Data\images\AutoStartProviders.png" />
-    <None Include="App_Data\images\AutoStartSites.png" />
-    <None Include="App_Data\images\ConfigEditor.png" />
-    <None Include="App_Data\images\FinalSiteProperties.png" />
-    <None Include="App_Data\images\SitesProperties.png" />
-    <None Include="App_Data\images\system.applicationhost.PNG" />
+    <None Include="images\ApplicationInitialization.png" />
+    <None Include="images\ApplicationPool.PNG" />
+    <None Include="images\AutoStart.png" />
+    <None Include="images\AutoStartProviderEntry.png" />
+    <None Include="images\AutoStartProviders.png" />
+    <None Include="images\AutoStartSites.png" />
+    <None Include="images\ConfigEditor.png" />
+    <None Include="images\FinalSiteProperties.png" />
+    <None Include="images\SitesProperties.png" />
+    <None Include="images\system.applicationhost.PNG" />
     <Content Include="App_Data\Install-Premise-Eventlog-Source.ps1" />
     <None Include="App_Data\Legacy Lambdas\Custom Skill Lambda.js" />
     <None Include="App_Data\Legacy Lambdas\Smart Home V2 Lambda.js" />
