@@ -69,7 +69,7 @@ Go to Main Application IIS Root select **Configuration Editor**. This changes th
 
 ![Edit system.applicationhost/Site Properties](images/SitesProperties.png)
 
-1. Select **system.applicationhost/Sites from the drop-down in the upper left corner of the Configuration Editor window.
+1. Select **system.applicationhost/Sites** from the drop-down in the upper left corner of the Configuration Editor window.
 1. Click on the elipses *(...)* for the **(Collection)** property.
 1. Select the correct site.
 1. Ensure the **serverAutoStart** property is True.
