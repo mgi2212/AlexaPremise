@@ -6,7 +6,7 @@ TODO
 ## Step X. Configure IIS Pre-Load for Premise Discovery and Subscription Cache 
 With the addition of Proactive State Updates (PSUs), the Premise web service must subscribe to asynchronous property changes on home-level objects that are sent to Alexa during discovery. These subscriptions notify the web service which in turn, sends a StateChange event to Alexa. To accomplish this, the web service must maintain a subscription cache and maintain a live connection to the premise server. This process occurs when the premise web service responds to Discovery directives. However, in larger systems, the time it takes to iterate the premise DOM and setup hundreds of subscriptions can exceed the time that the Alexa service waits for a response. 
 
-IIS has an **Application Initialization** feature that is used to pre-load the the discovery and subscription cache. Please follow these are the instructions to correctly configure that on IIS. 
+IIS has an **Application Initialization** feature that is used to pre-load the the discovery and subscription cache. Please follow these instructions to correctly configure that feature on IIS. 
 
 ### Step X.1 Install the IIS Application Initialization Feature
 
