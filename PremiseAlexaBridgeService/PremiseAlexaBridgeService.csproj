@@ -142,7 +142,7 @@
   <ItemGroup>
     <None Include="Alexa.Video\readme.md" />
     <None Include="images\ApplicationInitialization.png" />
-    <Content Include="images\ApplicationPool1.png" />
+    <Content Include="images\ApplicationPool.png" />
     <None Include="images\AutoStart.png" />
     <None Include="images\AutoStartProviderEntry.png" />
     <None Include="images\AutoStartProviders.png" />
@@ -228,7 +228,7 @@
     <None Include="App_Data\TestJson\SpeakerController-SetMute.http" />
     <None Include="App_Data\TestJson\SpeakerController-SetVolume.http" />
     <Content Include="README.md" />
-    <Content Include="images\system.applicationhost1.png" />
+    <Content Include="images\system.applicationhost.png" />
     <None Include="UtilityClasses\readme.md" />
     <None Include="Alexa.Discovery\readme.md" />
     <None Include="Alexa.Scene\readme.md" />
