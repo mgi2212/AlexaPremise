@@ -141,34 +141,21 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Alexa.Video\readme.md" />
-    <None Include="App_Data\alexa.txt" />
-    <Content Include="App_Data\Install-Premise.ps1" />
-    <None Include="App_Data\Micro Service for DB Lambda.js" />
-    <None Include="App_Data\Custom Skill Lambda.js" />
-    <None Include="App_Data\Smart Home V3 Lambda.js" />
-    <None Include="App_Data\Smart Home Lambda.js" />
-    <None Include="App_Data\dynamoDB\Create.txt" />
-    <None Include="App_Data\S3 Web\404.html" />
-    <None Include="App_Data\S3 Web\js\apigClient.js" />
-    <None Include="App_Data\S3 Web\css\ie10-viewport-bug-workaround.css" />
-    <None Include="App_Data\S3 Web\css\page.css" />
-    <None Include="App_Data\S3 Web\favicon.ico" />
-    <None Include="App_Data\S3 Web\index.html" />
-    <None Include="App_Data\S3 Web\index_simpleVersion.html" />
-    <None Include="App_Data\S3 Web\js\ie10-viewport-bug-workaround.js" />
-    <None Include="App_Data\S3 Web\js\simplePage.js" />
-    <None Include="App_Data\S3 Web\lib\apiGatewayCore\apiGatewayClient.js" />
-    <None Include="App_Data\S3 Web\lib\apiGatewayCore\sigV4Client.js" />
-    <None Include="App_Data\S3 Web\lib\apiGatewayCore\simpleHttpClient.js" />
-    <None Include="App_Data\S3 Web\lib\apiGatewayCore\utils.js" />
-    <None Include="App_Data\S3 Web\lib\axios\dist\axios.standalone.js" />
-    <None Include="App_Data\S3 Web\lib\CryptoJS\components\enc-base64.js" />
-    <None Include="App_Data\S3 Web\lib\CryptoJS\components\hmac.js" />
-    <None Include="App_Data\S3 Web\lib\CryptoJS\rollups\hmac-sha256.js" />
-    <None Include="App_Data\S3 Web\lib\CryptoJS\rollups\sha256.js" />
-    <None Include="App_Data\S3 Web\lib\url-template\url-template.js" />
-    <None Include="App_Data\S3 Web\privacy.html" />
-    <None Include="App_Data\S3 Web\simple.html" />
+    <None Include="App_Data\README.md" />
+    <None Include="App_Data\images\ApplicationInitialization.png" />
+    <None Include="App_Data\images\ApplicationPool.PNG" />
+    <None Include="App_Data\images\AutoStart.png" />
+    <None Include="App_Data\images\AutoStartProviderEntry.png" />
+    <None Include="App_Data\images\AutoStartProviders.png" />
+    <None Include="App_Data\images\AutoStartSites.png" />
+    <None Include="App_Data\images\ConfigEditor.png" />
+    <None Include="App_Data\images\FinalSiteProperties.png" />
+    <None Include="App_Data\images\SitesProperties.png" />
+    <None Include="App_Data\images\system.applicationhost.PNG" />
+    <Content Include="App_Data\Install-Premise-Eventlog-Source.ps1" />
+    <None Include="App_Data\Legacy Lambdas\Custom Skill Lambda.js" />
+    <None Include="App_Data\Legacy Lambdas\Smart Home V2 Lambda.js" />
+    <None Include="App_Data\dynamoDB\CreateDb.cmd" />
     <None Include="App_Data\Premise Driver\SPWebSockets.dll" />
     <Content Include="Alexa.V3\Alexa.svc">
       <BrowseToURL>~/V3/Alexa.svc</BrowseToURL>
@@ -246,7 +233,6 @@
     <None Include="Alexa.Discovery\readme.md" />
     <None Include="Alexa.Scene\readme.md" />
     <None Include="Alexa.EndpointHealth\readme.md" />
-    <None Include="App_Data\SmartHome V3 Json Schema.json" />
     <None Include="Properties\PublishProfiles\premise.quigleys.local.pubxml" />
     <None Include="Singleton\readme.md" />
     <None Include="Web.Debug.config">

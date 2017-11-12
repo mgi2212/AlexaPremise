@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using Alexa;
@@ -60,7 +61,12 @@ namespace PremiseAlexaBridgeService
             {
                 // get the endpoint and endpoint capabilities
                 Guid premiseId = new Guid(sub.sysObjectId);
-                IPremiseObject endpoint = RootObject.GetObjectAsync(premiseId.ToString("B")).GetAwaiter().GetResult();
+                IPremiseObject endpoint = HomeObject.GetObjectAsync(premiseId.ToString("B")).GetAwaiter().GetResult();
+                if (!endpoint.IsValidObject())
+                {
+                    return;
+                }
+
                 DiscoveryEndpoint discoveryEndpoint = GetDiscoveryEndpointAsync(endpoint).GetAwaiter().GetResult();
                 if (discoveryEndpoint == null)
                 {
@@ -246,7 +252,12 @@ namespace PremiseAlexaBridgeService
                     foreach (DiscoveryEndpoint discoveryEndpoint in endpoints)
                     {
                         Guid premiseId = new Guid(discoveryEndpoint.endpointId);
-                        IPremiseObject endpoint = await RootObject.GetObjectAsync(premiseId.ToString("B")).ConfigureAwait(false);
+                        IPremiseObject endpoint = await HomeObject.GetObjectAsync(premiseId.ToString("B")).ConfigureAwait(false);
+                        if (!endpoint.IsValidObject())
+                        {
+                            await NotifyErrorAsync(EventLogEntryType.Warning, $"Cannot find object {discoveryEndpoint.friendlyName} ({premiseId.ToString()})to subscribe on premise server.", 250).ConfigureAwait(false);
+                            continue;
+                        }
 
                         // use reflection to instantiate all device type controllers
                         var interfaceType = typeof(IAlexaDeviceType);

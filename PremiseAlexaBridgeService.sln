@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
-VisualStudioVersion = 15.0.27004.2006
+VisualStudioVersion = 15.0.27004.2008
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PremiseAlexaBridgeService", "PremiseAlexaBridgeService\PremiseAlexaBridgeService.csproj", "{4EEF0D2C-1B1E-4CB2-9B62-D4B6B56A3852}"
 	ProjectSection(ProjectDependencies) = postProject
@@ -11,6 +11,12 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ModelCheck", "ModelCheck\ModelCheck.csproj", "{B30859CB-320C-46FB-B80B-C5B2DE40FFC7}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SYSWebSockClient", "SYSWebSockClient\SYSWebSockClient.csproj", "{4BACF0AA-A338-49F8-AAF4-9128DD79EC4A}"
+EndProject
+Project("{888888A0-9F3D-457C-B088-3A5042F75D52}") = "AuthWeb", "AuthWeb\AuthWeb.pyproj", "{39F9D666-9B9F-4DC9-9426-35AF48F2F669}"
+EndProject
+Project("{9092AA53-FB77-4645-B42D-1CCCA6BD08BD}") = "Alexa.V3.Skill.Lambda", "PremiseLambda\Alexa.V3.Skill.Lambda.njsproj", "{93A99353-34B5-47FA-87C9-63D274E18909}"
+EndProject
+Project("{9092AA53-FB77-4645-B42D-1CCCA6BD08BD}") = "Alexa.CustomerEndpointTable.Lambda", "Alexa.CustomerEndpointTable.Lambda\Alexa.CustomerEndpointTable.Lambda.njsproj", "{ABEA25B2-40F5-4229-9164-2A683DB4D7D9}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -30,6 +36,18 @@ Global
 		{4BACF0AA-A338-49F8-AAF4-9128DD79EC4A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4BACF0AA-A338-49F8-AAF4-9128DD79EC4A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4BACF0AA-A338-49F8-AAF4-9128DD79EC4A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{39F9D666-9B9F-4DC9-9426-35AF48F2F669}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{39F9D666-9B9F-4DC9-9426-35AF48F2F669}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{39F9D666-9B9F-4DC9-9426-35AF48F2F669}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{39F9D666-9B9F-4DC9-9426-35AF48F2F669}.Release|Any CPU.Build.0 = Release|Any CPU
+		{93A99353-34B5-47FA-87C9-63D274E18909}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{93A99353-34B5-47FA-87C9-63D274E18909}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{93A99353-34B5-47FA-87C9-63D274E18909}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{93A99353-34B5-47FA-87C9-63D274E18909}.Release|Any CPU.Build.0 = Release|Any CPU
+		{ABEA25B2-40F5-4229-9164-2A683DB4D7D9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{ABEA25B2-40F5-4229-9164-2A683DB4D7D9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{ABEA25B2-40F5-4229-9164-2A683DB4D7D9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{ABEA25B2-40F5-4229-9164-2A683DB4D7D9}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -139,7 +139,7 @@ namespace Alexa.Lighting
                 @namespace = Namespace,
                 name = _alexaProperties[0],
                 value = (int)((brightness * 100)).LimitToRange(0, 100),
-                timeOfSample = PremiseServer.GetUtcTime()
+                timeOfSample = PremiseServer.UtcTimeStamp()
             };
             properties.Add(property);
 

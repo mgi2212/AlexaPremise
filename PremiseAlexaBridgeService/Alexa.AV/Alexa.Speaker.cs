@@ -143,7 +143,7 @@ namespace Alexa.AV
                 @namespace = Namespace,
                 name = _alexaProperties[0],
                 value = (int)((volume * 100)).LimitToRange(0, 100),
-                timeOfSample = PremiseServer.GetUtcTime()
+                timeOfSample = PremiseServer.UtcTimeStamp()
             };
             properties.Add(volumeProperty);
 
@@ -153,7 +153,7 @@ namespace Alexa.AV
                 @namespace = Namespace,
                 name = _alexaProperties[1],
                 value = mute,
-                timeOfSample = PremiseServer.GetUtcTime()
+                timeOfSample = PremiseServer.UtcTimeStamp()
             };
             properties.Add(muteProperty);
 

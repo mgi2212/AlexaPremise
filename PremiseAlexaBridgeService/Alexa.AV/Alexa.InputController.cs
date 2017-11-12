@@ -134,7 +134,7 @@ namespace Alexa.AV
                 @namespace = Namespace,
                 name = _alexaProperties[0],
                 value = GetCurrentInput(),
-                timeOfSample = PremiseServer.GetUtcTime()
+                timeOfSample = PremiseServer.UtcTimeStamp()
             };
             if ((string)volumeProperty.value == "")
             {

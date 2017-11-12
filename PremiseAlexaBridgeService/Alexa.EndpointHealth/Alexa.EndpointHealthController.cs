@@ -153,7 +153,7 @@ namespace Alexa.EndpointHealth
             {
                 @namespace = @namespace,
                 name = alexaProperties[0],
-                timeOfSample = PremiseServer.GetUtcTime(),
+                timeOfSample = PremiseServer.UtcTimeStamp(),
                 value = new AlexaEndpointHealthValue((isReachable ? "OK" : "UNREACHABLE"))
             };
             properties.Add(property);

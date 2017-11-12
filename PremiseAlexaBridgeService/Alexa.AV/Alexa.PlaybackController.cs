@@ -127,7 +127,7 @@ namespace Alexa.AV
             //    @namespace = _namespace,
             //    name = _alexaProperties[0],
             //    value = (int)((volume * 100)).LimitToRange(0, 100),
-            //    timeOfSample = GetUtcTime()
+            //    timeOfSample = UtcTimeStamp()
             //};
             //properties.Add(volumeProperty);
 

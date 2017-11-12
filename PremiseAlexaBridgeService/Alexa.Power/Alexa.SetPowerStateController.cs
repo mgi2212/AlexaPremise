@@ -129,7 +129,7 @@ namespace Alexa.Power
                 @namespace = Namespace,
                 name = _alexaProperties[0],
                 value = (powerState ? "ON" : "OFF"),
-                timeOfSample = PremiseServer.GetUtcTime()
+                timeOfSample = PremiseServer.UtcTimeStamp()
             };
 
             properties.Add(property);

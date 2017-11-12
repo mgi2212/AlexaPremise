@@ -130,7 +130,7 @@ namespace Alexa.HVAC
                 @namespace = Namespace,
                 name = _alexaProperties[0],
                 value = new AlexaTemperature(Math.Round(temp.Fahrenheit, 1), "FAHRENHEIT"),
-                timeOfSample = PremiseServer.GetUtcTime()
+                timeOfSample = PremiseServer.UtcTimeStamp()
             };
             properties.Add(property);
 

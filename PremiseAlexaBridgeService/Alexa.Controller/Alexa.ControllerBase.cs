@@ -228,7 +228,7 @@ namespace Alexa.Controller
 
             try
             {
-                if (PremiseServer.RootObject == null)
+                if (PremiseServer.HomeObject == null)
                 {
                     ReportError(AlexaErrorTypes.ENDPOINT_UNREACHABLE, "Premise Server.");
                     return false;
@@ -283,11 +283,11 @@ namespace Alexa.Controller
                 if (_directiveEndpoint?.endpointId != null)
                 {
                     Guid premiseId = new Guid(_directiveEndpoint.endpointId);
-                    Endpoint = PremiseServer.RootObject.GetObjectAsync(premiseId.ToString("B")).GetAwaiter().GetResult();
-                    if (Endpoint == null)
+                    Endpoint = PremiseServer.HomeObject.GetObjectAsync(premiseId.ToString("B")).GetAwaiter().GetResult();
+                    if (!Endpoint.IsValidObject())
                     {
                         ReportError(AlexaErrorTypes.NO_SUCH_ENDPOINT,
-                            $"Cannot find device {_directiveEndpoint.endpointId} on server.");
+                            $"Cannot find device {_directiveEndpoint.cookie.path} ({_directiveEndpoint.endpointId}) on server.");
                         return false;
                     }
                 }
@@ -296,7 +296,7 @@ namespace Alexa.Controller
             {
                 ReportError(AlexaErrorTypes.NO_SUCH_ENDPOINT, ex.Message);
                 ResponseEvent.payload = new AlexaErrorResponsePayload(AlexaErrorTypes.INTERNAL_ERROR,
-                    $"Cannot find device {_directiveEndpoint.endpointId} on server.");
+                    $"Cannot find device {_directiveEndpoint.cookie.path} ({_directiveEndpoint.endpointId}) on server.");
                 return false;
             }
 

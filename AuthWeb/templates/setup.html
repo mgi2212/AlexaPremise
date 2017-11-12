@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+
+{% block appname %} re:Invent ALX316 Bridge - Setup {% endblock %}
+
+{% block content %}
+	<div class="home-page-content">
+		<h2>re:Invent ALX316 Bridge User Setup</h2>
+		<p class="lead"><br></p>
+
+		<div class="row clearfix" id="pagedata">
+		   <div class="col-md-6 col-md-offset-3 column">
+			  <div class="form-group">
+				 <label for="nameInput">Name</label>
+				 <input type="text" class="form-control" id="nameInput" size="10" readonly>
+			  </div>
+			  <div class="form-group">
+				 <label for="emailInput">Email</label>
+				 <input type="email" class="form-control" id="emailInput" size="10" readonly>
+			  </div>
+			  <div id="formData">
+				 <div class="form-group">
+					<label for="hostInput">Host
+						<small>
+							<span class="glyphicon glyphicon-question-sign" data-toggle="tooltip" title="Your host name. Example: alexa.example.us">
+							</span>
+						</small>
+					</label>
+					<input type="text" class="form-control form-control-editable" id="hostInput" size="10" autofocus readonly>
+				 </div>
+				 <div class="form-group">
+					<label for="pathInput">Path 
+						<small>
+							<span class="glyphicon glyphicon-question-sign" data-toggle="tooltip" title="Your app path. Example: /Alexa.svc/jsons/">
+							</span>
+						</small>
+					</label>
+					<input type="text" class="form-control form-control-editable" id="pathInput" size="10" readonly>
+				 </div>
+				 <div class="form-group">
+					<label for="portInput">Port 
+						<small>
+							<span class="glyphicon glyphicon-question-sign" data-toggle="tooltip" title="Your host's port. Example: 8733">
+							</span>
+						</small>
+					</label>
+					<input type="text" class="form-control form-control-editable" id="portInput" size="10" readonly>
+				 </div>
+				 <div class="form-group">
+					<label for="tokenInput">Premise Access Token 
+						<small>
+							<span class="glyphicon glyphicon-question-sign" data-toggle="tooltip" title="Your access token. Example: z5699rt0d">
+							</span>
+						</small>
+					</label>
+					<input type="text" class="form-control form-control-editable" id="tokenInput" size="10" readonly>
+				 </div>
+				 <button id="submitButton" type="submit" class="btn btn-primary">Submit</button>
+				 <button id="editButton" type="edit"" class="btn btn-primary" hidden>Edit</button>
+				 <button id="resetButton" type="reset" class="btn btn-default">Reset</button>
+			  </div>
+		   </div>
+		</div>
+	</div>
+
+        <!-- API Gateway Javascript SDK Dependencies -->
+        <script type="text/javascript" src="../static/lib/axios/dist/axios.standalone.js"></script>
+        <script type="text/javascript" src="../static/lib/CryptoJS/rollups/hmac-sha256.js"></script>
+        <script type="text/javascript" src="../static/lib/CryptoJS/rollups/sha256.js"></script>
+        <script type="text/javascript" src="../static/lib/CryptoJS/components/hmac.js"></script>
+        <script type="text/javascript" src="../static/lib/CryptoJS/components/enc-base64.js"></script>
+        <script type="text/javascript" src="../static/lib/url-template/url-template.js"></script>
+        <script type="text/javascript" src="../static/lib/apiGatewayCore/sigV4Client.js"></script>
+        <script type="text/javascript" src="../static/lib/apiGatewayCore/apiGatewayClient.js"></script>
+        <script type="text/javascript" src="../static/lib/apiGatewayCore/simpleHttpClient.js"></script>
+        <script type="text/javascript" src="../static/lib/apiGatewayCore/utils.js"></script>
+        <script type="text/javascript" src="../static/apigClient.js"></script> 
+		
+		<script src="../static/js/jquery-2.0.3.min.js"></script>
+		<script type="text/javascript">		
+			/**
+			 *  Show the logout button
+			 */	
+			$('#NavItems').show();
+		
+			/**
+			 *  Add click event handeler for log out functionality.
+			 */		
+			$('#Logout').click(function() {
+				amazon.Login.logout();
+				window.location = '/';
+				return false;
+			});
+			
+			$('#submitButton').click(function() {
+				window.location = '/submit';
+				});
+				
+			/**
+			 * Performs the view manipulation for showing log in component.
+			 */
+			var showLogon = function() {
+				//$('.form-control').val('');  //Empty the input fields.
+				//customerId = '';             //Empty the persisted customerId.
+				//$('.navbar-header').hide();  //Hide the hamburger menu button.
+				//$('#NavItems').hide();       //Hide the navigation links.
+			}	
+		</script> 
+	
+{% endblock %}		
+		
+		

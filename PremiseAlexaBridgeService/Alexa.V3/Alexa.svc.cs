@@ -488,7 +488,7 @@ namespace PremiseAlexaBridgeService
 
             try
             {
-                if (PremiseServer.RootObject == null)
+                if (PremiseServer.HomeObject == null)
                 {
                     response.context = null;
                     response.@event.payload = new AlexaErrorResponsePayload(AlexaErrorTypes.ENDPOINT_UNREACHABLE, "Premise Server.");
@@ -537,8 +537,8 @@ namespace PremiseAlexaBridgeService
             try
             {
                 Guid premiseId = new Guid(directive.endpoint.endpointId);
-                endpoint = PremiseServer.RootObject.GetObjectAsync(premiseId.ToString("B")).GetAwaiter().GetResult();
-                if (endpoint == null)
+                endpoint = PremiseServer.HomeObject.GetObjectAsync(premiseId.ToString("B")).GetAwaiter().GetResult();
+                if (!endpoint.IsValidObject())
                 {
                     response.context = null;
                     response.@event.payload = new AlexaErrorResponsePayload(AlexaErrorTypes.NO_SUCH_ENDPOINT,

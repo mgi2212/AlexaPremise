@@ -140,7 +140,7 @@ namespace Alexa.Scene
             {
                 @namespace = Namespace,
                 value = (powerState ? "ActivationStarted" : "DeactivationStarted"),
-                timeOfSample = PremiseServer.GetUtcTime()
+                timeOfSample = PremiseServer.UtcTimeStamp()
             };
 
             properties.Add(property);
@@ -188,7 +188,7 @@ namespace Alexa.Scene
                 Response.context.properties = null;
                 Response.Event.header.@namespace = "Alexa.SceneController";
                 Response.Event.payload.cause = new ChangeReportCause { type = "VOICE_INTERACTION" };
-                Response.Event.payload.timestamp = PremiseServer.GetUtcTime();
+                Response.Event.payload.timestamp = PremiseServer.UtcTimeStamp();
                 Response.Event.endpoint.cookie.path = Endpoint.GetPathAsync().GetAwaiter().GetResult();
             }
             catch (Exception ex)

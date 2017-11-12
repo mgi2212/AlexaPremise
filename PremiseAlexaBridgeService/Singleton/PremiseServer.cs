@@ -25,8 +25,6 @@ namespace PremiseAlexaBridgeService
     {
         #region Fields
 
-        public static IPremiseObject _homeObject;
-        public static IPremiseObject _rootObject;
         public static string AlexaApplianceClassPath;
         public static string AlexaAudioVideoInput;
         public static int AlexaDeviceLimit;
@@ -45,8 +43,8 @@ namespace PremiseAlexaBridgeService
         private static readonly List<DiscoveryEndpoint> endpoints = new List<DiscoveryEndpoint>();
         private static readonly AsyncLock endpointsLock = new AsyncLock();
         private static readonly AsyncLock HomeObjectLock = new AsyncLock();
-        private static readonly AsyncLock RootObjectLock = new AsyncLock();
         private static readonly AlexaBlockingQueue<StateChangeReportWrapper> stateReportQueue = new AlexaBlockingQueue<StateChangeReportWrapper>();
+        private static IPremiseObject _homeObject;
 
         #endregion Fields
 
@@ -139,7 +137,6 @@ namespace PremiseAlexaBridgeService
             _sysClient.Disconnect();
 
             _homeObject = null;
-            _rootObject = null;
         }
 
         #endregion Destructors
@@ -163,18 +160,6 @@ namespace PremiseAlexaBridgeService
         }
 
         public static PremiseServer Instance { get; } = new PremiseServer();
-
-        public static IPremiseObject RootObject
-        {
-            get
-            {
-                CheckStatus();
-                using (RootObjectLock.Lock())
-                {
-                    return _rootObject;
-                }
-            }
-        }
 
         #endregion Properties
 
@@ -334,11 +319,6 @@ namespace PremiseAlexaBridgeService
             {
                 _homeObject = null;
             }
-            using (RootObjectLock.Lock())
-
-            {
-                _rootObject = null;
-            }
 
             WriteToWindowsApplicationEventLog(EventLogEntryType.Information, "Shutdown complete.", 9);
             BackgroundTaskManager.Shutdown.ThrowIfCancellationRequested();
@@ -362,17 +342,14 @@ namespace PremiseAlexaBridgeService
             return (-1 != tokens.IndexOf(token));
         }
 
-        internal static string GetUtcTime()
-        {
-            return DateTime.UtcNow.ToUniversalTime().ToString("yyyy-MM-dd'T'HH:mm:ss.ffZ");
-        }
-
         internal static async Task InformLastContactAsync(string command)
         {
             command += $" Client ip: {GetClientIp()}";
             await HomeObject.SetValueAsync("LastHeardFromAlexa", DateTime.Now.ToString(CultureInfo.CurrentCulture)).ConfigureAwait(false);
             await HomeObject.SetValueAsync("LastHeardCommand", command).ConfigureAwait(false);
         }
+
+        internal static string UtcTimeStamp() => DateTime.UtcNow.ToUniversalTime().ToString("yyyy-MM-dd'T'HH:mm:ss.ffZ");
 
         internal static void WarmUpCache()
         {
@@ -432,10 +409,6 @@ namespace PremiseAlexaBridgeService
                         Debug.WriteLine("Cannot connect to Premise server!");
                         return false;
                     }
-                    using (RootObjectLock.Lock())
-                    {
-                        _rootObject = _homeObject.GetRootAsync().GetAwaiter().GetResult();
-                    }
                 }
                 else
                 {
@@ -467,11 +440,6 @@ namespace PremiseAlexaBridgeService
                             return false;
                         }
                     }
-                    using (RootObjectLock.Lock())
-                    {
-                        _rootObject = null;
-                        _rootObject = _homeObject.GetRootAsync().GetAwaiter().GetResult();
-                    }
                 }
                 using (homeObjectSubscriptionLock.Lock())
                 {
@@ -487,7 +455,6 @@ namespace PremiseAlexaBridgeService
             catch (Exception ex)
             {
                 _homeObject = null;
-                _rootObject = null;
                 subscriptions.Clear();
                 endpoints.Clear();
                 Debug.WriteLine(ex.Message);
