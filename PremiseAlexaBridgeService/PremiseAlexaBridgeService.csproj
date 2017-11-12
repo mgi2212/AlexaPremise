@@ -142,7 +142,7 @@
   <ItemGroup>
     <None Include="Alexa.Video\readme.md" />
     <None Include="images\ApplicationInitialization.png" />
-    <None Include="images\ApplicationPool.PNG" />
+    <None Include="images\ApplicationPool.png" />
     <None Include="images\AutoStart.png" />
     <None Include="images\AutoStartProviderEntry.png" />
     <None Include="images\AutoStartProviders.png" />
@@ -150,7 +150,7 @@
     <None Include="images\ConfigEditor.png" />
     <None Include="images\FinalSiteProperties.png" />
     <None Include="images\SitesProperties.png" />
-    <None Include="images\system.applicationhost.PNG" />
+    <None Include="images\system.applicationhost.png" />
     <Content Include="App_Data\Install-Premise-Eventlog-Source.ps1" />
     <None Include="App_Data\Legacy Lambdas\Custom Skill Lambda.js" />
     <None Include="App_Data\Legacy Lambdas\Smart Home V2 Lambda.js" />
